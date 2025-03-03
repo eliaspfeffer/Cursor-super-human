@@ -1,0 +1,31 @@
+# Python virtual environment
+.venv/
+venv/
+env/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# IDE settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs und temporäre Dateien
+*.log
+*.tmp
+.DS_Store
+
+# Projektspezifische Dateien
+consciousness_state/
+*.pkl
+stats/
+visualizations/
