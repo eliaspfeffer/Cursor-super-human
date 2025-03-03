@@ -869,7 +869,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             # Bei niedriger Energie: Energiesparmodus aktivieren
             self.in_energy_saving_mode = True
             # Suche nach Kontexten, die Energie geben könnten
-            energy_context_id = self.find_energy_giving_context()
+            energy_context_id = self.seek_energy_source()
             if energy_context_id:
                 self.set_focus_by_id(energy_context_id)
         else:
