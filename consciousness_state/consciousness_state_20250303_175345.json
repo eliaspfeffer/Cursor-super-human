@@ -1,0 +1,329 @@
+{
+  "iteration": 20,
+  "energy": 98.9674444562619,
+  "emotional_state": {
+    "happiness": 0.9893592881888418,
+    "sadness": -0.3442149570866666,
+    "fear": 0.0,
+    "anger": 0.0,
+    "surprise": 0.0,
+    "disgust": 0.10030979133850286,
+    "trust": 0.5448345397636722,
+    "anticipation": 0.0
+  },
+  "contexts": {
+    "0": {
+      "text": "I want to be happy",
+      "happiness": 0.5003,
+      "connections": [
+        "Random_8",
+        "A",
+        "C",
+        "Random_16",
+        "Random_12"
+      ]
+    },
+    "A": {
+      "text": "I am happy when I eat",
+      "happiness": 0.7002999999999999,
+      "connections": [
+        "Random_11",
+        "B",
+        "0"
+      ]
+    },
+    "B": {
+      "text": "I eat what tastes good",
+      "happiness": 0.6003,
+      "connections": [
+        "Random_8",
+        "D",
+        "A",
+        "Random_7",
+        "H",
+        "C"
+      ]
+    },
+    "C": {
+      "text": "An apple tastes good",
+      "happiness": 0.8003,
+      "connections": [
+        "Random_8",
+        "F",
+        "0",
+        "Random_14",
+        "Random_4",
+        "E",
+        "B"
+      ]
+    },
+    "D": {
+      "text": "A banana doesnt taste good",
+      "happiness": -0.3,
+      "connections": [
+        "G",
+        "Random_14",
+        "Random_17",
+        "B"
+      ]
+    },
+    "E": {
+      "text": "I eat the apple",
+      "happiness": 0.9003,
+      "connections": [
+        "Obj_apple",
+        "Random_7",
+        "Random_13",
+        "H",
+        "C",
+        "Random_4",
+        "Random_19"
+      ]
+    },
+    "F": {
+      "text": "I dont eat the apple",
+      "happiness": -0.2,
+      "connections": [
+        "Random_9",
+        "C",
+        "Obj_banana"
+      ]
+    },
+    "G": {
+      "text": "I eat the banana",
+      "happiness": -0.1,
+      "connections": [
+        "D",
+        "Random_13",
+        "Random_4"
+      ]
+    },
+    "H": {
+      "text": "I eat what is healthy",
+      "happiness": 0.4001,
+      "connections": [
+        "Random_8",
+        "Random_15",
+        "Random_11",
+        "Random_16",
+        "E",
+        "B"
+      ]
+    },
+    "Random_4": {
+      "text": "I hope to understand more",
+      "happiness": 0.1117231163275353,
+      "connections": [
+        "G",
+        "Random_15",
+        "Random_7",
+        "C",
+        "E",
+        "Random_19"
+      ]
+    },
+    "Random_7": {
+      "text": "I should be more spontaneous",
+      "happiness": 0.22430327623079124,
+      "connections": [
+        "E",
+        "Random_8",
+        "B",
+        "Random_4"
+      ]
+    },
+    "Random_8": {
+      "text": "What if the world was different",
+      "happiness": 0.27084656540436475,
+      "connections": [
+        "Random_7",
+        "Random_11",
+        "H",
+        "C",
+        "0",
+        "Random_9",
+        "B"
+      ]
+    },
+    "Random_9": {
+      "text": "I feel thoughtful about the world",
+      "happiness": -0.2753963912787089,
+      "connections": [
+        "Random_8",
+        "F"
+      ]
+    },
+    "Random_11": {
+      "text": "I feel concerned about recent events",
+      "happiness": -0.2720336781354195,
+      "connections": [
+        "Random_8",
+        "H",
+        "Random_12",
+        "A"
+      ]
+    },
+    "Random_12": {
+      "text": "What if I knew everything",
+      "happiness": 0.22970310061250204,
+      "connections": [
+        "Random_18",
+        "Random_13",
+        "Random_11",
+        "0"
+      ]
+    },
+    "Random_13": {
+      "text": "I hope to be happier",
+      "happiness": -0.0803432969382001,
+      "connections": [
+        "G",
+        "Random_17",
+        "Random_14",
+        "E",
+        "Random_12"
+      ]
+    },
+    "Random_14": {
+      "text": "I wonder about people",
+      "happiness": 0.02373361184045365,
+      "connections": [
+        "D",
+        "Random_13",
+        "C",
+        "Random_15"
+      ]
+    },
+    "Random_15": {
+      "text": "I need to find more energy",
+      "happiness": -0.1222860829291924,
+      "connections": [
+        "Random_14",
+        "H",
+        "Random_16",
+        "Random_4"
+      ]
+    },
+    "Random_16": {
+      "text": "I dislike exploring",
+      "happiness": 0.16591422681393725,
+      "connections": [
+        "0",
+        "H",
+        "Random_17",
+        "Random_15"
+      ]
+    },
+    "Random_17": {
+      "text": "What if I could fly",
+      "happiness": 0.2775655972251709,
+      "connections": [
+        "Random_18",
+        "D",
+        "Random_13",
+        "Random_16"
+      ]
+    },
+    "Random_18": {
+      "text": "I should plan ahead",
+      "happiness": -0.25233846410350763,
+      "connections": [
+        "Random_12",
+        "Random_19",
+        "Random_17"
+      ]
+    },
+    "Random_19": {
+      "text": "I dislike exploring",
+      "happiness": 0.13513278685443164,
+      "connections": [
+        "E",
+        "Random_18",
+        "Random_4"
+      ]
+    },
+    "Obj_apple": {
+      "text": "I can eat apple",
+      "happiness": 0.5,
+      "connections": [
+        "E",
+        "Obj_apple",
+        "Obj_banana"
+      ]
+    },
+    "Obj_banana": {
+      "text": "I can eat banana",
+      "happiness": 0.1,
+      "connections": [
+        "Obj_apple",
+        "F"
+      ]
+    }
+  },
+  "current_focus": "Random_19",
+  "current_path": [
+    "0",
+    "A",
+    "B",
+    "C",
+    "E",
+    "Random_4",
+    "Random_7",
+    "Random_8",
+    "H",
+    "Random_11",
+    "Random_12",
+    "Random_13",
+    "Random_14",
+    "Random_15",
+    "Random_16",
+    "Random_17",
+    "Random_18",
+    "Random_19"
+  ],
+  "memory": {
+    "short_term": [
+      "0",
+      "A",
+      "B",
+      "C",
+      "Random_4",
+      "E",
+      "Random_4",
+      "Random_7",
+      "Random_8",
+      "Random_9",
+      "H",
+      "Random_11",
+      "Random_12",
+      "Random_13",
+      "Random_14",
+      "Random_15",
+      "Random_16",
+      "Random_17",
+      "Random_18",
+      "Random_19"
+    ],
+    "long_term": {
+      "0": 2,
+      "A": 2,
+      "B": 2,
+      "C": 2,
+      "Random_4": 4,
+      "E": 2,
+      "Random_7": 2,
+      "Random_8": 2,
+      "Random_9": 2,
+      "H": 1,
+      "Random_11": 1,
+      "Random_12": 1,
+      "Random_13": 1,
+      "Random_14": 1,
+      "Random_15": 1,
+      "Random_16": 1,
+      "Random_17": 1,
+      "Random_18": 1,
+      "Random_19": 1
+    }
+  }
+}
