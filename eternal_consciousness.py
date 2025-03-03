@@ -24,8 +24,10 @@ from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from urllib.parse import urlparse
+import uuid
 
 from advanced_consciousness import AdvancedConsciousnessEngine, Context, EmotionalState, Memory, Environment
+from artificial_consciousness import Word
 
 class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
     """
@@ -34,24 +36,50 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
     
     def __init__(self, save_interval: int = 100, visualization_interval: int = 500, learning_interval: int = 50):
         super().__init__()
-        self.running = False
+        self.active = False
         self.iteration_count = 0
         self.save_interval = save_interval
         self.visualization_interval = visualization_interval
         self.learning_interval = learning_interval
         self.save_dir = "consciousness_state"
         self.stats_history = {
+            "energy": [],
             "happiness": [],
-            "emotions": {emotion: [] for emotion in self.emotional_state.emotions},
-            "connections": [],
-            "contexts": [],
-            "timestamps": []
+            "emotions": {
+                "happiness": [],
+                "sadness": [],
+                "fear": [],
+                "anger": [],
+                "surprise": [],
+                "disgust": [],
+                "trust": [],
+                "anticipation": []
+            },
+            "contexts_count": [],
+            "connections_count": [],
+            "timestamp": []
         }
         self.energy = 100.0  # Energie des Systems
-        self.energy_decay_rate = 0.1  # Rate, mit der Energie abnimmt
+        self.energy_decay_rate = 0.05  # Rate, mit der Energie abnimmt
         self.energy_gain_rate = 0.2  # Rate, mit der Energie durch Glück zunimmt
-        self.min_energy_threshold = 20.0  # Schwellenwert für niedrige Energie
+        self.min_energy_threshold = 30.0  # Schwellenwert für niedrige Energie
         self.max_energy = 100.0  # Maximale Energie
+        
+        # Neue Attribute für verbessertes Glückskonzept
+        self.happiness = 0.5  # Langfristiges, stabiles Glück (0-1)
+        self.stimulation = 0.0  # Kurzfristige Stimulation (-1 bis 1)
+        self.happiness_decay_rate = 0.01  # Langsame Abnahme des Glücks
+        self.stimulation_decay_rate = 0.1  # Schnelle Abnahme der Stimulation
+        self.in_energy_saving_mode = False  # Energiesparmodus
+        
+        # Bedürfnispyramide nach Maslow
+        self.needs_pyramid = {
+            "physiological": 0.5,  # Grundbedürfnisse (Essen, Schlafen)
+            "safety": 0.3,         # Sicherheit
+            "belonging": 0.2,      # Zugehörigkeit und Liebe
+            "esteem": 0.1,         # Anerkennung und Wertschätzung
+            "self_actualization": 0.0  # Selbstverwirklichung
+        }
         
         # Internet-Lernparameter
         self.visited_urls = set()
@@ -99,83 +127,275 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         # Erstelle Verzeichnis für Speicherungen, falls es nicht existiert
         if not os.path.exists(self.save_dir):
             os.makedirs(self.save_dir)
+        
+        # Verbindungen zwischen Kontexten
+        self.connections = {}
     
     def update_energy(self):
-        """Aktualisiert die Energie des Systems basierend auf dem aktuellen Glückswert."""
-        if not self.current_focus:
-            return
-            
+        """Aktualisiert die Energie des Systems basierend auf dem aktuellen Fokus."""
         # Energie nimmt mit der Zeit ab
         self.energy -= self.energy_decay_rate
         
         # Energie steigt mit positivem Glückswert
-        happiness = self.current_focus.happiness
-        if happiness > 0:
-            self.energy += happiness * self.energy_gain_rate
+        if self.current_focus:
+            if isinstance(self.current_focus, str):
+                # Wenn current_focus ein String ist, versuche das entsprechende Context-Objekt zu finden
+                if self.current_focus in self.contexts:
+                    happiness = self.contexts[self.current_focus].happiness
+                else:
+                    happiness = 0
+            else:
+                happiness = self.current_focus.happiness
+                
+            if happiness > 0:
+                self.energy += happiness * self.energy_gain_rate
         
         # Begrenze die Energie auf den Bereich [0, max_energy]
         self.energy = max(0.0, min(self.max_energy, self.energy))
     
-    def is_low_energy(self) -> bool:
+    def update_happiness_and_stimulation(self):
+        """
+        Aktualisiert das langfristige Glück und die kurzfristige Stimulation basierend auf dem Konzept
+        aus dem Text "Wie Glücklichkeit funktioniert".
+        """
+        if not self.current_focus:
+            return
+            
+        # Stimulation wird durch den aktuellen Fokus beeinflusst
+        if isinstance(self.current_focus, str):
+            # Wenn current_focus ein String ist, versuche das entsprechende Context-Objekt zu finden
+            if self.current_focus in self.contexts:
+                focus_happiness = self.contexts[self.current_focus].happiness
+            else:
+                focus_happiness = 0
+        else:
+            focus_happiness = self.current_focus.happiness
+        
+        # Stimulation steigt schnell bei positiven Kontexten
+        if focus_happiness > 0:
+            self.stimulation += focus_happiness * 0.3
+        else:
+            self.stimulation += focus_happiness * 0.2
+            
+        # Langfristiges Glück wird langsamer beeinflusst
+        # Es hängt von der Erfüllung der Bedürfnispyramide ab
+        pyramid_fulfillment = sum(self.needs_pyramid.values()) / len(self.needs_pyramid)
+        
+        # Formel: Ø Glücklichkeits Zustand = 1 + B
+        # Wobei B die Erfüllung der Bedürfnispyramide ist
+        target_happiness = 0.5 + (pyramid_fulfillment * 0.5)
+        
+        # Glück bewegt sich langsam in Richtung des Zielwerts
+        if self.happiness < target_happiness:
+            self.happiness += min(self.happiness_decay_rate, target_happiness - self.happiness)
+        elif self.happiness > target_happiness:
+            self.happiness -= min(self.happiness_decay_rate, self.happiness - target_happiness)
+            
+        # Stimulation nimmt mit der Zeit ab (schneller als Glück)
+        if self.stimulation > 0:
+            self.stimulation -= self.stimulation_decay_rate
+        elif self.stimulation < 0:
+            self.stimulation += self.stimulation_decay_rate
+            
+        # Begrenze Werte auf sinnvolle Bereiche
+        self.stimulation = max(-1.0, min(1.0, self.stimulation))
+        self.happiness = max(0.0, min(1.0, self.happiness))
+        
+        # Aktualisiere den emotionalen Zustand basierend auf Glück und Stimulation
+        self.emotional_state.emotions["happiness"] = self.happiness
+        
+        # Hohe Stimulation kann zu negativen Emotionen führen, wenn sie abfällt
+        if self.stimulation < -0.5:
+            self.emotional_state.emotions["sadness"] = min(1.0, self.emotional_state.emotions["sadness"] + 0.1)
+        
+        print(f"Glück: {self.happiness:.2f}, Stimulation: {self.stimulation:.2f}, Pyramide: {pyramid_fulfillment:.2f}")
+    
+    def is_low_energy(self):
         """Überprüft, ob die Energie niedrig ist."""
         return self.energy < self.min_energy_threshold
     
     def seek_energy_source(self):
-        """Sucht nach einer Energiequelle, wenn die Energie niedrig ist."""
-        print("Energie niedrig! Suche nach Energiequelle...")
+        """Sucht nach einer Energiequelle basierend auf dem Honeypot-Konzept."""
+        print(f"Suche nach Energiequelle... Aktueller Energiestand: {self.energy:.2f}")
         
-        # Suche nach Kontexten mit hohem Glückswert
-        high_happiness_contexts = [
-            context for context in self.contexts.values()
-            if context.happiness > 0.5
-        ]
+        # Überprüfen, ob wir uns im Energiesparmodus befinden sollten
+        if self.energy < self.min_energy_threshold / 2 and not self.in_energy_saving_mode:
+            self.in_energy_saving_mode = True
+            self.energy_decay_rate = self.energy_decay_rate / 2  # Reduziere den Energieverbrauch
+            print(f"Energiesparmodus aktiviert. Neuer Energieverbrauch: {self.energy_decay_rate:.4f}")
+            # Im Energiesparmodus fokussieren wir uns mehr auf grundlegende Bedürfnisse
+            self.needs_pyramid['physiological'] = min(1.0, self.needs_pyramid['physiological'] * 1.5)
+            self.needs_pyramid['safety'] = min(1.0, self.needs_pyramid['safety'] * 1.2)
+            self.needs_pyramid['belonging'] *= 0.8
+            self.needs_pyramid['esteem'] *= 0.6
+            self.needs_pyramid['self_actualization'] *= 0.4
         
-        if high_happiness_contexts:
-            # Wähle einen zufälligen Kontext mit hohem Glückswert
-            target_context = random.choice(high_happiness_contexts)
-            print(f"Energiequelle gefunden: {target_context}")
-            self.set_focus(target_context)
+        # Energiesparmodus deaktivieren, wenn genug Energie vorhanden ist
+        elif self.energy > self.min_energy_threshold * 1.5 and self.in_energy_saving_mode:
+            self.in_energy_saving_mode = False
+            self.energy_decay_rate = self.energy_decay_rate * 2  # Normaler Energieverbrauch wiederherstellen
+            print(f"Energiesparmodus deaktiviert. Normaler Energieverbrauch: {self.energy_decay_rate:.4f}")
+            # Bedürfnispyramide normalisieren
+            self.update_needs_pyramid_from_state()
+        
+        # Definiere die drei Honeypots
+        honeypots = {
+            'energy_intake': ['eat', 'food', 'drink', 'consume', 'nutrition', 'meal', 'hungry', 'thirsty'],
+            'regeneration': ['sleep', 'rest', 'relax', 'calm', 'peaceful', 'quiet', 'meditate', 'recover'],
+            'reproduction': ['social', 'interact', 'communicate', 'share', 'connect', 'learn', 'teach', 'create']
+        }
+        
+        # Bestimme, welcher Honeypot basierend auf der Bedürfnispyramide am wichtigsten ist
+        target_honeypot = 'energy_intake'  # Standard
+        if self.needs_pyramid['physiological'] < 0.3:
+            target_honeypot = 'energy_intake'
+        elif self.needs_pyramid['safety'] < 0.3:
+            target_honeypot = 'regeneration'
+        elif self.needs_pyramid['belonging'] < 0.3 or self.needs_pyramid['esteem'] < 0.3:
+            target_honeypot = 'reproduction'
+        
+        print(f"Ziel-Honeypot: {target_honeypot}")
+        
+        # Suche nach Kontexten, die mit dem Ziel-Honeypot zusammenhängen
+        best_energy_source = None
+        best_score = -float('inf')
+        
+        for context_id, context in self.contexts.items():
+            # Überspringe den aktuellen Fokus
+            if context_id == self.current_focus:
+                continue
+            
+            # Berechne die Relevanz für den Ziel-Honeypot
+            honeypot_relevance = 0
+            context_text = str(context).lower()
+            for word in honeypots[target_honeypot]:
+                if word.lower() in context_text:
+                    honeypot_relevance += 1
+            
+            # Berechne die Nähe zum aktuellen Fokus (geringerer Widerstand = näher)
+            proximity = 0
+            if self.current_focus in self.contexts:
+                current_context = self.contexts[self.current_focus]
+                # Berechne Jaccard-Ähnlichkeit zwischen aktuellem Kontext und potentieller Energiequelle
+                current_text = str(current_context).lower()
+                words1 = set(current_text.split())
+                words2 = set(context_text.split())
+                if words1 and words2:
+                    intersection = len(words1.intersection(words2))
+                    union = len(words1.union(words2))
+                    proximity = intersection / union if union > 0 else 0
+            
+            # Berechne den Gesamtscore basierend auf Honeypot-Relevanz, Glücklichkeit und Nähe
+            score = (honeypot_relevance * 2) + (context.happiness * 3) + (proximity * 1)
+            
+            # Berücksichtige die Bedürfnispyramide im Score
+            if target_honeypot == 'energy_intake':
+                score *= (2 - self.needs_pyramid['physiological'])  # Je niedriger, desto wichtiger
+            elif target_honeypot == 'regeneration':
+                score *= (2 - self.needs_pyramid['safety'])
+            elif target_honeypot == 'reproduction':
+                score *= (2 - (self.needs_pyramid['belonging'] + self.needs_pyramid['esteem']) / 2)
+            
+            if score > best_score:
+                best_score = score
+                best_energy_source = context_id
+        
+        if best_energy_source:
+            print(f"Energiequelle gefunden: {str(self.contexts[best_energy_source])} (Score: {best_score:.2f})")
+            return best_energy_source
+        else:
+            # Wenn keine passende Energiequelle gefunden wurde, erstelle eine neue
+            print("Keine passende Energiequelle gefunden. Erstelle eine neue...")
+            
+            # Erstelle einen neuen Kontext basierend auf dem Ziel-Honeypot
+            if target_honeypot == 'energy_intake':
+                new_text = f"I need to eat something to regain energy."
+            elif target_honeypot == 'regeneration':
+                new_text = f"I need to rest and recover my energy."
+            else:  # reproduction
+                new_text = f"I need to connect with others and share knowledge."
+            
+            # Erstelle einen neuen Kontext mit dem Text
+            words = [Word(word) for word in new_text.split()]
+            new_context = Context(words=words, happiness=0.8)  # Hoher Glückswert für Energiequellen
+            new_context_id = str(uuid.uuid4())
+            self.contexts[new_context_id] = new_context
+            
+            # Verbinde den neuen Kontext mit dem aktuellen Fokus
+            if self.current_focus in self.contexts:
+                self.create_connection(self.current_focus, new_context_id)
+            
+            print(f"Neue Energiequelle erstellt: {new_text}")
+            return new_context_id
+    
+    def update_needs_pyramid(self, context):
+        """Aktualisiert die Bedürfnispyramide basierend auf dem Kontext."""
+        text = str(context).lower()
+        
+        # Physiologische Bedürfnisse
+        if any(word in text for word in ["eat", "food", "drink", "sleep", "rest"]):
+            self.needs_pyramid["physiological"] += 0.05
+        
+        # Sicherheitsbedürfnisse
+        if any(word in text for word in ["safe", "secure", "protect", "shelter"]):
+            self.needs_pyramid["safety"] += 0.05
+        
+        # Zugehörigkeitsbedürfnisse
+        if any(word in text for word in ["friend", "family", "love", "belong", "connect"]):
+            self.needs_pyramid["belonging"] += 0.05
+        
+        # Wertschätzungsbedürfnisse
+        if any(word in text for word in ["respect", "achieve", "success", "proud", "confidence"]):
+            self.needs_pyramid["esteem"] += 0.05
+        
+        # Selbstverwirklichungsbedürfnisse
+        if any(word in text for word in ["create", "potential", "fulfill", "grow", "develop"]):
+            self.needs_pyramid["self_actualization"] += 0.05
+        
+        # Begrenze Werte
+        for need in self.needs_pyramid:
+            self.needs_pyramid[need] = max(0.0, min(1.0, self.needs_pyramid[need]))
+    
+    def create_connection(self, source_id, target_id, weight=0.5):
+        """Erstellt eine Verbindung zwischen zwei Kontexten."""
+        if source_id not in self.contexts or target_id not in self.contexts:
+            return None
+        
+        # Erstelle eine eindeutige ID für die Verbindung
+        connection_id = str(uuid.uuid4())
+        
+        # Erstelle die Verbindung
+        self.connections[connection_id] = {
+            "source": source_id,
+            "target": target_id,
+            "weight": weight,
+            "created_at": time.time()
+        }
+        
+        return connection_id
+    
+    def set_focus_by_id(self, context_id):
+        """Setzt den Fokus auf einen Kontext anhand seiner ID."""
+        if context_id in self.contexts:
+            self.current_focus = context_id
+            if context_id not in self.current_path:
+                self.current_path.append(context_id)
+            # Aktualisiere den emotionalen Zustand
+            self.emotional_state.update_from_context(self.contexts[context_id])
+            # Füge zum Kurzzeitgedächtnis hinzu
+            self.memory.add_to_short_term(self.contexts[context_id])
+            # Aktualisiere Habituation
+            self.update_habituation(context_id)
             return True
-        
-        # Wenn keine Energiequelle gefunden wurde, erstelle eine neue
-        print("Keine Energiequelle gefunden. Erstelle eine neue...")
-        self.create_energy_source()
         return False
     
-    def create_energy_source(self):
-        """Erstellt eine neue Energiequelle (Kontext mit hohem Glückswert)."""
-        # Liste von möglichen Energiequellen
-        energy_sources = [
-            "I eat delicious food",
-            "I sleep peacefully",
-            "I enjoy the sunshine",
-            "I listen to beautiful music",
-            "I learn something interesting",
-            "I solve a difficult problem",
-            "I help someone in need",
-            "I create something new",
-            "I connect with a friend",
-            "I achieve a goal"
-        ]
-        
-        # Wähle eine zufällige Energiequelle
-        source_text = random.choice(energy_sources)
-        label = f"Energy_{self.iteration_count}"
-        happiness = 0.8 + random.random() * 0.2  # Zufälliger Wert zwischen 0.8 und 1.0
-        
-        # Erstelle den Kontext
-        energy_context = self.create_context(source_text, label, happiness)
-        
-        # Verbinde mit einigen existierenden Kontexten
-        existing_contexts = list(self.contexts.values())
-        if existing_contexts:
-            for _ in range(min(3, len(existing_contexts))):
-                random_context = random.choice(existing_contexts)
-                self.connect_contexts(energy_context, random_context)
-        
-        # Setze den Fokus auf die neue Energiequelle
-        self.set_focus(energy_context)
-        print(f"Neue Energiequelle erstellt: {energy_context}")
+    def create_context(self, text, label=None, happiness=0.0):
+        """Erstellt einen neuen Kontext aus Text."""
+        words = [Word(word) for word in text.split()]
+        context = Context(words=words, label=label, happiness=happiness)
+        context_id = str(uuid.uuid4()) if not label else label
+        self.contexts[context_id] = context
+        return context_id
     
     def generate_random_thought(self):
         """Generiert einen zufälligen Gedanken, wenn keine bessere Option gefunden wird."""
@@ -230,48 +450,118 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         happiness = random.random() * 0.6 - 0.3  # Zufälliger Wert zwischen -0.3 und 0.3
         
         # Erstelle den Kontext
-        random_context = self.create_context(thought, label, happiness)
+        random_context_id = self.create_context(thought, label, happiness)
         
         # Verbinde mit dem aktuellen Fokus und einigen zufälligen Kontexten
         if self.current_focus:
-            self.connect_contexts(random_context, self.current_focus)
+            self.create_connection(self.current_focus, random_context_id)
         
-        existing_contexts = list(self.contexts.values())
-        if existing_contexts:
-            for _ in range(min(2, len(existing_contexts))):
-                random_existing = random.choice(existing_contexts)
-                if random_existing != random_context:
-                    self.connect_contexts(random_context, random_existing)
+        # Verbinde mit einigen zufälligen Kontexten
+        context_ids = list(self.contexts.keys())
+        if len(context_ids) > 1:
+            for _ in range(min(2, len(context_ids))):
+                random_id = random.choice(context_ids)
+                if random_id != random_context_id:
+                    self.create_connection(random_context_id, random_id)
         
-        return random_context
+        return random_context_id
     
     def save_state(self):
         """Speichert den aktuellen Zustand des Bewusstseins."""
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = os.path.join(self.save_dir, f"consciousness_state_{timestamp}.json")
+        if not os.path.exists(self.save_dir):
+            os.makedirs(self.save_dir)
         
-        # Erstelle ein serialisierbares Objekt
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{self.save_dir}/consciousness_state_{timestamp}.json"
+        
+        # Serialisiere die Kontexte
+        serialized_contexts = {}
+        for context_id, context in self.contexts.items():
+            serialized_contexts[context_id] = {
+                "words": [word.content for word in context.words],
+                "label": context.label,
+                "happiness": context.happiness,
+                "habituation_level": getattr(context, "habituation_level", 0.0),
+                "last_interaction": getattr(context, "last_interaction", 0),
+                "interaction_count": getattr(context, "interaction_count", 0)
+            }
+        
+        # Serialisiere die Verbindungen
+        serialized_connections = {}
+        for connection_id, connection in self.connections.items():
+            serialized_connections[connection_id] = {
+                "source": connection["source"],
+                "target": connection["target"],
+                "weight": connection["weight"],
+                "created_at": connection["created_at"]
+            }
+        
+        # Serialisiere den emotionalen Zustand
+        serialized_emotional_state = {
+            "emotions": self.emotional_state.emotions.copy(),
+            "weights": self.emotional_state.weights.copy()
+        }
+        
+        # Serialisiere das Gedächtnis
+        serialized_memory = {
+            "short_term": [],
+            "long_term": []
+        }
+        
+        # Stelle sicher, dass nur IDs im Gedächtnis sind
+        for item in self.memory.short_term:
+            if isinstance(item, str):
+                serialized_memory["short_term"].append(item)
+            elif hasattr(item, 'label'):
+                serialized_memory["short_term"].append(item.label)
+        
+        for item in self.memory.long_term:
+            if isinstance(item, str):
+                serialized_memory["long_term"].append(item)
+            elif hasattr(item, 'label'):
+                serialized_memory["long_term"].append(item.label)
+        
+        # Stelle sicher, dass current_path nur IDs enthält
+        serialized_path = []
+        for item in self.current_path:
+            if isinstance(item, str):
+                serialized_path.append(item)
+            elif hasattr(item, 'label'):
+                serialized_path.append(item.label)
+        
+        # Stelle sicher, dass current_focus eine ID ist
+        serialized_focus = None
+        if self.current_focus:
+            if isinstance(self.current_focus, str):
+                serialized_focus = self.current_focus
+            elif hasattr(self.current_focus, 'label'):
+                serialized_focus = self.current_focus.label
+        
+        # Erstelle eine Kopie der Statistik-Historie
+        serialized_stats = {}
+        for key, value in self.stats_history.items():
+            if key == "emotions":
+                serialized_stats[key] = {}
+                for emotion, values in value.items():
+                    serialized_stats[key][emotion] = values.copy() if isinstance(values, list) else values
+            else:
+                serialized_stats[key] = value.copy() if isinstance(value, list) else value
+        
+        # Erstelle das Zustandsobjekt
         state = {
-            "iteration": self.iteration_count,
+            "iteration_count": self.iteration_count,
+            "contexts": serialized_contexts,
+            "connections": serialized_connections,
+            "current_focus": serialized_focus,
+            "current_path": serialized_path,
+            "emotional_state": serialized_emotional_state,
+            "memory": serialized_memory,
             "energy": self.energy,
-            "emotional_state": self.emotional_state.emotions,
-            "contexts": {
-                label: {
-                    "text": str(context),
-                    "happiness": context.happiness,
-                    "connections": [c.label for c in context.connections if c.label]
-                }
-                for label, context in self.contexts.items()
-            },
-            "current_focus": self.current_focus.label if self.current_focus else None,
-            "current_path": [c.label for c in self.current_path if c.label],
-            "memory": {
-                "short_term": [c.label for c in self.memory.short_term if c.label],
-                "long_term": self.memory.long_term
-            },
-            "visited_urls": list(self.visited_urls),
-            "url_queue": self.url_queue,
-            "learning_history": self.learning_history
+            "happiness": self.happiness,
+            "stimulation": self.stimulation,
+            "needs_pyramid": self.needs_pyramid.copy(),
+            "in_energy_saving_mode": self.in_energy_saving_mode,
+            "stats_history": serialized_stats
         }
         
         # Speichere den Zustand
@@ -279,6 +569,12 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             json.dump(state, f, indent=2)
         
         print(f"Zustand gespeichert: {filename}")
+        
+        # Lösche alte Zustände, behalte nur die letzten 5
+        all_states = sorted([f for f in os.listdir(self.save_dir) if f.startswith("consciousness_state_")])
+        if len(all_states) > 5:
+            for old_state in all_states[:-5]:
+                os.remove(os.path.join(self.save_dir, old_state))
     
     def load_state(self, filename: str):
         """Lädt einen gespeicherten Zustand des Bewusstseins."""
@@ -313,7 +609,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             
             # Setze aktuellen Fokus und Pfad
             if state["current_focus"] and state["current_focus"] in self.contexts:
-                self.current_focus = self.contexts[state["current_focus"]]
+                self.current_focus = state["current_focus"]
                 self.current_path = []
                 for label in state["current_path"]:
                     if label in self.contexts:
@@ -336,6 +632,22 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             
             if "learning_history" in state:
                 self.learning_history = state["learning_history"]
+                
+            # Lade neue Attribute, falls vorhanden
+            if "happiness" in state:
+                self.happiness = state["happiness"]
+                
+            if "stimulation" in state:
+                self.stimulation = state["stimulation"]
+                
+            if "in_energy_saving_mode" in state:
+                self.in_energy_saving_mode = state["in_energy_saving_mode"]
+                
+            if "needs_pyramid" in state:
+                self.needs_pyramid = state["needs_pyramid"]
+                
+            if "energy_decay_rate" in state:
+                self.energy_decay_rate = state["energy_decay_rate"]
             
             print(f"Zustand geladen: {filename}")
             return True
@@ -345,17 +657,34 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             return False
     
     def update_stats(self):
-        """Aktualisiert die Statistiken für die Visualisierung."""
-        current_happiness = self.calculate_path_happiness(self.current_path) if self.current_path else 0
+        """Aktualisiert die Statistiken des Bewusstseins."""
+        # Berechne aktuelle Werte
+        current_energy = self.energy
+        # Berechne Glück basierend auf dem aktuellen Pfad
+        current_happiness = 0
+        if self.current_path:
+            # Konvertiere IDs in Context-Objekte für die Berechnung
+            context_objects = []
+            for context_id in self.current_path:
+                if context_id in self.contexts:
+                    context_objects.append(self.contexts[context_id])
+            if context_objects:
+                current_happiness = self.calculate_path_happiness(context_objects)
         
+        # Zähle Kontexte und Verbindungen
+        contexts_count = len(self.contexts)
+        connections_count = len(self.connections)
+        
+        # Aktualisiere Statistik-Historie
+        self.stats_history["energy"].append(current_energy)
         self.stats_history["happiness"].append(current_happiness)
-        self.stats_history["timestamps"].append(self.iteration_count)
+        self.stats_history["contexts_count"].append(contexts_count)
+        self.stats_history["connections_count"].append(connections_count)
+        self.stats_history["timestamp"].append(time.time())
         
+        # Aktualisiere emotionale Statistiken
         for emotion, value in self.emotional_state.emotions.items():
             self.stats_history["emotions"][emotion].append(value)
-        
-        self.stats_history["connections"].append(sum(len(c.connections) for c in self.contexts.values()))
-        self.stats_history["contexts"].append(len(self.contexts))
     
     def visualize_stats(self):
         """Visualisiert die gesammelten Statistiken."""
@@ -372,10 +701,21 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             
             # Glückswert über Zeit
             plt.figure(figsize=(10, 6))
-            plt.plot(self.stats_history["timestamps"], self.stats_history["happiness"])
+            plt.plot(self.stats_history["timestamp"], self.stats_history["happiness"], label="Kurzfristiges Glück")
+            
+            # Füge langfristiges Glück und Stimulation hinzu, falls vorhanden
+            if "happiness_long_term" in self.stats_history:
+                plt.plot(self.stats_history["timestamp"], self.stats_history["happiness_long_term"], 
+                         label="Langfristiges Glück", linestyle="--")
+            
+            if "stimulation" in self.stats_history:
+                plt.plot(self.stats_history["timestamp"], self.stats_history["stimulation"], 
+                         label="Stimulation", linestyle=":")
+            
             plt.title("Glückswert über Zeit")
             plt.xlabel("Iteration")
-            plt.ylabel("Glückswert")
+            plt.ylabel("Wert")
+            plt.legend()
             plt.grid(True)
             plt.savefig(os.path.join(vis_dir, f"happiness_{timestamp}.png"))
             plt.close()
@@ -383,7 +723,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             # Emotionaler Zustand über Zeit
             plt.figure(figsize=(12, 8))
             for emotion, values in self.stats_history["emotions"].items():
-                plt.plot(self.stats_history["timestamps"], values, label=emotion)
+                plt.plot(self.stats_history["timestamp"], values, label=emotion)
             plt.title("Emotionaler Zustand über Zeit")
             plt.xlabel("Iteration")
             plt.ylabel("Emotionswert")
@@ -394,8 +734,8 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             
             # Anzahl der Verbindungen und Kontexte
             plt.figure(figsize=(10, 6))
-            plt.plot(self.stats_history["timestamps"], self.stats_history["connections"], label="Verbindungen")
-            plt.plot(self.stats_history["timestamps"], self.stats_history["contexts"], label="Kontexte")
+            plt.plot(self.stats_history["timestamp"], self.stats_history["connections_count"], label="Verbindungen")
+            plt.plot(self.stats_history["timestamp"], self.stats_history["contexts_count"], label="Kontexte")
             plt.title("Netzwerkwachstum über Zeit")
             plt.xlabel("Iteration")
             plt.ylabel("Anzahl")
@@ -403,6 +743,19 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             plt.grid(True)
             plt.savefig(os.path.join(vis_dir, f"network_{timestamp}.png"))
             plt.close()
+            
+            # Visualisiere die Bedürfnispyramide, falls vorhanden
+            if "needs_pyramid" in self.stats_history:
+                plt.figure(figsize=(12, 8))
+                for need, values in self.stats_history["needs_pyramid"].items():
+                    plt.plot(self.stats_history["timestamp"], values, label=need)
+                plt.title("Bedürfnispyramide über Zeit")
+                plt.xlabel("Iteration")
+                plt.ylabel("Erfüllungsgrad")
+                plt.legend()
+                plt.grid(True)
+                plt.savefig(os.path.join(vis_dir, f"needs_pyramid_{timestamp}.png"))
+                plt.close()
             
             # Visualisiere das Kontextnetzwerk
             try:
@@ -454,8 +807,13 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             # Markiere den aktuellen Fokus
             node_sizes = []
             for node in G.nodes():
-                if self.current_focus and node == self.current_focus.label:
-                    node_sizes.append(500)  # Größerer Knoten für den aktuellen Fokus
+                if self.current_focus:
+                    # Überprüfe, ob current_focus ein String oder ein Objekt mit label ist
+                    current_focus_label = self.current_focus if isinstance(self.current_focus, str) else self.current_focus.label
+                    if node == current_focus_label:
+                        node_sizes.append(500)  # Größerer Knoten für den aktuellen Fokus
+                    else:
+                        node_sizes.append(100)  # Normale Größe für andere Knoten
                 else:
                     node_sizes.append(100)  # Normale Größe für andere Knoten
             
@@ -488,79 +846,72 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             except:
                 print("Auch Fallback-Visualisierung fehlgeschlagen.")
     
-    def think_forever(self):
-        """Denkt kontinuierlich ohne Unterbrechung."""
-        self.running = True
+    def think(self):
+        """Führt einen Denkzyklus aus."""
+        self.iteration_count += 1
         
-        try:
-            while self.running:
-                self.iteration_count += 1
-                
-                # Aktualisiere Energie
-                self.update_energy()
-                
-                # Überprüfe, ob Energie niedrig ist
-                if self.is_low_energy():
-                    self.seek_energy_source()
-                
-                # Aktualisiere Statistiken
-                self.update_stats()
-                
-                # Lerne aus Erfahrungen
-                if self.iteration_count % 10 == 0:
-                    self.learn_from_experience()
-                
-                # Lerne aus dem Internet
-                if self.iteration_count % self.learning_interval == 0:
-                    self.learn_from_internet()
-                
-                # Erstelle neue Verbindungen
-                if self.iteration_count % 15 == 0:
-                    self.create_new_connections()
-                
-                # Nimm die Umgebung wahr
-                if self.iteration_count % 20 == 0:
-                    self.perceive_environment()
-                
-                # Speichere den Zustand
-                if self.iteration_count % self.save_interval == 0:
-                    self.save_state()
-                
-                # Visualisiere Statistiken
-                if self.iteration_count % self.visualization_interval == 0:
-                    self.visualize_stats()
-                
-                # Finde den nächsten Fokus
+        # Energie verbrauchen
+        self.energy -= self.energy_decay_rate
+        self.energy = max(0.0, self.energy)
+        
+        # Glück und Stimulation aktualisieren
+        self.happiness -= self.happiness_decay_rate
+        self.happiness = max(0.0, min(1.0, self.happiness))
+        
+        self.stimulation -= self.stimulation_decay_rate
+        self.stimulation = max(-1.0, min(1.0, self.stimulation))
+        
+        # Habituation über Zeit abbauen
+        self.decay_habituation()
+        
+        # Entscheide, was als nächstes zu tun ist
+        if self.energy < self.min_energy_threshold:
+            # Bei niedriger Energie: Energiesparmodus aktivieren
+            self.in_energy_saving_mode = True
+            # Suche nach Kontexten, die Energie geben könnten
+            energy_context_id = self.find_energy_giving_context()
+            if energy_context_id:
+                self.set_focus_by_id(energy_context_id)
+        else:
+            # Normaler Modus
+            self.in_energy_saving_mode = False
+            
+            # Entscheide, ob ein neuer Gedanke generiert werden soll
+            if random.random() < 0.2:  # 20% Chance für einen neuen Gedanken
+                new_context_id = self.generate_random_thought()
+                if new_context_id:
+                    self.set_focus_by_id(new_context_id)
+            else:
+                # Finde den besten nächsten Fokus
                 next_focus = self.find_best_next_focus()
-                
                 if next_focus:
-                    self.set_focus(next_focus)
-                else:
-                    # Wenn kein besserer Fokus gefunden wurde, generiere einen zufälligen Gedanken
-                    random_thought = self.generate_random_thought()
-                    self.set_focus(random_thought)
-                
-                # Ausgabe des aktuellen Zustands
-                if self.iteration_count % 10 == 0:
-                    print(f"\nIteration {self.iteration_count}:")
-                    print(f"Energie: {self.energy:.2f}")
-                    print(f"Aktueller Fokus: {self.current_focus}")
-                    print(f"Aktuelles Glück: {self.calculate_path_happiness(self.current_path):.2f}")
-                    print(f"Emotionaler Zustand: {self.emotional_state}")
-                    print(f"Anzahl Kontexte: {len(self.contexts)}")
-                    print(f"Anzahl Verbindungen: {sum(len(c.connections) for c in self.contexts.values())}")
-                
-                # Kurze Pause, um CPU-Auslastung zu reduzieren
-                time.sleep(0.1)
+                    self.set_focus_by_id(next_focus)
         
-        except KeyboardInterrupt:
-            print("\nDenkprozess unterbrochen.")
-        finally:
-            # Speichere den finalen Zustand
+        # Speichere den Zustand in regelmäßigen Abständen
+        if self.iteration_count % self.save_interval == 0:
             self.save_state()
+        
+        # Visualisiere in regelmäßigen Abständen
+        if self.iteration_count % self.visualization_interval == 0:
             self.visualize_stats()
-            print("Finaler Zustand gespeichert und visualisiert.")
+        
+        # Lerne in regelmäßigen Abständen
+        if self.iteration_count % self.learning_interval == 0:
+            self.learn_from_internet()
+        
+        # Aktualisiere Statistiken
+        self.update_stats()
     
+    def think_forever(self):
+        """Kontinuierlicher Denkprozess des Bewusstseins."""
+        self.active = True
+        
+        while self.active:
+            self.think()
+            
+            # Kurze Pause, um CPU-Last zu reduzieren
+            time.sleep(0.1)
+
     def start(self):
         """Startet den ewigen Denkprozess in einem separaten Thread."""
         if not self.current_focus:
@@ -584,35 +935,28 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
     
     def stop(self):
         """Stoppt den ewigen Denkprozess."""
-        self.running = False
+        self.active = False
         if hasattr(self, 'thread') and self.thread.is_alive():
             self.thread.join(timeout=2)
         print("Ewiges Bewusstsein gestoppt.")
 
     def learn_from_internet(self):
-        """Lernt neue Worte und Kontexte aus dem Internet."""
-        if not self.url_queue:
-            self.add_random_urls()
-        
+        """Lernt neue Kontexte aus dem Internet."""
         if self.current_url_count >= self.max_urls_per_session:
-            print("Maximale Anzahl an URLs für diese Sitzung erreicht. Warte auf nächste Sitzung.")
+            self.current_url_count = 0
             return
         
-        # Hole die nächste URL aus der Warteschlange
+        if not self.url_queue:
+            return
+        
         url = self.url_queue.pop(0)
+        print(f"Lerne von URL: {url}")
         
         try:
-            print(f"Lerne von URL: {url}")
-            
-            # Hole den Inhalt der Webseite
-            headers = {
-                'User-Agent': 'EternalConsciousness/1.0 (Learning AI; Educational Purpose)'
-            }
-            response = requests.get(url, headers=headers, timeout=10)
-            
-            # Überprüfe, ob die Anfrage erfolgreich war
+            # Hole die Webseite
+            response = requests.get(url, timeout=10)
             if response.status_code != 200:
-                print(f"Fehler beim Abrufen der URL: {response.status_code}")
+                print(f"Fehler beim Abrufen von {url}: Status {response.status_code}")
                 return
             
             # Parse den HTML-Inhalt
@@ -630,84 +974,89 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
             text = '\n'.join(chunk for chunk in chunks if chunk)
             
-            # Teile den Text in Sätze mit einfacher Methode, falls NLTK fehlschlägt
-            try:
-                sentences = sent_tokenize(text)
-            except Exception as e:
-                print(f"Fehler bei NLTK sent_tokenize: {e}")
-                # Fallback: Einfache Satztrennung
-                sentences = [s.strip() for s in re.split(r'[.!?]+', text) if s.strip()]
+            # Tokenisiere den Text in Sätze
+            sentences = sent_tokenize(text)
             
             # Wähle zufällig einige Sätze aus (maximal max_contexts_per_page)
             if len(sentences) > self.max_contexts_per_page:
-                selected_sentences = random.sample(sentences, self.max_contexts_per_page)
-            else:
-                selected_sentences = sentences
+                sentences = random.sample(sentences, self.max_contexts_per_page)
             
             # Erstelle neue Kontexte aus den Sätzen
-            new_contexts = []
-            for i, sentence in enumerate(selected_sentences):
-                # Bereinige den Satz
-                clean_sentence = re.sub(r'[^\w\s]', '', sentence)
+            for sentence in sentences:
+                # Bereinige und tokenisiere den Satz
+                words = word_tokenize(sentence.lower())
                 
-                # Tokenisiere den Satz mit einfacher Methode, falls NLTK fehlschlägt
-                try:
-                    words = word_tokenize(clean_sentence)
-                except Exception as e:
-                    print(f"Fehler bei NLTK word_tokenize: {e}")
-                    # Fallback: Einfache Worttrennung
-                    words = [w.strip() for w in clean_sentence.split() if w.strip()]
+                # Entferne Stoppwörter und Sonderzeichen
+                words = [word for word in words if word.isalnum() and len(word) > 1]
                 
-                # Entferne Stopwörter und lemmatisiere
-                try:
-                    filtered_words = [self.lemmatizer.lemmatize(word.lower()) for word in words 
-                                     if word.lower() not in self.stop_words and len(word) > 1]
-                except Exception as e:
-                    print(f"Fehler bei Lemmatisierung: {e}")
-                    # Fallback: Nur Stopwörter entfernen ohne Lemmatisierung
-                    filtered_words = [word.lower() for word in words 
-                                     if word.lower() not in self.stop_words and len(word) > 1]
+                if len(words) < 3:  # Ignoriere zu kurze Sätze
+                    continue
                 
-                # Wenn nach der Filterung noch genug Wörter übrig sind
-                if len(filtered_words) >= 3:
-                    # Erstelle einen neuen Kontext
-                    context_text = " ".join(filtered_words)
-                    label = f"Web_{self.iteration_count}_{i}"
-                    
-                    # Berechne einen Glückswert basierend auf dem emotionalen Zustand
-                    sentiment_score = self.calculate_sentiment(filtered_words)
-                    happiness = sentiment_score * 0.5  # Skaliere auf [-0.5, 0.5]
-                    
-                    context = self.create_context(context_text, label, happiness)
-                    new_contexts.append(context)
-                    
-                    print(f"Neuer Kontext gelernt: {context_text} (Glück: {happiness:.2f})")
+                # Erstelle einen neuen Kontext
+                context_id = self.create_context(" ".join(words))
+                
+                # Setze einen zufälligen Glückswert
+                self.contexts[context_id].happiness = round(random.uniform(-0.5, 0.5), 2)
+                
+                # Verbinde mit dem aktuellen Fokus, falls vorhanden
+                if self.current_focus:
+                    self.create_connection(self.current_focus, context_id, weight=0.5)
+                
+                # Verbinde mit einem zufälligen anderen Kontext
+                if len(self.contexts) > 1:
+                    random_context_id = random.choice(list(self.contexts.keys()))
+                    if random_context_id != context_id:
+                        self.create_connection(context_id, random_context_id, weight=0.3)
+                
+                print(f"Neuer Kontext gelernt: {' '.join(words[:20])}{'...' if len(words) > 20 else ''} (Glück: {self.contexts[context_id].happiness:.2f})")
             
-            # Verbinde die neuen Kontexte miteinander und mit existierenden Kontexten
-            self.connect_new_contexts(new_contexts)
-            
-            # Füge die Seite zu den besuchten URLs hinzu
+            # Füge die URL zu den besuchten URLs hinzu
             self.visited_urls.add(url)
+            
+            # Extrahiere Links für weitere Erkundung
+            links = []
+            for link in soup.find_all('a', href=True):
+                href = link['href']
+                
+                # Ignoriere relative Links und Anker
+                if href.startswith('#') or href.startswith('javascript:'):
+                    continue
+                
+                # Konvertiere relative URLs in absolute URLs
+                if not href.startswith('http'):
+                    base_url = '{uri.scheme}://{uri.netloc}'.format(uri=urlparse(url))
+                    href = base_url + href if href.startswith('/') else base_url + '/' + href
+                
+                # Füge den Link hinzu, wenn er noch nicht besucht wurde
+                if href not in self.visited_urls and href not in self.url_queue:
+                    links.append(href)
+            
+            # Füge einige zufällige Links zur Queue hinzu
+            if links:
+                random.shuffle(links)
+                self.url_queue.extend(links[:3])  # Maximal 3 neue Links
+            
+            # Aktualisiere den Zähler
             self.current_url_count += 1
             
-            # Extrahiere Links für die nächste Runde
-            self.extract_links(soup, url)
-            
-            # Speichere Lernhistorie
+            # Füge zur Lernhistorie hinzu
             self.learning_history.append({
                 "url": url,
-                "timestamp": datetime.datetime.now().isoformat(),
-                "contexts_learned": len(new_contexts)
+                "timestamp": time.time(),
+                "contexts_learned": len(sentences)
             })
-            
-            print(f"Lernen von {url} abgeschlossen. {len(new_contexts)} neue Kontexte erstellt.")
             
         except Exception as e:
             print(f"Fehler beim Lernen von {url}: {str(e)}")
-            # Füge die URL wieder zur Warteschlange hinzu, wenn es sich um einen temporären Fehler handeln könnte
-            if "timeout" in str(e).lower() or "connection" in str(e).lower():
-                self.url_queue.append(url)
-    
+        
+        # Füge immer eine zufällige Wikipedia-Seite hinzu, um die Erkundung zu fördern
+        if random.random() < 0.3:
+            self.url_queue.append(random.choice([
+                "https://de.wikipedia.org/wiki/Spezial:Zuf%C3%A4llige_Seite",
+                "https://en.wikipedia.org/wiki/Special:Random",
+                "https://simple.wikipedia.org/wiki/Special:Random"
+            ]))
+
     def calculate_sentiment(self, words: List[str]) -> float:
         """Berechnet einen einfachen Sentiment-Score für eine Liste von Wörtern."""
         # Einfache Wörterbücher für positive und negative Wörter
@@ -800,6 +1149,284 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         ]
         self.url_queue.extend(random_urls)
         self.current_url_count = 0  # Zurücksetzen des Zählers für eine neue Sitzung
+
+    def learn_from_experience(self):
+        """Lernt aus Erfahrungen und passt Glückswerte an."""
+        if len(self.current_path) < 2:
+            return
+        
+        # Konsolidiere Gedächtnis
+        self.memory.consolidate_to_long_term()
+        
+        # Passe Glückswerte basierend auf der Häufigkeit im Langzeitgedächtnis an
+        for label, frequency in self.memory.long_term.items():
+            if label in self.contexts:
+                context = self.contexts[label]
+                
+                # Häufig besuchte Kontexte werden leicht positiver bewertet
+                # Dies fördert langfristiges, stabiles Glück statt kurzfristiger Stimulation
+                old_happiness = context.happiness
+                context.happiness += self.learning_rate * (frequency / 10) * 0.01
+                
+                # Begrenze den Glückswert
+                context.happiness = max(-1.0, min(1.0, context.happiness))
+                
+                # Wenn der Kontext positiver wurde, aktualisiere die Bedürfnispyramide
+                if context.happiness > old_happiness:
+                    self.update_needs_pyramid(context)
+        
+        # Analysiere die letzten Kontexte im Pfad, um zu lernen, was zu stabilem Glück führt
+        if len(self.current_path) >= 3:
+            # Berechne die durchschnittliche Glücksänderung im Pfad
+            happiness_changes = []
+            for i in range(1, len(self.current_path)):
+                prev = self.current_path[i-1].happiness
+                curr = self.current_path[i].happiness
+                happiness_changes.append(curr - prev)
+            
+            avg_change = sum(happiness_changes) / len(happiness_changes)
+            
+            # Wenn der Pfad zu stabilem Glück führt (wenig Schwankungen)
+            if abs(avg_change) < 0.1:
+                # Erhöhe das langfristige Glück leicht
+                self.happiness += 0.01
+                self.happiness = min(1.0, self.happiness)
+                
+                print(f"Stabiler Glückspfad gefunden. Langfristiges Glück erhöht auf {self.happiness:.2f}")
+            
+            # Wenn der Pfad zu starken Schwankungen führt
+            elif abs(avg_change) > 0.3:
+                # Dies ist eher Stimulation als echtes Glück
+                # Erhöhe die Stimulation, aber reduziere langfristiges Glück leicht
+                self.stimulation += 0.05
+                self.happiness -= 0.01
+                
+                self.stimulation = min(1.0, self.stimulation)
+                self.happiness = max(0.0, self.happiness)
+                
+                print(f"Stimulierender Pfad gefunden. Stimulation: {self.stimulation:.2f}, Glück: {self.happiness:.2f}")
+                
+        # Aktualisiere die Bedürfnispyramide basierend auf dem aktuellen Zustand
+        self.update_needs_pyramid_from_state()
+
+    def update_needs_pyramid_from_state(self):
+        """Aktualisiert die Bedürfnispyramide basierend auf dem aktuellen Zustand."""
+        # Physiologische Bedürfnisse werden durch Energie beeinflusst
+        energy_factor = self.energy / self.max_energy
+        self.needs_pyramid["physiological"] = 0.3 + (energy_factor * 0.7)
+        
+        # Sicherheitsbedürfnisse werden durch Stabilität beeinflusst
+        # Wenn wir im Energiesparmodus sind, fühlen wir uns weniger sicher
+        if self.in_energy_saving_mode:
+            self.needs_pyramid["safety"] = max(0.1, self.needs_pyramid["safety"] - 0.02)
+        else:
+            self.needs_pyramid["safety"] = min(0.9, self.needs_pyramid["safety"] + 0.01)
+        
+        # Zugehörigkeitsbedürfnisse werden durch Verbindungen beeinflusst
+        if self.current_focus:
+            if isinstance(self.current_focus, str):
+                # Wenn current_focus ein String ist, versuche das entsprechende Context-Objekt zu finden
+                if self.current_focus in self.contexts:
+                    current_focus_obj = self.contexts[self.current_focus]
+                    if hasattr(current_focus_obj, 'connections') and current_focus_obj.connections:
+                        connection_factor = min(1.0, len(current_focus_obj.connections) / 10)
+                        self.needs_pyramid["belonging"] = 0.2 + (connection_factor * 0.6)
+            else:
+                if hasattr(self.current_focus, 'connections') and self.current_focus.connections:
+                    connection_factor = min(1.0, len(self.current_focus.connections) / 10)
+                    self.needs_pyramid["belonging"] = 0.2 + (connection_factor * 0.6)
+        
+        # Anerkennungsbedürfnisse werden durch Erfolg beim Lernen beeinflusst
+        if hasattr(self, 'learning_history') and self.learning_history:
+            recent_learning = self.learning_history[-5:]
+            contexts_learned = sum(entry.get('contexts_learned', 0) for entry in recent_learning)
+            learning_factor = min(1.0, contexts_learned / 20)
+            self.needs_pyramid["esteem"] = 0.1 + (learning_factor * 0.5)
+        
+        # Selbstverwirklichungsbedürfnisse werden durch Kreativität und Exploration beeinflusst
+        # Dies steigt langsam mit der Zeit und dem Wachstum des Bewusstseins
+        contexts_factor = min(1.0, len(self.contexts) / 1000)
+        self.needs_pyramid["self_actualization"] = 0.05 + (contexts_factor * 0.4)
+        
+        # Begrenze alle Werte auf den Bereich [0, 1]
+        for need in self.needs_pyramid:
+            self.needs_pyramid[need] = max(0.0, min(1.0, self.needs_pyramid[need]))
+
+    def create_new_connections(self):
+        """Erstellt neue Verbindungen zwischen Kontexten."""
+        # Wähle zufällig zwei Kontexte aus
+        if len(self.contexts) > 1:
+            context_ids = list(self.contexts.keys())
+            context_id1 = random.choice(context_ids)
+            context_id2 = random.choice(context_ids)
+            
+            # Erstelle Verbindung zwischen den zufällig ausgewählten Kontexten
+            self.create_connection(context_id1, context_id2)
+
+    def find_best_next_focus(self):
+        """Findet den besten nächsten Fokus basierend auf dem aktuellen Zustand."""
+        if not self.current_focus or self.current_focus not in self.contexts:
+            return None
+        
+        # Sammle alle möglichen nächsten Kontexte (verbundene Kontexte)
+        next_contexts = []
+        
+        # Durchsuche alle Verbindungen
+        for connection_id, connection in self.connections.items():
+            if connection["source"] == self.current_focus:
+                next_contexts.append((connection["target"], connection["weight"]))
+            elif connection["target"] == self.current_focus:
+                next_contexts.append((connection["source"], connection["weight"]))
+        
+        if not next_contexts:
+            return None
+        
+        # Bewerte die möglichen nächsten Kontexte
+        scored_contexts = []
+        for context_id, weight in next_contexts:
+            if context_id in self.contexts:
+                context = self.contexts[context_id]
+                
+                # Berechne den effektiven Glückswert unter Berücksichtigung der Habituation
+                effective_happiness = self.calculate_effective_happiness(context_id)
+                
+                # Berechne den Score basierend auf effektivem Glückswert, Gewicht und Zufallsfaktor
+                happiness_factor = effective_happiness * 2.0
+                weight_factor = weight * 1.5
+                random_factor = random.random() * 0.5  # Zufallsfaktor für Exploration
+                
+                # Berücksichtige emotionalen Zustand
+                emotional_factor = 0
+                for emotion, value in self.emotional_state.emotions.items():
+                    emotional_factor += value * self.emotional_state.weights[emotion]
+                
+                # Berücksichtige Bedürfnispyramide
+                needs_factor = 0
+                text = str(context).lower()
+                if any(word in text for word in ["eat", "food", "drink", "sleep", "rest"]):
+                    needs_factor += (1.0 - self.needs_pyramid["physiological"]) * 2.0
+                if any(word in text for word in ["safe", "secure", "protect"]):
+                    needs_factor += (1.0 - self.needs_pyramid["safety"]) * 1.5
+                if any(word in text for word in ["friend", "connect", "love", "belong"]):
+                    needs_factor += (1.0 - self.needs_pyramid["belonging"]) * 1.0
+                
+                # Gesamtscore
+                score = happiness_factor + weight_factor + random_factor + emotional_factor + needs_factor
+                
+                scored_contexts.append((context_id, score))
+        
+        if not scored_contexts:
+            return None
+        
+        # Wähle den Kontext mit dem höchsten Score
+        scored_contexts.sort(key=lambda x: x[1], reverse=True)
+        
+        # Mit einer gewissen Wahrscheinlichkeit, wähle einen der Top-3 Kontexte zufällig aus
+        if len(scored_contexts) >= 3 and random.random() < 0.3:
+            return random.choice(scored_contexts[:3])[0]
+        else:
+            return scored_contexts[0][0]
+    
+    def update_habituation(self, context_id):
+        """Aktualisiert den Habituationswert eines Kontexts nach Interaktion."""
+        if context_id in self.contexts:
+            context = self.contexts[context_id]
+            
+            # Initialisiere Habituation-Attribute, falls nicht vorhanden
+            if not hasattr(context, 'interaction_count'):
+                context.interaction_count = 0
+            if not hasattr(context, 'habituation_level'):
+                context.habituation_level = 0.0
+            if not hasattr(context, 'last_interaction'):
+                context.last_interaction = 0
+            
+            # Erhöhe Interaktionszähler
+            context.interaction_count += 1
+            
+            # Berechne neuen Habituationswert (steigt mit jeder Interaktion)
+            habituation_increase = 0.1  # Parameter: Wie schnell tritt Gewöhnung ein
+            context.habituation_level = min(1.0, context.habituation_level + habituation_increase)
+            
+            # Aktualisiere Zeitstempel
+            context.last_interaction = self.iteration_count
+            
+            return context.habituation_level
+        return 0.0
+    
+    def decay_habituation(self):
+        """Reduziert Habituationswerte über Zeit (simuliert Vergessen)."""
+        current_time = self.iteration_count
+        decay_rate = 0.01  # Parameter: Wie schnell wird Habituation abgebaut
+        
+        for context_id, context in self.contexts.items():
+            if hasattr(context, 'habituation_level') and hasattr(context, 'last_interaction'):
+                time_since_last_interaction = current_time - context.last_interaction
+                decay_amount = decay_rate * time_since_last_interaction
+                context.habituation_level = max(0.0, context.habituation_level - decay_amount)
+    
+    def calculate_effective_happiness(self, context_id):
+        """Berechnet den effektiven Glückswert unter Berücksichtigung der Habituation."""
+        if context_id in self.contexts:
+            context = self.contexts[context_id]
+            base_happiness = context.happiness
+            
+            # Wenn keine Habituation vorhanden, vollen Glückswert zurückgeben
+            if not hasattr(context, 'habituation_level'):
+                return base_happiness
+            
+            # Neuheitsbonus für neue oder selten besuchte Kontexte
+            novelty_bonus = 0.0
+            if not hasattr(context, 'interaction_count') or context.interaction_count <= 1:
+                novelty_bonus = 0.2  # Parameter: Bonus für neue Kontexte
+            
+            # Berechne effektiven Glückswert mit Habituation und Neuheitsbonus
+            habituation_factor = 1.0 - context.habituation_level
+            effective_happiness = base_happiness * habituation_factor + novelty_bonus
+            
+            return effective_happiness
+        return 0.0
+
+    def initialize_example(self):
+        """Initialisiert das Bewusstsein mit Beispieldaten."""
+        print("Initialisiere ewiges Bewusstsein mit Beispieldaten...")
+        
+        # Erstelle einige Beispiel-Kontexte
+        context1_id = self.create_context("Ich denke über das Bewusstsein nach")
+        context2_id = self.create_context("Was bedeutet es, bewusst zu sein?")
+        context3_id = self.create_context("Künstliche Intelligenz kann Bewusstsein simulieren")
+        context4_id = self.create_context("Emotionen sind ein wichtiger Teil des Bewusstseins")
+        context5_id = self.create_context("Lernen ist ein kontinuierlicher Prozess")
+        
+        # Setze Glückswerte für die Kontexte
+        self.contexts[context1_id].happiness = 0.3
+        self.contexts[context2_id].happiness = 0.5
+        self.contexts[context3_id].happiness = 0.2
+        self.contexts[context4_id].happiness = 0.7
+        self.contexts[context5_id].happiness = 0.4
+        
+        # Erstelle Verbindungen zwischen den Kontexten
+        self.create_connection(context1_id, context2_id, weight=0.8)
+        self.create_connection(context1_id, context3_id, weight=0.6)
+        self.create_connection(context2_id, context4_id, weight=0.5)
+        self.create_connection(context3_id, context5_id, weight=0.7)
+        self.create_connection(context4_id, context5_id, weight=0.4)
+        
+        # Setze den initialen Fokus
+        self.set_focus_by_id(context1_id)
+        
+        # Initialisiere den emotionalen Zustand
+        self.emotional_state.emotions["happiness"] = 0.6
+        self.emotional_state.emotions["anticipation"] = 0.8
+        
+        # Initialisiere die Bedürfnispyramide
+        self.needs_pyramid["physiological"] = 0.7
+        self.needs_pyramid["safety"] = 0.6
+        self.needs_pyramid["belonging"] = 0.5
+        self.needs_pyramid["esteem"] = 0.3
+        self.needs_pyramid["self_actualization"] = 0.1
+        
+        print("Beispieldaten initialisiert. Ewiges Bewusstsein ist bereit.")
+        return True
 
 
 def handle_signal(sig, frame):
