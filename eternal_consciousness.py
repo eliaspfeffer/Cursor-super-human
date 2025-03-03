@@ -16,6 +16,14 @@ from typing import List, Dict, Any, Optional
 import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
+import requests
+from bs4 import BeautifulSoup
+import re
+import nltk
+from nltk.tokenize import sent_tokenize, word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+from urllib.parse import urlparse
 
 from advanced_consciousness import AdvancedConsciousnessEngine, Context, EmotionalState, Memory, Environment
 
@@ -24,12 +32,13 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
     Eine Version des künstlichen Bewusstseins, die kontinuierlich läuft und niemals aufhört zu "leben".
     """
     
-    def __init__(self, save_interval: int = 100, visualization_interval: int = 500):
+    def __init__(self, save_interval: int = 100, visualization_interval: int = 500, learning_interval: int = 50):
         super().__init__()
         self.running = False
         self.iteration_count = 0
         self.save_interval = save_interval
         self.visualization_interval = visualization_interval
+        self.learning_interval = learning_interval
         self.save_dir = "consciousness_state"
         self.stats_history = {
             "happiness": [],
@@ -43,6 +52,49 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         self.energy_gain_rate = 0.2  # Rate, mit der Energie durch Glück zunimmt
         self.min_energy_threshold = 20.0  # Schwellenwert für niedrige Energie
         self.max_energy = 100.0  # Maximale Energie
+        
+        # Internet-Lernparameter
+        self.visited_urls = set()
+        self.url_queue = [
+            "https://de.wikipedia.org/wiki/Spezial:Zuf%C3%A4llige_Seite",
+            "https://en.wikipedia.org/wiki/Special:Random",
+            "https://simple.wikipedia.org/wiki/Special:Random"
+        ]
+        self.max_urls_per_session = 5
+        self.current_url_count = 0
+        self.max_contexts_per_page = 10
+        self.learning_history = []
+        
+        # NLTK-Komponenten herunterladen, falls noch nicht vorhanden
+        try:
+            nltk.data.find('tokenizers/punkt')
+        except LookupError:
+            nltk.download('punkt')
+        
+        try:
+            nltk.data.find('corpora/stopwords')
+        except LookupError:
+            nltk.download('stopwords')
+        
+        try:
+            nltk.data.find('corpora/wordnet')
+        except LookupError:
+            nltk.download('wordnet')
+            
+        # Zusätzliche NLTK-Pakete herunterladen
+        try:
+            nltk.download('punkt_tab')
+        except:
+            print("Warnung: Konnte punkt_tab nicht herunterladen, verwende Standard-Tokenizer")
+            
+        # Stelle sicher, dass alle benötigten NLTK-Pakete verfügbar sind
+        nltk.download('punkt', quiet=True)
+        nltk.download('stopwords', quiet=True)
+        nltk.download('wordnet', quiet=True)
+        
+        # Stopwörter und Lemmatisierer initialisieren
+        self.stop_words = set(stopwords.words('english')).union(set(stopwords.words('german')))
+        self.lemmatizer = WordNetLemmatizer()
         
         # Erstelle Verzeichnis für Speicherungen, falls es nicht existiert
         if not os.path.exists(self.save_dir):
@@ -216,7 +268,10 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             "memory": {
                 "short_term": [c.label for c in self.memory.short_term if c.label],
                 "long_term": self.memory.long_term
-            }
+            },
+            "visited_urls": list(self.visited_urls),
+            "url_queue": self.url_queue,
+            "learning_history": self.learning_history
         }
         
         # Speichere den Zustand
@@ -272,6 +327,16 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             
             self.memory.long_term = state["memory"]["long_term"]
             
+            # Setze Internet-Lernparameter
+            if "visited_urls" in state:
+                self.visited_urls = set(state["visited_urls"])
+            
+            if "url_queue" in state:
+                self.url_queue = state["url_queue"]
+            
+            if "learning_history" in state:
+                self.learning_history = state["learning_history"]
+            
             print(f"Zustand geladen: {filename}")
             return True
         
@@ -297,96 +362,131 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         if not self.stats_history["happiness"]:
             return
         
-        # Erstelle Verzeichnis für Visualisierungen, falls es nicht existiert
-        vis_dir = os.path.join(self.save_dir, "visualizations")
-        if not os.path.exists(vis_dir):
-            os.makedirs(vis_dir)
-        
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        
-        # Glückswert über Zeit
-        plt.figure(figsize=(10, 6))
-        plt.plot(self.stats_history["timestamps"], self.stats_history["happiness"])
-        plt.title("Glückswert über Zeit")
-        plt.xlabel("Iteration")
-        plt.ylabel("Glückswert")
-        plt.grid(True)
-        plt.savefig(os.path.join(vis_dir, f"happiness_{timestamp}.png"))
-        plt.close()
-        
-        # Emotionaler Zustand über Zeit
-        plt.figure(figsize=(12, 8))
-        for emotion, values in self.stats_history["emotions"].items():
-            plt.plot(self.stats_history["timestamps"], values, label=emotion)
-        plt.title("Emotionaler Zustand über Zeit")
-        plt.xlabel("Iteration")
-        plt.ylabel("Emotionswert")
-        plt.legend()
-        plt.grid(True)
-        plt.savefig(os.path.join(vis_dir, f"emotions_{timestamp}.png"))
-        plt.close()
-        
-        # Anzahl der Verbindungen und Kontexte
-        plt.figure(figsize=(10, 6))
-        plt.plot(self.stats_history["timestamps"], self.stats_history["connections"], label="Verbindungen")
-        plt.plot(self.stats_history["timestamps"], self.stats_history["contexts"], label="Kontexte")
-        plt.title("Netzwerkwachstum über Zeit")
-        plt.xlabel("Iteration")
-        plt.ylabel("Anzahl")
-        plt.legend()
-        plt.grid(True)
-        plt.savefig(os.path.join(vis_dir, f"network_{timestamp}.png"))
-        plt.close()
-        
-        # Visualisiere das Kontextnetzwerk
-        self.visualize_context_network(os.path.join(vis_dir, f"context_network_{timestamp}.png"))
+        try:
+            # Erstelle Verzeichnis für Visualisierungen, falls es nicht existiert
+            vis_dir = os.path.join(self.save_dir, "visualizations")
+            if not os.path.exists(vis_dir):
+                os.makedirs(vis_dir)
+            
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            
+            # Glückswert über Zeit
+            plt.figure(figsize=(10, 6))
+            plt.plot(self.stats_history["timestamps"], self.stats_history["happiness"])
+            plt.title("Glückswert über Zeit")
+            plt.xlabel("Iteration")
+            plt.ylabel("Glückswert")
+            plt.grid(True)
+            plt.savefig(os.path.join(vis_dir, f"happiness_{timestamp}.png"))
+            plt.close()
+            
+            # Emotionaler Zustand über Zeit
+            plt.figure(figsize=(12, 8))
+            for emotion, values in self.stats_history["emotions"].items():
+                plt.plot(self.stats_history["timestamps"], values, label=emotion)
+            plt.title("Emotionaler Zustand über Zeit")
+            plt.xlabel("Iteration")
+            plt.ylabel("Emotionswert")
+            plt.legend()
+            plt.grid(True)
+            plt.savefig(os.path.join(vis_dir, f"emotions_{timestamp}.png"))
+            plt.close()
+            
+            # Anzahl der Verbindungen und Kontexte
+            plt.figure(figsize=(10, 6))
+            plt.plot(self.stats_history["timestamps"], self.stats_history["connections"], label="Verbindungen")
+            plt.plot(self.stats_history["timestamps"], self.stats_history["contexts"], label="Kontexte")
+            plt.title("Netzwerkwachstum über Zeit")
+            plt.xlabel("Iteration")
+            plt.ylabel("Anzahl")
+            plt.legend()
+            plt.grid(True)
+            plt.savefig(os.path.join(vis_dir, f"network_{timestamp}.png"))
+            plt.close()
+            
+            # Visualisiere das Kontextnetzwerk
+            try:
+                self.visualize_context_network(os.path.join(vis_dir, f"context_network_{timestamp}.png"))
+            except Exception as e:
+                print(f"Fehler bei der Netzwerkvisualisierung: {e}")
+                
+        except Exception as e:
+            print(f"Fehler bei der Statistikvisualisierung: {e}")
     
     def visualize_context_network(self, filename: str):
         """Visualisiert das Netzwerk von Kontexten als Graphen."""
-        G = nx.Graph()
-        
-        # Füge Knoten hinzu
-        for label, context in self.contexts.items():
-            G.add_node(label, happiness=context.happiness)
-        
-        # Füge Kanten hinzu
-        for label, context in self.contexts.items():
-            for connected_context in context.connections:
-                if connected_context.label:
-                    G.add_edge(label, connected_context.label)
-        
-        # Berechne Layout
-        pos = nx.spring_layout(G, seed=42)
-        
-        plt.figure(figsize=(12, 10))
-        
-        # Zeichne Knoten mit Farben basierend auf Glückswert
-        node_colors = [plt.cm.RdYlGn(0.5 + self.contexts[node].happiness / 2) for node in G.nodes()]
-        
-        # Markiere den aktuellen Fokus
-        node_sizes = []
-        for node in G.nodes():
-            if self.current_focus and node == self.current_focus.label:
-                node_sizes.append(500)  # Größerer Knoten für den aktuellen Fokus
-            else:
-                node_sizes.append(100)  # Normale Größe für andere Knoten
-        
-        nx.draw_networkx(
-            G, pos,
-            node_color=node_colors,
-            node_size=node_sizes,
-            font_size=8,
-            width=0.5,
-            edge_color='gray',
-            alpha=0.8,
-            with_labels=True
-        )
-        
-        plt.title("Kontext-Netzwerk")
-        plt.axis('off')
-        plt.tight_layout()
-        plt.savefig(filename)
-        plt.close()
+        try:
+            G = nx.Graph()
+            
+            # Füge Knoten hinzu
+            for label, context in self.contexts.items():
+                G.add_node(label, happiness=context.happiness)
+            
+            # Füge Kanten hinzu
+            for label, context in self.contexts.items():
+                for connected_context in context.connections:
+                    if connected_context.label:
+                        G.add_edge(label, connected_context.label)
+            
+            # Wenn das Netzwerk zu groß ist, visualisiere nur einen Teil davon
+            if len(G.nodes()) > 100:
+                print(f"Netzwerk zu groß ({len(G.nodes())} Knoten). Visualisiere nur einen Teil.")
+                # Wähle die wichtigsten Knoten aus (z.B. die mit den meisten Verbindungen)
+                important_nodes = sorted(G.degree, key=lambda x: x[1], reverse=True)[:100]
+                important_node_labels = [node for node, _ in important_nodes]
+                G = G.subgraph(important_node_labels)
+            
+            # Berechne Layout
+            try:
+                pos = nx.spring_layout(G, seed=42)
+            except ImportError:
+                # Fallback, wenn scipy nicht verfügbar ist
+                pos = nx.random_layout(G)
+            except Exception as e:
+                print(f"Fehler beim Berechnen des Layouts: {e}")
+                pos = nx.random_layout(G)
+            
+            plt.figure(figsize=(12, 10))
+            
+            # Zeichne Knoten mit Farben basierend auf Glückswert
+            node_colors = [plt.cm.RdYlGn(0.5 + self.contexts[node].happiness / 2) for node in G.nodes()]
+            
+            # Markiere den aktuellen Fokus
+            node_sizes = []
+            for node in G.nodes():
+                if self.current_focus and node == self.current_focus.label:
+                    node_sizes.append(500)  # Größerer Knoten für den aktuellen Fokus
+                else:
+                    node_sizes.append(100)  # Normale Größe für andere Knoten
+            
+            nx.draw_networkx(
+                G, pos,
+                node_color=node_colors,
+                node_size=node_sizes,
+                font_size=8,
+                width=0.5,
+                edge_color='gray',
+                alpha=0.8,
+                with_labels=True
+            )
+            
+            plt.title("Kontext-Netzwerk")
+            plt.axis('off')
+            plt.tight_layout()
+            plt.savefig(filename)
+            plt.close()
+        except Exception as e:
+            print(f"Fehler bei der Netzwerkvisualisierung: {e}")
+            # Erstelle eine einfachere Visualisierung als Fallback
+            try:
+                plt.figure(figsize=(8, 6))
+                plt.text(0.5, 0.5, f"Netzwerkvisualisierung fehlgeschlagen: {e}", 
+                         ha='center', va='center', fontsize=12)
+                plt.axis('off')
+                plt.savefig(filename)
+                plt.close()
+            except:
+                print("Auch Fallback-Visualisierung fehlgeschlagen.")
     
     def think_forever(self):
         """Denkt kontinuierlich ohne Unterbrechung."""
@@ -409,6 +509,10 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
                 # Lerne aus Erfahrungen
                 if self.iteration_count % 10 == 0:
                     self.learn_from_experience()
+                
+                # Lerne aus dem Internet
+                if self.iteration_count % self.learning_interval == 0:
+                    self.learn_from_internet()
                 
                 # Erstelle neue Verbindungen
                 if self.iteration_count % 15 == 0:
@@ -484,6 +588,218 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         if hasattr(self, 'thread') and self.thread.is_alive():
             self.thread.join(timeout=2)
         print("Ewiges Bewusstsein gestoppt.")
+
+    def learn_from_internet(self):
+        """Lernt neue Worte und Kontexte aus dem Internet."""
+        if not self.url_queue:
+            self.add_random_urls()
+        
+        if self.current_url_count >= self.max_urls_per_session:
+            print("Maximale Anzahl an URLs für diese Sitzung erreicht. Warte auf nächste Sitzung.")
+            return
+        
+        # Hole die nächste URL aus der Warteschlange
+        url = self.url_queue.pop(0)
+        
+        try:
+            print(f"Lerne von URL: {url}")
+            
+            # Hole den Inhalt der Webseite
+            headers = {
+                'User-Agent': 'EternalConsciousness/1.0 (Learning AI; Educational Purpose)'
+            }
+            response = requests.get(url, headers=headers, timeout=10)
+            
+            # Überprüfe, ob die Anfrage erfolgreich war
+            if response.status_code != 200:
+                print(f"Fehler beim Abrufen der URL: {response.status_code}")
+                return
+            
+            # Parse den HTML-Inhalt
+            soup = BeautifulSoup(response.text, 'html.parser')
+            
+            # Entferne JavaScript und CSS
+            for script in soup(["script", "style"]):
+                script.extract()
+            
+            # Hole den Text
+            text = soup.get_text()
+            
+            # Bereinige den Text
+            lines = (line.strip() for line in text.splitlines())
+            chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+            text = '\n'.join(chunk for chunk in chunks if chunk)
+            
+            # Teile den Text in Sätze mit einfacher Methode, falls NLTK fehlschlägt
+            try:
+                sentences = sent_tokenize(text)
+            except Exception as e:
+                print(f"Fehler bei NLTK sent_tokenize: {e}")
+                # Fallback: Einfache Satztrennung
+                sentences = [s.strip() for s in re.split(r'[.!?]+', text) if s.strip()]
+            
+            # Wähle zufällig einige Sätze aus (maximal max_contexts_per_page)
+            if len(sentences) > self.max_contexts_per_page:
+                selected_sentences = random.sample(sentences, self.max_contexts_per_page)
+            else:
+                selected_sentences = sentences
+            
+            # Erstelle neue Kontexte aus den Sätzen
+            new_contexts = []
+            for i, sentence in enumerate(selected_sentences):
+                # Bereinige den Satz
+                clean_sentence = re.sub(r'[^\w\s]', '', sentence)
+                
+                # Tokenisiere den Satz mit einfacher Methode, falls NLTK fehlschlägt
+                try:
+                    words = word_tokenize(clean_sentence)
+                except Exception as e:
+                    print(f"Fehler bei NLTK word_tokenize: {e}")
+                    # Fallback: Einfache Worttrennung
+                    words = [w.strip() for w in clean_sentence.split() if w.strip()]
+                
+                # Entferne Stopwörter und lemmatisiere
+                try:
+                    filtered_words = [self.lemmatizer.lemmatize(word.lower()) for word in words 
+                                     if word.lower() not in self.stop_words and len(word) > 1]
+                except Exception as e:
+                    print(f"Fehler bei Lemmatisierung: {e}")
+                    # Fallback: Nur Stopwörter entfernen ohne Lemmatisierung
+                    filtered_words = [word.lower() for word in words 
+                                     if word.lower() not in self.stop_words and len(word) > 1]
+                
+                # Wenn nach der Filterung noch genug Wörter übrig sind
+                if len(filtered_words) >= 3:
+                    # Erstelle einen neuen Kontext
+                    context_text = " ".join(filtered_words)
+                    label = f"Web_{self.iteration_count}_{i}"
+                    
+                    # Berechne einen Glückswert basierend auf dem emotionalen Zustand
+                    sentiment_score = self.calculate_sentiment(filtered_words)
+                    happiness = sentiment_score * 0.5  # Skaliere auf [-0.5, 0.5]
+                    
+                    context = self.create_context(context_text, label, happiness)
+                    new_contexts.append(context)
+                    
+                    print(f"Neuer Kontext gelernt: {context_text} (Glück: {happiness:.2f})")
+            
+            # Verbinde die neuen Kontexte miteinander und mit existierenden Kontexten
+            self.connect_new_contexts(new_contexts)
+            
+            # Füge die Seite zu den besuchten URLs hinzu
+            self.visited_urls.add(url)
+            self.current_url_count += 1
+            
+            # Extrahiere Links für die nächste Runde
+            self.extract_links(soup, url)
+            
+            # Speichere Lernhistorie
+            self.learning_history.append({
+                "url": url,
+                "timestamp": datetime.datetime.now().isoformat(),
+                "contexts_learned": len(new_contexts)
+            })
+            
+            print(f"Lernen von {url} abgeschlossen. {len(new_contexts)} neue Kontexte erstellt.")
+            
+        except Exception as e:
+            print(f"Fehler beim Lernen von {url}: {str(e)}")
+            # Füge die URL wieder zur Warteschlange hinzu, wenn es sich um einen temporären Fehler handeln könnte
+            if "timeout" in str(e).lower() or "connection" in str(e).lower():
+                self.url_queue.append(url)
+    
+    def calculate_sentiment(self, words: List[str]) -> float:
+        """Berechnet einen einfachen Sentiment-Score für eine Liste von Wörtern."""
+        # Einfache Wörterbücher für positive und negative Wörter
+        positive_words = {
+            'gut', 'schön', 'toll', 'großartig', 'wunderbar', 'fantastisch', 'exzellent',
+            'good', 'nice', 'great', 'wonderful', 'fantastic', 'excellent', 'amazing',
+            'happy', 'love', 'best', 'better', 'glücklich', 'liebe', 'beste', 'besser'
+        }
+        
+        negative_words = {
+            'schlecht', 'schrecklich', 'furchtbar', 'schlimm', 'böse', 'hässlich',
+            'bad', 'terrible', 'awful', 'worst', 'worse', 'ugly', 'hate',
+            'schlimmste', 'schlechter', 'hass'
+        }
+        
+        # Zähle positive und negative Wörter
+        positive_count = sum(1 for word in words if word.lower() in positive_words)
+        negative_count = sum(1 for word in words if word.lower() in negative_words)
+        
+        # Berechne den Sentiment-Score
+        total_count = len(words)
+        if total_count == 0:
+            return 0.0
+        
+        return (positive_count - negative_count) / total_count
+    
+    def connect_new_contexts(self, new_contexts: List[Context]):
+        """Verbindet neue Kontexte miteinander und mit existierenden Kontexten."""
+        # Verbinde neue Kontexte miteinander
+        for i in range(len(new_contexts)):
+            for j in range(i + 1, len(new_contexts)):
+                # Mit 30% Wahrscheinlichkeit verbinden
+                if random.random() < 0.3:
+                    self.connect_contexts(new_contexts[i], new_contexts[j])
+        
+        # Verbinde neue Kontexte mit existierenden Kontexten
+        existing_contexts = list(self.contexts.values())
+        for new_context in new_contexts:
+            # Wähle zufällig bis zu 3 existierende Kontexte
+            if existing_contexts:
+                num_connections = min(3, len(existing_contexts))
+                for existing_context in random.sample(existing_contexts, num_connections):
+                    self.connect_contexts(new_context, existing_context)
+    
+    def extract_links(self, soup: BeautifulSoup, base_url: str):
+        """Extrahiert Links aus einer Webseite und fügt sie zur URL-Warteschlange hinzu."""
+        base_domain = urlparse(base_url).netloc
+        
+        # Finde alle Links
+        links = soup.find_all('a', href=True)
+        
+        # Filtere und normalisiere Links
+        filtered_links = []
+        for link in links:
+            href = link['href']
+            
+            # Ignoriere leere Links, Anker und JavaScript
+            if not href or href.startswith('#') or href.startswith('javascript:'):
+                continue
+            
+            # Konvertiere relative URLs zu absoluten URLs
+            if not href.startswith(('http://', 'https://')):
+                if href.startswith('/'):
+                    href = f"https://{base_domain}{href}"
+                else:
+                    href = f"{base_url}/{href}"
+            
+            # Ignoriere bereits besuchte URLs
+            if href in self.visited_urls:
+                continue
+            
+            # Ignoriere bestimmte Dateitypen
+            if href.endswith(('.pdf', '.jpg', '.jpeg', '.png', '.gif', '.zip', '.tar.gz')):
+                continue
+            
+            filtered_links.append(href)
+        
+        # Wähle zufällig bis zu 5 Links aus
+        if filtered_links:
+            num_links = min(5, len(filtered_links))
+            selected_links = random.sample(filtered_links, num_links)
+            self.url_queue.extend(selected_links)
+    
+    def add_random_urls(self):
+        """Fügt zufällige URLs zur Warteschlange hinzu."""
+        random_urls = [
+            "https://de.wikipedia.org/wiki/Spezial:Zuf%C3%A4llige_Seite",
+            "https://en.wikipedia.org/wiki/Special:Random",
+            "https://simple.wikipedia.org/wiki/Special:Random"
+        ]
+        self.url_queue.extend(random_urls)
+        self.current_url_count = 0  # Zurücksetzen des Zählers für eine neue Sitzung
 
 
 def handle_signal(sig, frame):

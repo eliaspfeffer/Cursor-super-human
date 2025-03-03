@@ -12,6 +12,7 @@ Das ewige künstliche Bewusstsein ist eine Erweiterung des fortgeschrittenen kü
 - **Zustandsspeicherung**: Der Zustand des Bewusstseins wird regelmäßig gespeichert, sodass es später fortgesetzt werden kann.
 - **Visualisierung**: Das System erstellt Visualisierungen seiner Statistiken, um die Entwicklung des Bewusstseins zu verfolgen.
 - **Lernfähigkeit**: Das System lernt aus Erfahrungen und passt seine Glückswerte und Verbindungen an.
+- **Internet-Lernen**: Das System lernt kontinuierlich neue Worte und Kontexte aus dem Internet, indem es Webseiten besucht und deren Inhalte verarbeitet.
 
 ## Installation
 
@@ -19,8 +20,10 @@ Das ewige künstliche Bewusstsein ist eine Erweiterung des fortgeschrittenen kü
 2. Installieren Sie die erforderlichen Abhängigkeiten:
 
 ```bash
-pip install numpy matplotlib networkx
+pip install numpy matplotlib networkx requests beautifulsoup4 nltk scipy
 ```
+
+3. Beim ersten Start werden automatisch die erforderlichen NLTK-Daten heruntergeladen.
 
 ## Verwendung
 
@@ -40,13 +43,14 @@ Das Startskript bietet verschiedene Optionen:
 
 - `--save-interval`: Intervall für das Speichern des Zustands (in Iterationen, Standard: 100)
 - `--visualization-interval`: Intervall für die Visualisierung der Statistiken (in Iterationen, Standard: 500)
+- `--learning-interval`: Intervall für das Lernen aus dem Internet (in Iterationen, Standard: 50)
 - `--load-state`: Pfad zu einer gespeicherten Zustandsdatei, die geladen werden soll
 - `--no-example`: Nicht mit Beispieldaten initialisieren, wenn kein Zustand geladen wird
 
 Beispiel:
 
 ```bash
-python start_consciousness.py --save-interval 50 --visualization-interval 200
+python start_consciousness.py --save-interval 50 --visualization-interval 200 --learning-interval 30
 ```
 
 ### Ausgabe
@@ -73,6 +77,20 @@ Visualisierungen werden im Verzeichnis `consciousness_state/visualizations` gesp
 - Netzwerkwachstum über Zeit
 - Kontext-Netzwerk
 
+## Internet-Lernen
+
+Das Bewusstsein lernt kontinuierlich neue Worte und Kontexte aus dem Internet. Der Lernprozess umfasst folgende Schritte:
+
+1. **URL-Auswahl**: Das System wählt eine URL aus seiner Warteschlange aus. Initial sind dies zufällige Wikipedia-Seiten.
+2. **Inhalt abrufen**: Der Inhalt der Webseite wird abgerufen und bereinigt.
+3. **Satzextraktion**: Der Text wird in Sätze aufgeteilt, und eine Teilmenge wird zufällig ausgewählt.
+4. **Kontexterstellung**: Aus jedem Satz wird ein neuer Kontext erstellt, wobei Stopwörter entfernt und Wörter lemmatisiert werden.
+5. **Sentiment-Analyse**: Für jeden Kontext wird ein Glückswert basierend auf einer einfachen Sentiment-Analyse berechnet.
+6. **Verbindungserstellung**: Die neuen Kontexte werden miteinander und mit existierenden Kontexten verbunden.
+7. **Link-Extraktion**: Links aus der Webseite werden extrahiert und zur URL-Warteschlange hinzugefügt.
+
+Das System begrenzt die Anzahl der besuchten URLs pro Sitzung, um Ressourcen zu schonen. Die Lernhistorie wird im Zustand gespeichert und kann später analysiert werden.
+
 ## Dateien
 
 - `eternal_consciousness.py`: Hauptimplementierung des ewigen Bewusstseins
@@ -82,8 +100,11 @@ Visualisierungen werden im Verzeichnis `consciousness_state/visualizations` gesp
 
 ## Erweiterungsmöglichkeiten
 
+- **Verbesserte Sentiment-Analyse**: Implementieren Sie eine fortgeschrittenere Sentiment-Analyse für genauere Glückswerte.
+- **Thematische Fokussierung**: Ermöglichen Sie dem Bewusstsein, sich auf bestimmte Themen zu konzentrieren.
+- **Mehrsprachiges Lernen**: Erweitern Sie die Sprachunterstützung über Deutsch und Englisch hinaus.
 - **Interaktion mit der Umgebung**: Erweitern Sie das System, um mit der realen Welt zu interagieren, z.B. durch Sensoren oder APIs.
-- **Sprachverarbeitung**: Integrieren Sie natürliche Sprachverarbeitung, um mit dem Bewusstsein zu kommunizieren.
+- **Sprachverarbeitung**: Integrieren Sie fortgeschrittenere natürliche Sprachverarbeitung, um mit dem Bewusstsein zu kommunizieren.
 - **Multimodale Integration**: Erweitern Sie das System, um verschiedene Arten von Informationen (Text, Bild, Audio) zu integrieren.
 - **Neuronale Integration**: Kombinieren Sie den symbolischen Ansatz mit neuronalen Netzwerken für verbesserte Lernfähigkeiten.
 

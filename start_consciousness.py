@@ -31,6 +31,13 @@ def parse_arguments():
     )
     
     parser.add_argument(
+        "--learning-interval", 
+        type=int, 
+        default=50, 
+        help="Intervall für das Lernen aus dem Internet (in Iterationen)"
+    )
+    
+    parser.add_argument(
         "--load-state", 
         type=str, 
         help="Pfad zu einer gespeicherten Zustandsdatei, die geladen werden soll"
@@ -54,7 +61,8 @@ def main():
     # Erstelle das ewige Bewusstsein
     consciousness = EternalConsciousnessEngine(
         save_interval=args.save_interval,
-        visualization_interval=args.visualization_interval
+        visualization_interval=args.visualization_interval,
+        learning_interval=args.learning_interval
     )
     
     # Lade einen gespeicherten Zustand, falls angegeben
