@@ -101,7 +101,14 @@ def analyze_contexts(state, top_n=20, web_only=False):
     # Sammle Wörter aus allen Kontexten
     all_words = []
     for label, data in contexts.items():
-        words = data["text"].split()
+        # Prüfe, ob "text" oder "words" vorhanden ist
+        if "text" in data:
+            words = data["text"].split()
+        elif "words" in data:
+            words = data["words"] if isinstance(data["words"], list) else " ".join(data["words"]).split()
+        else:
+            print(f"Warnung: Kontext {label} hat weder 'text' noch 'words' Attribute.")
+            continue
         all_words.extend(words)
     
     # Zähle Häufigkeit der Wörter
@@ -111,20 +118,20 @@ def analyze_contexts(state, top_n=20, web_only=False):
     top_words = word_counts.most_common(top_n)
     
     # Berechne durchschnittlichen Glückswert
-    happiness_values = [data["happiness"] for data in contexts.values()]
+    happiness_values = [data["happiness"] for data in contexts.values() if "happiness" in data]
     avg_happiness = sum(happiness_values) / len(happiness_values) if happiness_values else 0
     
     # Finde Kontexte mit höchstem und niedrigstem Glückswert
     if happiness_values:
-        max_happiness_label = max(contexts.items(), key=lambda x: x[1]["happiness"])[0]
-        min_happiness_label = min(contexts.items(), key=lambda x: x[1]["happiness"])[0]
+        max_happiness_label = max(((label, data) for label, data in contexts.items() if "happiness" in data), key=lambda x: x[1]["happiness"])[0]
+        min_happiness_label = min(((label, data) for label, data in contexts.items() if "happiness" in data), key=lambda x: x[1]["happiness"])[0]
         max_happiness_context = contexts[max_happiness_label]
         min_happiness_context = contexts[min_happiness_label]
     else:
         max_happiness_context = min_happiness_context = None
     
     # Analysiere Verbindungen
-    connection_counts = {label: len(data["connections"]) for label, data in contexts.items()}
+    connection_counts = {label: len(data.get("connections", [])) for label, data in contexts.items()}
     most_connected = sorted(connection_counts.items(), key=lambda x: x[1], reverse=True)[:top_n]
     
     # Kategorisiere Kontexte nach Quelle
@@ -198,8 +205,27 @@ def analyze_emotional_state(state):
     
     emotional_state = state["emotional_state"]
     
-    # Finde die stärksten Emotionen
-    sorted_emotions = sorted(emotional_state.items(), key=lambda x: abs(x[1]), reverse=True)
+    # Überprüfe die Struktur des emotionalen Zustands
+    if isinstance(emotional_state, dict):
+        # Wenn es ein einfaches Dictionary mit Emotion -> Wert ist
+        if all(isinstance(v, (int, float)) for v in emotional_state.values()):
+            sorted_emotions = sorted(emotional_state.items(), key=lambda x: abs(x[1]), reverse=True)
+        else:
+            # Wenn es ein komplexeres Dictionary ist, extrahiere die Werte
+            print("Komplexe emotionale Zustandsstruktur erkannt.")
+            simplified_state = {}
+            for emotion, value in emotional_state.items():
+                if isinstance(value, dict) and "value" in value:
+                    simplified_state[emotion] = value["value"]
+                elif isinstance(value, (int, float)):
+                    simplified_state[emotion] = value
+                else:
+                    print(f"Unbekannte Struktur für Emotion {emotion}: {value}")
+            
+            sorted_emotions = sorted(simplified_state.items(), key=lambda x: abs(x[1]), reverse=True)
+    else:
+        print(f"Unerwarteter Typ des emotionalen Zustands: {type(emotional_state)}")
+        sorted_emotions = []
     
     return {
         "emotional_state": emotional_state,
@@ -212,6 +238,10 @@ def create_visualizations(analysis_results, output_dir, top_n=20):
         os.makedirs(output_dir)
     
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    # Hilfsfunktion zum Abrufen des Glückswerts
+    def get_happiness(data, default=0.0):
+        return data.get("happiness", default)
     
     # Erstelle Wort-Cloud
     if "all_words" in analysis_results and analysis_results["all_words"]:
@@ -292,12 +322,12 @@ def create_visualizations(analysis_results, output_dir, top_n=20):
             # Füge Knoten hinzu
             for label in top_connected_labels:
                 if label in analysis_results["contexts"]:
-                    G.add_node(label, happiness=analysis_results["contexts"][label]["happiness"])
+                    G.add_node(label, happiness=get_happiness(analysis_results["contexts"][label]))
             
             # Füge Kanten hinzu
             for label in top_connected_labels:
                 if label in analysis_results["contexts"]:
-                    for connected_label in analysis_results["contexts"][label]["connections"]:
+                    for connected_label in analysis_results["contexts"][label].get("connections", []):
                         if connected_label in top_connected_labels:
                             G.add_edge(label, connected_label)
             
@@ -311,7 +341,7 @@ def create_visualizations(analysis_results, output_dir, top_n=20):
                     pos = nx.random_layout(G)
                 
                 # Zeichne Knoten mit Farben basierend auf Glückswert
-                node_colors = [plt.cm.RdYlGn(0.5 + analysis_results["contexts"][node]["happiness"] / 2) for node in G.nodes()]
+                node_colors = [plt.cm.RdYlGn(0.5 + get_happiness(analysis_results["contexts"][node]) / 2) for node in G.nodes()]
                 
                 nx.draw_networkx(
                     G, pos,
@@ -363,33 +393,46 @@ def print_analysis_results(analysis_results, top_n=20):
     # Kontext mit höchstem Glückswert
     if "max_happiness_context" in analysis_results and analysis_results["max_happiness_context"]:
         print("\nKontext mit höchstem Glückswert:")
-        print(f"  Text: {analysis_results['max_happiness_context']['text']}")
+        if "text" in analysis_results["max_happiness_context"]:
+            print(f"  Text: {analysis_results['max_happiness_context']['text']}")
+        elif "words" in analysis_results["max_happiness_context"]:
+            words = analysis_results["max_happiness_context"]["words"]
+            text = " ".join(words) if isinstance(words, list) else words
+            print(f"  Text: {text}")
         print(f"  Glückswert: {analysis_results['max_happiness_context']['happiness']:.4f}")
     
     # Kontext mit niedrigstem Glückswert
     if "min_happiness_context" in analysis_results and analysis_results["min_happiness_context"]:
         print("\nKontext mit niedrigstem Glückswert:")
-        print(f"  Text: {analysis_results['min_happiness_context']['text']}")
+        if "text" in analysis_results["min_happiness_context"]:
+            print(f"  Text: {analysis_results['min_happiness_context']['text']}")
+        elif "words" in analysis_results["min_happiness_context"]:
+            words = analysis_results["min_happiness_context"]["words"]
+            text = " ".join(words) if isinstance(words, list) else words
+            print(f"  Text: {text}")
         print(f"  Glückswert: {analysis_results['min_happiness_context']['happiness']:.4f}")
     
     # Lernhistorie
-    if "learning_history" in analysis_results:
+    if "learning_history" in analysis_results and analysis_results["learning_history"]:
         print("\nLernhistorie:")
-        print(f"  Besuchte URLs: {analysis_results['learning_history'].get('total_urls', 'N/A')}")
-        print(f"  Gelernte Kontexte: {analysis_results['learning_history'].get('total_learned', 'N/A')}")
+        learning_history = analysis_results["learning_history"]
+        print(f"  Besuchte URLs: {learning_history.get('total_urls', 'N/A')}")
+        print(f"  Gelernte Kontexte: {learning_history.get('total_learned', 'N/A')}")
         
-        if "first_learning" in analysis_results["learning_history"] and analysis_results["learning_history"]["first_learning"]:
-            print(f"  Erster Lernvorgang: {analysis_results['learning_history']['first_learning']}")
-            print(f"  Letzter Lernvorgang: {analysis_results['learning_history']['last_learning']}")
-            print(f"  Lerndauer: {analysis_results['learning_history']['learning_duration']}")
+        if "first_learning" in learning_history and learning_history["first_learning"]:
+            print(f"  Erster Lernvorgang: {learning_history['first_learning']}")
+            print(f"  Letzter Lernvorgang: {learning_history['last_learning']}")
+            print(f"  Lerndauer: {learning_history['learning_duration']}")
         
-        if "top_urls" in analysis_results["learning_history"] and analysis_results["learning_history"]["top_urls"]:
-            print(f"\n  Top {len(analysis_results['learning_history']['top_urls'])} URLs mit den meisten gelernten Kontexten:")
-            for url, count in analysis_results["learning_history"]["top_urls"]:
+        if "top_urls" in learning_history and learning_history["top_urls"]:
+            print(f"\n  Top {len(learning_history['top_urls'])} URLs mit den meisten gelernten Kontexten:")
+            for url, count in learning_history["top_urls"]:
                 print(f"    {url}: {count} Kontexte")
+    else:
+        print("\nKeine Lernhistorie verfügbar.")
     
     # Emotionaler Zustand
-    if "emotional_analysis" in analysis_results and "sorted_emotions" in analysis_results["emotional_analysis"]:
+    if "emotional_analysis" in analysis_results and analysis_results["emotional_analysis"] and "sorted_emotions" in analysis_results["emotional_analysis"]:
         print("\nEmotionaler Zustand:")
         for emotion, value in analysis_results["emotional_analysis"]["sorted_emotions"]:
             print(f"  {emotion}: {value:.4f}")
@@ -403,6 +446,16 @@ def interactive_mode(analysis_results):
         return
     
     contexts = analysis_results["contexts"]
+    
+    # Hilfsfunktion zum Anzeigen des Textes eines Kontexts
+    def get_context_text(data):
+        if "text" in data:
+            return data["text"]
+        elif "words" in data:
+            words = data["words"]
+            return " ".join(words) if isinstance(words, list) else words
+        else:
+            return "[Kein Text verfügbar]"
     
     while True:
         print("\n" + "="*80)
@@ -423,9 +476,9 @@ def interactive_mode(analysis_results):
             if label in contexts:
                 print(f"\nKontext gefunden:")
                 print(f"  Label: {label}")
-                print(f"  Text: {contexts[label]['text']}")
-                print(f"  Glückswert: {contexts[label]['happiness']:.4f}")
-                print(f"  Anzahl Verbindungen: {len(contexts[label]['connections'])}")
+                print(f"  Text: {get_context_text(contexts[label])}")
+                print(f"  Glückswert: {contexts[label].get('happiness', 'N/A')}")
+                print(f"  Anzahl Verbindungen: {len(contexts[label].get('connections', []))}")
             else:
                 print(f"Kontext mit Label '{label}' nicht gefunden.")
         
@@ -434,13 +487,14 @@ def interactive_mode(analysis_results):
             found_contexts = []
             
             for label, data in contexts.items():
-                if search_text in data["text"].lower():
+                context_text = get_context_text(data).lower()
+                if search_text in context_text:
                     found_contexts.append((label, data))
             
             if found_contexts:
                 print(f"\n{len(found_contexts)} Kontexte gefunden:")
                 for i, (label, data) in enumerate(found_contexts[:10], 1):
-                    print(f"  {i}. {label}: {data['text']}")
+                    print(f"  {i}. {label}: {get_context_text(data)}")
                 
                 if len(found_contexts) > 10:
                     print(f"  ... und {len(found_contexts) - 10} weitere")
@@ -450,12 +504,12 @@ def interactive_mode(analysis_results):
         elif choice == "3":
             label = input("Gib das Label des Kontexts ein: ")
             if label in contexts:
-                connections = contexts[label]["connections"]
+                connections = contexts[label].get("connections", [])
                 if connections:
                     print(f"\n{len(connections)} Verbindungen gefunden:")
                     for i, connected_label in enumerate(connections[:20], 1):
                         if connected_label in contexts:
-                            print(f"  {i}. {connected_label}: {contexts[connected_label]['text']}")
+                            print(f"  {i}. {connected_label}: {get_context_text(contexts[connected_label])}")
                     
                     if len(connections) > 20:
                         print(f"  ... und {len(connections) - 20} weitere")
@@ -480,7 +534,7 @@ def interactive_mode(analysis_results):
             G = nx.Graph()
             for label, data in contexts.items():
                 G.add_node(label)
-                for connected_label in data["connections"]:
+                for connected_label in data.get("connections", []):
                     if connected_label in contexts:
                         G.add_edge(label, connected_label)
             
@@ -490,7 +544,7 @@ def interactive_mode(analysis_results):
                 
                 print(f"\nPfad gefunden ({len(path)} Schritte):")
                 for i, label in enumerate(path):
-                    print(f"  {i+1}. {label}: {contexts[label]['text']}")
+                    print(f"  {i+1}. {label}: {get_context_text(contexts[label])}")
             except nx.NetworkXNoPath:
                 print("Kein Pfad zwischen den Kontexten gefunden.")
             except Exception as e:
@@ -501,9 +555,9 @@ def interactive_mode(analysis_results):
             random_label = random.choice(list(contexts.keys()))
             print(f"\nZufälliger Kontext:")
             print(f"  Label: {random_label}")
-            print(f"  Text: {contexts[random_label]['text']}")
-            print(f"  Glückswert: {contexts[random_label]['happiness']:.4f}")
-            print(f"  Anzahl Verbindungen: {len(contexts[random_label]['connections'])}")
+            print(f"  Text: {get_context_text(contexts[random_label])}")
+            print(f"  Glückswert: {contexts[random_label].get('happiness', 'N/A')}")
+            print(f"  Anzahl Verbindungen: {len(contexts[random_label].get('connections', []))}")
         
         elif choice == "6":
             print("Interaktiver Modus beendet.")

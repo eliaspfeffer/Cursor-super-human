@@ -29,3 +29,5 @@ consciousness_state/
 *.pkl
 stats/
 visualizations/
+
+.env

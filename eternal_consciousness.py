@@ -256,13 +256,17 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         
         print(f"Ziel-Honeypot: {target_honeypot}")
         
+        # Initialisiere eine Liste für kürzlich verwendete Energiequellen, falls sie noch nicht existiert
+        if not hasattr(self, 'recent_energy_sources'):
+            self.recent_energy_sources = []
+        
         # Suche nach Kontexten, die mit dem Ziel-Honeypot zusammenhängen
         best_energy_source = None
         best_score = -float('inf')
         
         for context_id, context in self.contexts.items():
-            # Überspringe den aktuellen Fokus
-            if context_id == self.current_focus:
+            # Überspringe den aktuellen Fokus und kürzlich verwendete Energiequellen
+            if context_id == self.current_focus or context_id in self.recent_energy_sources:
                 continue
             
             # Berechne die Relevanz für den Ziel-Honeypot
@@ -296,12 +300,23 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             elif target_honeypot == 'reproduction':
                 score *= (2 - (self.needs_pyramid['belonging'] + self.needs_pyramid['esteem']) / 2)
             
+            # Füge einen Zufallsfaktor hinzu, um Variation zu fördern
+            score += random.uniform(0, 0.5)
+            
             if score > best_score:
                 best_score = score
                 best_energy_source = context_id
         
         if best_energy_source:
             print(f"Energiequelle gefunden: {str(self.contexts[best_energy_source])} (Score: {best_score:.2f})")
+            
+            # Füge die gefundene Energiequelle zu den kürzlich verwendeten hinzu
+            self.recent_energy_sources.append(best_energy_source)
+            
+            # Begrenze die Liste auf die letzten 5 Energiequellen
+            if len(self.recent_energy_sources) > 5:
+                self.recent_energy_sources.pop(0)
+                
             return best_energy_source
         else:
             # Wenn keine passende Energiequelle gefunden wurde, erstelle eine neue
@@ -872,6 +887,14 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             energy_context_id = self.seek_energy_source()
             if energy_context_id:
                 self.set_focus_by_id(energy_context_id)
+                # Erhöhe die Energie, wenn eine Energiequelle gefunden wurde
+                energy_gain = random.uniform(1.0, 3.0)  # Zufälliger Energiegewinn
+                self.energy += energy_gain
+                print(f"Energie aufgefüllt: +{energy_gain:.2f}. Neuer Energiestand: {self.energy:.2f}")
+                
+                # Verhindere, dass wir im nächsten Zyklus sofort wieder nach Energie suchen
+                if self.energy < self.min_energy_threshold:
+                    self.energy = self.min_energy_threshold + 1.0
         else:
             # Normaler Modus
             self.in_energy_saving_mode = False
@@ -966,8 +989,35 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             for script in soup(["script", "style"]):
                 script.extract()
             
-            # Hole den Text
-            text = soup.get_text()
+            # Entferne Navigations- und Metainformationen, die typischerweise in Wikipedia-Artikeln vorkommen
+            for nav in soup.find_all(['nav', 'footer', 'header']):
+                nav.extract()
+                
+            # Entferne spezifische Elemente, die in Wikipedia-Artikeln vorkommen
+            for element in soup.find_all(class_=lambda x: x and any(term in str(x).lower() for term in 
+                                                                 ['navigation', 'menu', 'sidebar', 'footer', 'header', 
+                                                                  'login', 'search', 'terms', 'policy', 'cookie', 
+                                                                  'privacy', 'disclaimer', 'license'])):
+                element.extract()
+                
+            # Bei Wikipedia-Artikeln: Versuche, nur den Hauptinhalt zu extrahieren
+            if 'wikipedia.org' in url:
+                main_content = soup.find(id='mw-content-text')
+                if main_content:
+                    # Entferne Infoboxen, Navigationsleisten und andere Metainformationen
+                    for box in main_content.find_all(class_=lambda x: x and any(term in str(x).lower() for term in 
+                                                                           ['infobox', 'navbox', 'metadata', 'catlinks', 
+                                                                            'references', 'reflist', 'hatnote'])):
+                        box.extract()
+                    
+                    # Verwende nur den Hauptinhalt
+                    text = main_content.get_text()
+                else:
+                    # Hole den Text aus dem gesamten Dokument, wenn der Hauptinhalt nicht gefunden wurde
+                    text = soup.get_text()
+            else:
+                # Für andere Websites: Hole den Text aus dem gesamten Dokument
+                text = soup.get_text()
             
             # Bereinige den Text
             lines = (line.strip() for line in text.splitlines())
@@ -977,12 +1027,23 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             # Tokenisiere den Text in Sätze
             sentences = sent_tokenize(text)
             
+            # Filtere Sätze, die wahrscheinlich Metainformationen enthalten
+            filtered_sentences = []
+            for sentence in sentences:
+                # Überspringe Sätze, die wahrscheinlich Metainformationen enthalten
+                if any(term in sentence.lower() for term in ['cookie', 'privacy', 'terms of use', 'disclaimer', 
+                                                           'license', 'copyright', 'wikimedia', 'foundation', 
+                                                           'login', 'sign in', 'register', 'account', 'password',
+                                                           'username', 'edit', 'view history', 'talk', 'contributions']):
+                    continue
+                filtered_sentences.append(sentence)
+            
             # Wähle zufällig einige Sätze aus (maximal max_contexts_per_page)
-            if len(sentences) > self.max_contexts_per_page:
-                sentences = random.sample(sentences, self.max_contexts_per_page)
+            if len(filtered_sentences) > self.max_contexts_per_page:
+                filtered_sentences = random.sample(filtered_sentences, self.max_contexts_per_page)
             
             # Erstelle neue Kontexte aus den Sätzen
-            for sentence in sentences:
+            for sentence in filtered_sentences:
                 # Bereinige und tokenisiere den Satz
                 words = word_tokenize(sentence.lower())
                 
@@ -1043,7 +1104,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             self.learning_history.append({
                 "url": url,
                 "timestamp": time.time(),
-                "contexts_learned": len(sentences)
+                "contexts_learned": len(filtered_sentences)
             })
             
         except Exception as e:
