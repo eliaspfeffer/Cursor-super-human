@@ -110,9 +110,10 @@ def create_input_context(consciousness, user_input):
     happiness = consciousness.calculate_sentiment(cleaned_input.split())
     
     # Erstelle den Kontext mit der vorhandenen Methode
-    input_context = consciousness.create_context(cleaned_input, label, happiness)
+    input_context_id = consciousness.create_context(cleaned_input, label, happiness)
     
-    return input_context
+    # Gib den tatsächlichen Kontext zurück, nicht nur die ID
+    return consciousness.contexts[input_context_id]
 
 def find_relevant_contexts(consciousness, input_context, max_contexts=10):
     """Findet Kontexte, die für die Eingabe relevant sind."""
@@ -220,7 +221,8 @@ def generate_response(consciousness, input_context, relevant_contexts, max_lengt
     response_happiness = consciousness.calculate_sentiment(words)
     
     # Erstelle den Antwortkontext mit der vorhandenen Methode
-    response_context = consciousness.create_context(response_text, response_label, response_happiness)
+    response_context_id = consciousness.create_context(response_text, response_label, response_happiness)
+    response_context = consciousness.contexts[response_context_id]
     
     # Verbinde den Antwortkontext mit dem Eingabekontext
     consciousness.connect_contexts(response_context, input_context)

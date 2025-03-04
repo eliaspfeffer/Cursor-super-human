@@ -602,41 +602,58 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
                 state = json.load(f)
             
             # Setze grundlegende Attribute
-            self.iteration_count = state["iteration"]
-            self.energy = state["energy"]
+            self.iteration_count = state.get("iteration_count", state.get("iteration", 0))
+            self.energy = state.get("energy", 100.0)
             
             # Setze emotionalen Zustand
-            for emotion, value in state["emotional_state"].items():
-                if emotion in self.emotional_state.emotions:
-                    self.emotional_state.emotions[emotion] = value
+            if "emotional_state" in state:
+                for emotion, value in state["emotional_state"].items():
+                    if emotion in self.emotional_state.emotions:
+                        self.emotional_state.emotions[emotion] = value
             
             # Erstelle Kontexte
             self.words = {}
             self.contexts = {}
-            for label, context_data in state["contexts"].items():
-                context = self.create_context(context_data["text"], label, context_data["happiness"])
+            if "contexts" in state:
+                for label, context_data in state["contexts"].items():
+                    # Überprüfe, ob "text" oder "words" vorhanden ist
+                    if "text" in context_data:
+                        text = context_data["text"]
+                    elif "words" in context_data and isinstance(context_data["words"], list):
+                        text = " ".join(context_data["words"])
+                    else:
+                        print(f"Warnung: Kontext {label} hat weder 'text' noch 'words' Attribute.")
+                        continue
+                    
+                    happiness = context_data.get("happiness", 0.0)
+                    context = self.create_context(text, label, happiness)
             
             # Erstelle Verbindungen zwischen Kontexten
-            for label, context_data in state["contexts"].items():
-                for connected_label in context_data["connections"]:
-                    if connected_label in self.contexts and label in self.contexts:
-                        self.connect_contexts(self.contexts[label], self.contexts[connected_label])
+            if "contexts" in state:
+                for label, context_data in state["contexts"].items():
+                    if "connections" in context_data:
+                        for connected_label in context_data["connections"]:
+                            if connected_label in self.contexts and label in self.contexts:
+                                self.connect_contexts(self.contexts[label], self.contexts[connected_label])
             
             # Setze aktuellen Fokus und Pfad
-            if state["current_focus"] and state["current_focus"] in self.contexts:
+            if "current_focus" in state and state["current_focus"] and state["current_focus"] in self.contexts:
                 self.current_focus = state["current_focus"]
                 self.current_path = []
-                for label in state["current_path"]:
-                    if label in self.contexts:
-                        self.current_path.append(self.contexts[label])
+                if "current_path" in state:
+                    for label in state["current_path"]:
+                        if label in self.contexts:
+                            self.current_path.append(self.contexts[label])
             
             # Setze Gedächtnis
             self.memory.short_term = []
-            for label in state["memory"]["short_term"]:
-                if label in self.contexts:
-                    self.memory.short_term.append(self.contexts[label])
+            if "memory" in state and "short_term" in state["memory"]:
+                for label in state["memory"]["short_term"]:
+                    if label in self.contexts:
+                        self.memory.short_term.append(self.contexts[label])
             
-            self.memory.long_term = state["memory"]["long_term"]
+            if "memory" in state and "long_term" in state["memory"]:
+                self.memory.long_term = state["memory"]["long_term"]
             
             # Setze Internet-Lernparameter
             if "visited_urls" in state:
