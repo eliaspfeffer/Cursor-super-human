@@ -115,12 +115,21 @@ def create_input_context(consciousness, user_input):
     # Gib den tatsächlichen Kontext zurück, nicht nur die ID
     return consciousness.contexts[input_context_id]
 
-def find_relevant_contexts(consciousness, input_context, max_contexts=10):
+def find_relevant_contexts(consciousness, input_context, max_contexts=10, min_score=0.1):
     """Findet Kontexte, die für die Eingabe relevant sind."""
     relevant_contexts = []
     
     # Extrahiere wichtige Wörter aus der Eingabe
     input_words = [word.content.lower() for word in input_context.words]
+    
+    # Entferne sehr häufige Wörter (Stopwörter)
+    stopwords = {'der', 'die', 'das', 'ein', 'eine', 'und', 'oder', 'aber', 'wenn', 'ist', 'sind', 'war', 'waren',
+                'the', 'a', 'an', 'and', 'or', 'but', 'if', 'is', 'are', 'was', 'were', 'in', 'on', 'at', 'to', 'from'}
+    filtered_input_words = [word for word in input_words if word not in stopwords and len(word) > 2]
+    
+    # Wenn nach dem Filtern keine Wörter übrig bleiben, verwende die ursprünglichen Wörter
+    if not filtered_input_words:
+        filtered_input_words = input_words
     
     # Bewerte alle Kontexte nach Relevanz
     context_scores = {}
@@ -131,25 +140,47 @@ def find_relevant_contexts(consciousness, input_context, max_contexts=10):
         
         # Extrahiere Wörter aus dem Kontext
         context_words = [word.content.lower() for word in context.words]
+        filtered_context_words = [word for word in context_words if word not in stopwords and len(word) > 2]
+        
+        # Wenn nach dem Filtern keine Wörter übrig bleiben, verwende die ursprünglichen Wörter
+        if not filtered_context_words:
+            filtered_context_words = context_words
         
         # Berechne Überlappung der Wörter
-        common_words = set(input_words).intersection(set(context_words))
-        word_score = len(common_words) / max(len(input_words), 1)
+        common_words = set(filtered_input_words).intersection(set(filtered_context_words))
         
-        # Berücksichtige auch den Glückswert (ähnliche Emotionen sind relevanter)
-        happiness_diff = abs(input_context.happiness - context.happiness)
-        happiness_score = 1.0 - (happiness_diff / 2.0)  # Normalisiere auf [0, 1]
-        
-        # Kombiniere die Scores
-        combined_score = (word_score * 0.7) + (happiness_score * 0.3)
+        # Wenn es gemeinsame Wörter gibt, berechne den Score
+        if common_words:
+            # Gewichte wichtigere Wörter stärker (längere Wörter sind oft wichtiger)
+            weighted_common = sum(len(word) for word in common_words)
+            weighted_input = sum(len(word) for word in filtered_input_words)
+            weighted_context = sum(len(word) for word in filtered_context_words)
+            
+            # Berechne den Wort-Score basierend auf der gewichteten Überlappung
+            word_score = weighted_common / max(weighted_input, weighted_context, 1)
+            
+            # Berücksichtige auch den Glückswert (ähnliche Emotionen sind relevanter)
+            happiness_diff = abs(input_context.happiness - context.happiness)
+            happiness_score = 1.0 - (happiness_diff / 2.0)  # Normalisiere auf [0, 1]
+            
+            # Kombiniere die Scores, mit stärkerer Gewichtung der Wortüberlappung
+            combined_score = (word_score * 0.8) + (happiness_score * 0.2)
+        else:
+            # Wenn keine gemeinsamen Wörter gefunden wurden, setze einen niedrigen Score
+            combined_score = 0.05
         
         # Speichere den Score
         context_scores[label] = combined_score
     
-    # Sortiere Kontexte nach Relevanz und wähle die besten aus
+    # Sortiere Kontexte nach Relevanz und wähle die besten aus, die über dem Mindestscore liegen
     sorted_contexts = sorted(context_scores.items(), key=lambda x: x[1], reverse=True)
-    for label, score in sorted_contexts[:max_contexts]:
-        relevant_contexts.append((label, consciousness.contexts[label], score))
+    for label, score in sorted_contexts:
+        if score >= min_score and len(relevant_contexts) < max_contexts:
+            relevant_contexts.append((label, consciousness.contexts[label], score))
+    
+    # Wenn keine relevanten Kontexte gefunden wurden, versuche es mit einem niedrigeren Mindestscore
+    if not relevant_contexts and min_score > 0.01:
+        return find_relevant_contexts(consciousness, input_context, max_contexts, min_score=0.01)
     
     return relevant_contexts
 
@@ -157,7 +188,17 @@ def generate_response(consciousness, input_context, relevant_contexts, max_lengt
     """Generiert eine Antwort basierend auf der Eingabe und relevanten Kontexten."""
     if not relevant_contexts:
         # Wenn keine relevanten Kontexte gefunden wurden, generiere eine allgemeine Antwort
-        return "Ich verstehe nicht ganz, worüber du sprichst. Kannst du das näher erläutern?"
+        default_responses = [
+            "Ich verstehe nicht ganz, worüber du sprichst. Kannst du das näher erläutern?",
+            "Darüber habe ich nicht genug Informationen. Magst du mir mehr darüber erzählen?",
+            "Interessante Frage! Leider habe ich dazu noch keine Gedanken gesammelt.",
+            "Das ist ein spannendes Thema, aber ich bin mir nicht sicher, was ich dazu sagen soll.",
+            "Ich würde gerne mehr über dieses Thema lernen. Was denkst du darüber?"
+        ]
+        return random.choice(default_responses)
+    
+    # Extrahiere die Eingabewörter für die Antwortgenerierung
+    input_words = [word.content.lower() for word in input_context.words]
     
     # Erstelle einen Graphen aus den relevanten Kontexten
     G = nx.Graph()
@@ -182,9 +223,9 @@ def generate_response(consciousness, input_context, relevant_contexts, max_lengt
     current_node = start_node
     
     # Parameter für die Pfadgenerierung
-    max_path_length = min(max_length // 5, len(relevant_contexts))  # Begrenze die Pfadlänge
+    max_path_length = min(3, len(relevant_contexts))  # Begrenze die Pfadlänge für mehr Kohärenz
     
-    # Generiere einen Pfad durch den Graphen
+    # Generiere einen Pfad durch den Graphen mit mehr Kohärenz
     for _ in range(max_path_length - 1):
         neighbors = list(G.neighbors(current_node))
         if not neighbors:
@@ -192,11 +233,23 @@ def generate_response(consciousness, input_context, relevant_contexts, max_lengt
         
         # Wähle den nächsten Knoten basierend auf Kohärenz und Kreativität
         if random.random() < coherence and neighbors:
-            # Kohärenter Pfad: Wähle einen verbundenen Knoten
-            next_node = random.choice(neighbors)
+            # Kohärenter Pfad: Wähle einen verbundenen Knoten mit höherem Score
+            neighbor_scores = [(neighbor, G.nodes[neighbor]['score']) for neighbor in neighbors]
+            sorted_neighbors = sorted(neighbor_scores, key=lambda x: x[1], reverse=True)
+            
+            # Wähle einen der Top-Nachbarn (mit etwas Zufall)
+            top_n = max(1, min(3, len(sorted_neighbors)))
+            next_node = sorted_neighbors[random.randint(0, top_n-1)][0]
         else:
-            # Kreativer Pfad: Wähle einen zufälligen Knoten
-            next_node = random.choice(list(G.nodes()))
+            # Kreativer Pfad: Wähle einen zufälligen Knoten mit höherem Score
+            node_scores = [(node, G.nodes[node]['score']) for node in G.nodes() if node not in path]
+            if node_scores:
+                sorted_nodes = sorted(node_scores, key=lambda x: x[1], reverse=True)
+                top_n = max(1, min(3, len(sorted_nodes)))
+                next_node = sorted_nodes[random.randint(0, top_n-1)][0]
+            else:
+                # Wenn alle Knoten bereits im Pfad sind, breche ab
+                break
         
         path.append(next_node)
         current_node = next_node
@@ -204,10 +257,26 @@ def generate_response(consciousness, input_context, relevant_contexts, max_lengt
     # Extrahiere Texte aus dem Pfad
     response_parts = []
     for node in path:
-        response_parts.append(G.nodes[node]["text"])
+        node_text = G.nodes[node]["text"]
+        
+        # Vermeide Wiederholungen im Text
+        if not response_parts or not any(part in node_text or node_text in part for part in response_parts):
+            response_parts.append(node_text)
     
     # Kombiniere die Teile zu einer Antwort
-    raw_response = " ".join(response_parts)
+    if len(response_parts) > 1:
+        # Versuche, die Antwort strukturierter zu gestalten
+        conjunctions = ["und", "aber", "denn", "weil", "obwohl", "jedoch", "außerdem", "zudem"]
+        raw_response = response_parts[0]
+        
+        for i, part in enumerate(response_parts[1:]):
+            # Füge Konjunktionen hinzu, um die Antwort flüssiger zu gestalten
+            if random.random() < 0.7 and i < len(conjunctions):
+                raw_response += f". {part.capitalize()}"
+            else:
+                raw_response += f" {random.choice(conjunctions)} {part}"
+    else:
+        raw_response = " ".join(response_parts)
     
     # Begrenze die Länge der Antwort
     words = raw_response.split()
@@ -217,6 +286,12 @@ def generate_response(consciousness, input_context, relevant_contexts, max_lengt
     
     # Füge die Antwort als neuen Kontext zum Bewusstsein hinzu
     response_text = " ".join(words)
+    
+    # Stelle sicher, dass die Antwort sinnvoll ist
+    if len(response_text.split()) < 3:
+        # Wenn die Antwort zu kurz ist, verwende eine Standardantwort
+        response_text = f"Ich denke über {' '.join(input_words[:3])} nach, aber ich bin mir nicht sicher, was ich dazu sagen soll."
+    
     response_label = f"Response_{int(time.time())}"
     response_happiness = consciousness.calculate_sentiment(words)
     
@@ -243,7 +318,13 @@ def interact_with_consciousness():
     print("Gib 'stats' ein, um Statistiken über das Bewusstsein anzuzeigen.")
     print("Gib 'save' ein, um den aktuellen Zustand zu speichern.")
     print("Gib 'learn' ein, um das Bewusstsein aus dem Internet lernen zu lassen.")
+    print("Gib 'reset' ein, um die Antwortqualität zurückzusetzen.")
     print("\nDu kannst jetzt mit dem Bewusstsein interagieren:")
+    
+    # Parameter für die Antwortqualität
+    coherence = args.coherence
+    creativity = args.creativity
+    max_response_length = args.max_response_length
     
     while True:
         try:
@@ -261,6 +342,10 @@ def interact_with_consciousness():
                 print(f"  Emotionaler Zustand:")
                 for emotion, value in consciousness.emotional_state.emotions.items():
                     print(f"    {emotion}: {value:.4f}")
+                print(f"  Aktuelle Antwortparameter:")
+                print(f"    Kohärenz: {coherence:.2f}")
+                print(f"    Kreativität: {creativity:.2f}")
+                print(f"    Max. Antwortlänge: {max_response_length}")
                 continue
             
             if user_input.lower() == "save":
@@ -274,6 +359,53 @@ def interact_with_consciousness():
                 print("Lerne aus dem Internet...")
                 consciousness.learn_from_internet()
                 print("Lernen abgeschlossen.")
+                continue
+            
+            if user_input.lower() == "reset":
+                # Setze die Antwortparameter zurück
+                coherence = args.coherence
+                creativity = args.creativity
+                max_response_length = args.max_response_length
+                print("Antwortparameter zurückgesetzt.")
+                continue
+            
+            if user_input.lower().startswith("set coherence "):
+                # Setze die Kohärenz
+                try:
+                    new_coherence = float(user_input.split()[2])
+                    if 0.0 <= new_coherence <= 1.0:
+                        coherence = new_coherence
+                        print(f"Kohärenz auf {coherence:.2f} gesetzt.")
+                    else:
+                        print("Kohärenz muss zwischen 0.0 und 1.0 liegen.")
+                except (IndexError, ValueError):
+                    print("Ungültiges Format. Verwende 'set coherence 0.7'.")
+                continue
+            
+            if user_input.lower().startswith("set creativity "):
+                # Setze die Kreativität
+                try:
+                    new_creativity = float(user_input.split()[2])
+                    if 0.0 <= new_creativity <= 1.0:
+                        creativity = new_creativity
+                        print(f"Kreativität auf {creativity:.2f} gesetzt.")
+                    else:
+                        print("Kreativität muss zwischen 0.0 und 1.0 liegen.")
+                except (IndexError, ValueError):
+                    print("Ungültiges Format. Verwende 'set creativity 0.3'.")
+                continue
+            
+            if user_input.lower().startswith("set length "):
+                # Setze die maximale Antwortlänge
+                try:
+                    new_length = int(user_input.split()[2])
+                    if 10 <= new_length <= 200:
+                        max_response_length = new_length
+                        print(f"Max. Antwortlänge auf {max_response_length} gesetzt.")
+                    else:
+                        print("Max. Antwortlänge muss zwischen 10 und 200 liegen.")
+                except (IndexError, ValueError):
+                    print("Ungültiges Format. Verwende 'set length 50'.")
                 continue
             
             if not user_input:
@@ -291,9 +423,9 @@ def interact_with_consciousness():
                 consciousness, 
                 input_context, 
                 relevant_contexts, 
-                max_length=args.max_response_length,
-                creativity=args.creativity,
-                coherence=args.coherence
+                max_length=max_response_length,
+                creativity=creativity,
+                coherence=coherence
             )
             
             # Gib die Antwort aus
