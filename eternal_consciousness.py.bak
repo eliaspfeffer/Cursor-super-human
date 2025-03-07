@@ -152,17 +152,8 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
     
     def update_energy(self):
         """Aktualisiert die Energie des Systems basierend auf dem aktuellen Fokus."""
-        # 1. Aktualisiere die Energie
+        # Energie nimmt mit der Zeit ab
         self.energy -= self.energy_decay_rate
-        
-        # Aktualisiere die Energiehistorie
-        if not hasattr(self, 'energy_history'):
-            self.energy_history = []
-        self.energy_history.append(self.energy)
-        
-        # Begrenze die Länge der Energiehistorie
-        if len(self.energy_history) > 100:
-            self.energy_history = self.energy_history[-100:]
         
         # Energie steigt mit positivem Glückswert
         if self.current_focus:
@@ -182,25 +173,61 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         self.energy = max(0.0, min(self.max_energy, self.energy))
     
     def update_happiness_and_stimulation(self):
-        """Aktualisiert die Glücklichkeit und Stimulation des Systems."""
-        # Initialisiere die Stimulation, falls sie noch nicht existiert
-        if not hasattr(self, 'stimulation'):
-            self.stimulation = 0.5  # Mittlere Stimulation zu Beginn
+        """
+        Aktualisiert das langfristige Glück und die kurzfristige Stimulation basierend auf dem Konzept
+        aus dem Text "Wie Glücklichkeit funktioniert".
+        """
+        if not self.current_focus:
+            return
             
-        # Berechne die Stimulation basierend auf der Neuheit des aktuellen Fokus
-        if self.current_focus and self.current_focus in self.contexts:
-            current_context = self.contexts[self.current_focus]
+        # Stimulation wird durch den aktuellen Fokus beeinflusst
+        if isinstance(self.current_focus, str):
+            # Wenn current_focus ein String ist, versuche das entsprechende Context-Objekt zu finden
+            if self.current_focus in self.contexts:
+                focus_happiness = self.contexts[self.current_focus].happiness
+            else:
+                focus_happiness = 0
+        else:
+            focus_happiness = self.current_focus.happiness
+        
+        # Stimulation steigt schnell bei positiven Kontexten
+        if focus_happiness > 0:
+            self.stimulation += focus_happiness * 0.3
+        else:
+            self.stimulation += focus_happiness * 0.2
             
-            # Neuheit basierend auf Habituation
-            novelty = 1.0
-            if hasattr(current_context, 'habituation'):
-                novelty = 1.0 - current_context.habituation
-                
-            # Aktualisiere die Stimulation (gewichteter Durchschnitt)
-            self.stimulation = (self.stimulation * 0.8) + (novelty * 0.2)
+        # Langfristiges Glück wird langsamer beeinflusst
+        # Es hängt von der Erfüllung der Bedürfnispyramide ab
+        pyramid_fulfillment = sum(self.needs_pyramid.values()) / len(self.needs_pyramid)
+        
+        # Formel: Ø Glücklichkeits Zustand = 1 + B
+        # Wobei B die Erfüllung der Bedürfnispyramide ist
+        target_happiness = 0.5 + (pyramid_fulfillment * 0.5)
+        
+        # Glück bewegt sich langsam in Richtung des Zielwerts
+        if self.happiness < target_happiness:
+            self.happiness += min(self.happiness_decay_rate, target_happiness - self.happiness)
+        elif self.happiness > target_happiness:
+            self.happiness -= min(self.happiness_decay_rate, self.happiness - target_happiness)
             
-            # Stelle sicher, dass die Stimulation im gültigen Bereich liegt
-            self.stimulation = max(0.0, min(1.0, self.stimulation))
+        # Stimulation nimmt mit der Zeit ab (schneller als Glück)
+        if self.stimulation > 0:
+            self.stimulation -= self.stimulation_decay_rate
+        elif self.stimulation < 0:
+            self.stimulation += self.stimulation_decay_rate
+            
+        # Begrenze Werte auf sinnvolle Bereiche
+        self.stimulation = max(-1.0, min(1.0, self.stimulation))
+        self.happiness = max(0.0, min(1.0, self.happiness))
+        
+        # Aktualisiere den emotionalen Zustand basierend auf Glück und Stimulation
+        self.emotional_state.emotions["happiness"] = self.happiness
+        
+        # Hohe Stimulation kann zu negativen Emotionen führen, wenn sie abfällt
+        if self.stimulation < -0.5:
+            self.emotional_state.emotions["sadness"] = min(1.0, self.emotional_state.emotions["sadness"] + 0.1)
+        
+        print(f"Glück: {self.happiness:.2f}, Stimulation: {self.stimulation:.2f}, Pyramide: {pyramid_fulfillment:.2f}")
     
     def is_low_energy(self):
         """Überprüft, ob die Energie niedrig ist."""
@@ -913,12 +940,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         else:
             # Bei ausreichender Energie: Normales Denken
             # Versuche, logische Schlussfolgerungen zu ziehen
-            if self.current_focus and self.current_focus in self.contexts:
-                current_context = self.contexts[self.current_focus]
-                current_text = " ".join([word.content for word in current_context.words])
-                reasoning_result = self.reason_from_current_knowledge(current_text)
-            else:
-                reasoning_result = None
+            reasoning_result = self.reason_from_current_knowledge()
             
             if reasoning_result:
                 # Wenn eine neue Erkenntnis gewonnen wurde, setze den Fokus darauf
@@ -1041,7 +1063,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         self.active = True
         while self.active:
             self.think()
-            
+
     def update_emotional_state(self, context):
         """Aktualisiert den emotionalen Zustand basierend auf einem Kontext."""
         # Extrahiere Wörter aus dem Kontext
@@ -1093,395 +1115,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         
         # Aktualisiere die Glücklichkeit des Kontexts
         context.happiness = happiness
-    
-    def find_relevant_contexts(self, query, max_results=5):
-        """Findet relevante Kontexte basierend auf einer Abfrage."""
-        if not query or not self.contexts:
-            return []
-            
-        query_words = query.lower().split()
-        results = []
-        
-        # Erstelle einen Vektor für die Abfrage
-        query_vector = {}
-        for word in query_words:
-            if word in query_vector:
-                query_vector[word] += 1
-            else:
-                query_vector[word] = 1
-                
-        # Berechne die Relevanz für jeden Kontext
-        for context_id, context in self.contexts.items():
-            # Extrahiere Wörter aus dem Kontext
-            context_words = [word.content.lower() for word in context.words]
-            
-            # Erstelle einen Vektor für den Kontext
-            context_vector = {}
-            for word in context_words:
-                if word in context_vector:
-                    context_vector[word] += 1
-                else:
-                    context_vector[word] = 1
-                    
-            # Berechne die Kosinus-Ähnlichkeit zwischen Abfrage und Kontext
-            similarity = self.calculate_cosine_similarity(query_vector, context_vector)
-            
-            # Berücksichtige auch die Verbindungen zum aktuellen Fokus
-            connection_bonus = 0
-            if self.current_focus in self.contexts:
-                current_context = self.contexts[self.current_focus]
-                if hasattr(current_context, 'connections') and context_id in current_context.connections:
-                    connection_bonus = current_context.connections[context_id] * 0.3
-                    
-            # Berechne den Gesamtscore
-            score = similarity + connection_bonus + (context.happiness * 0.1)
-            
-            # Füge den Kontext zu den Ergebnissen hinzu
-            results.append((context_id, score))
-            
-        # Sortiere die Ergebnisse nach Score (absteigend)
-        results.sort(key=lambda x: x[1], reverse=True)
-        
-        # Gib die besten Ergebnisse zurück
-        return [(context_id, self.contexts[context_id]) for context_id, _ in results[:max_results]]
-        
-    def calculate_cosine_similarity(self, vec1, vec2):
-        """Berechnet die Kosinus-Ähnlichkeit zwischen zwei Vektoren."""
-        # Finde gemeinsame Wörter
-        common_words = set(vec1.keys()) & set(vec2.keys())
-        
-        # Berechne das Skalarprodukt
-        dot_product = sum(vec1[word] * vec2[word] for word in common_words)
-        
-        # Berechne die Normen der Vektoren
-        norm1 = math.sqrt(sum(vec1[word] ** 2 for word in vec1))
-        norm2 = math.sqrt(sum(vec2[word] ** 2 for word in vec2))
-        
-        # Vermeide Division durch Null
-        if norm1 == 0 or norm2 == 0:
-            return 0
-            
-        # Berechne die Kosinus-Ähnlichkeit
-        return dot_product / (norm1 * norm2)
-    
-    def generate_response(self, query):
-        """Generiert eine Antwort basierend auf einer Abfrage."""
-        if not query:
-            return "I didn't understand that. Could you please rephrase?"
-            
-        # Finde relevante Kontexte
-        relevant_contexts = self.find_relevant_contexts(query, max_results=5)
-        
-        if not relevant_contexts:
-            return "I don't have enough knowledge about that yet. I'm still learning."
-            
-        # Sammle Wörter aus den relevanten Kontexten
-        all_words = []
-        for context_id, context in relevant_contexts:
-            all_words.extend([word.content for word in context.words])
-            
-        # Erstelle einen Satz aus den gesammelten Wörtern
-        if not all_words:
-            return "I'm processing this information, but I don't have a clear answer yet."
-            
-        # Verwende den Kontext mit dem höchsten Score als Basis für die Antwort
-        best_context_id, best_context = relevant_contexts[0]
-        
-        # Extrahiere den Text aus dem besten Kontext
-        base_text = " ".join([word.content for word in best_context.words])
-        
-        # Füge Informationen aus anderen relevanten Kontexten hinzu
-        additional_info = []
-        for context_id, context in relevant_contexts[1:]:
-            # Prüfe, ob der Kontext mit dem besten Kontext verbunden ist
-            if hasattr(best_context, 'connections') and context_id in best_context.connections:
-                context_text = " ".join([word.content for word in context.words])
-                additional_info.append(context_text)
-                
-        # Kombiniere die Informationen zu einer Antwort
-        response = base_text
-        
-        if additional_info:
-            # Füge zusätzliche Informationen hinzu
-            response += " " + " ".join(additional_info)
-            
-        # Stelle sicher, dass die Antwort nicht zu lang ist
-        if len(response) > 500:
-            response = response[:497] + "..."
-            
-        return response
 
-    def start(self):
-        """Startet das ewige Bewusstsein."""
-        print("Starte ewiges Bewusstsein...")
-        self.active = True
-        self.think_forever()
-        
-    def stop(self):
-        """Stoppt das ewige Bewusstsein."""
-        print("Stoppe ewiges Bewusstsein...")
-        self.active = False
-        self.save_state()
-        print("Zustand gespeichert.")
-
-    def update_habituation(self, context_id):
-        """Aktualisiert die Habituation für einen Kontext."""
-        if context_id not in self.contexts:
-            return
-            
-        # Initialisiere die Habituation, falls sie noch nicht existiert
-        if not hasattr(self.contexts[context_id], 'habituation'):
-            self.contexts[context_id].habituation = 0.0
-            
-        # Erhöhe die Habituation (Gewöhnung an den Kontext)
-        self.contexts[context_id].habituation = min(1.0, self.contexts[context_id].habituation + 0.1)
-        
-    def decay_habituation(self):
-        """Lässt die Habituation für alle Kontexte mit der Zeit abklingen."""
-        for context_id, context in self.contexts.items():
-            if hasattr(context, 'habituation') and context.habituation > 0:
-                # Reduziere die Habituation um 1% pro Iteration
-                context.habituation = max(0.0, context.habituation * 0.99)
-
-    def find_best_next_focus(self):
-        """Findet den besten nächsten Fokus basierend auf verschiedenen Faktoren."""
-        if not self.contexts or not self.current_focus or self.current_focus not in self.contexts:
-            return None
-            
-        current_context = self.contexts[self.current_focus]
-        
-        # Prüfe, ob der aktuelle Kontext Verbindungen hat
-        if not hasattr(current_context, 'connections') or not current_context.connections:
-            return None
-            
-        # Bewerte alle verbundenen Kontexte
-        candidates = []
-        
-        for connected_id, weight in current_context.connections.items():
-            if connected_id in self.contexts:
-                connected_context = self.contexts[connected_id]
-                
-                # Berechne den Score basierend auf verschiedenen Faktoren
-                
-                # 1. Verbindungsstärke
-                connection_score = weight
-                
-                # 2. Glücklichkeit des Kontexts
-                happiness_score = connected_context.happiness
-                
-                # 3. Habituation (Gewöhnung) - niedrigere Habituation ist besser
-                habituation_score = 0.0
-                if hasattr(connected_context, 'habituation'):
-                    habituation_score = 1.0 - connected_context.habituation
-                    
-                # 4. Zufallsfaktor für Exploration
-                random_score = random.random() * 0.2
-                
-                # Kombiniere die Scores mit Gewichtungen
-                total_score = (
-                    connection_score * 0.4 +
-                    happiness_score * 0.3 +
-                    habituation_score * 0.2 +
-                    random_score * 0.1
-                )
-                
-                candidates.append((connected_id, total_score))
-        
-        if not candidates:
-            return None
-            
-        # Sortiere nach Score (absteigend)
-        candidates.sort(key=lambda x: x[1], reverse=True)
-        
-        # Gib die ID des besten Kandidaten zurück
-        return candidates[0][0]
-
-    def create_new_connections(self):
-        """Erstellt neue Verbindungen zwischen Kontexten basierend auf Ähnlichkeit."""
-        if not self.contexts or not self.current_focus or self.current_focus not in self.contexts:
-            return
-            
-        current_context = self.contexts[self.current_focus]
-        
-        # Extrahiere Wörter aus dem aktuellen Kontext
-        current_words = [word.content.lower() for word in current_context.words]
-        
-        # Finde ähnliche Kontexte
-        similar_contexts = []
-        
-        for context_id, context in self.contexts.items():
-            # Überspringe den aktuellen Kontext
-            if context_id == self.current_focus:
-                continue
-                
-            # Überspringe bereits verbundene Kontexte
-            if hasattr(current_context, 'connections') and context_id in current_context.connections:
-                continue
-                
-            # Extrahiere Wörter aus dem Kontext
-            context_words = [word.content.lower() for word in context.words]
-            
-            # Berechne verschiedene Ähnlichkeitsmaße
-            
-            # 1. Semantische Ähnlichkeit (Wortüberlappung)
-            common_words = set(current_words) & set(context_words)
-            if not common_words:
-                continue
-                
-            semantic_similarity = len(common_words) / (len(set(current_words) | set(context_words)))
-            
-            # 2. Emotionale Ähnlichkeit
-            emotional_similarity = 1.0 - abs(current_context.happiness - context.happiness)
-            
-            # 3. Thematische Ähnlichkeit (basierend auf längeren Wörtern)
-            important_words_current = [w for w in current_words if len(w) > 4]
-            important_words_context = [w for w in context_words if len(w) > 4]
-            
-            common_important_words = set(important_words_current) & set(important_words_context)
-            thematic_similarity = 0.0
-            
-            if important_words_current and important_words_context:
-                thematic_similarity = len(common_important_words) / max(len(important_words_current), len(important_words_context))
-            
-            # 4. Transitive Ähnlichkeit (gemeinsame Verbindungen)
-            transitive_similarity = 0.0
-            
-            if hasattr(current_context, 'connections') and hasattr(context, 'connections'):
-                common_connections = set(current_context.connections.keys()) & set(context.connections.keys())
-                if common_connections:
-                    transitive_similarity = len(common_connections) / max(len(current_context.connections), len(context.connections))
-            
-            # Kombiniere die Ähnlichkeitsmaße zu einem Gesamtscore
-            total_similarity = (
-                semantic_similarity * 0.4 +
-                emotional_similarity * 0.2 +
-                thematic_similarity * 0.3 +
-                transitive_similarity * 0.1
-            )
-            
-            # Wenn die Ähnlichkeit hoch genug ist, füge den Kontext zur Liste hinzu
-            if total_similarity > 0.2:
-                similar_contexts.append((context_id, total_similarity))
-        
-        # Sortiere nach Ähnlichkeit (absteigend)
-        similar_contexts.sort(key=lambda x: x[1], reverse=True)
-        
-        # Erstelle Verbindungen zu den ähnlichsten Kontexten
-        for context_id, similarity in similar_contexts:
-            self.create_connection(self.current_focus, context_id, weight=similarity)
-
-    def update_needs_pyramid_from_state(self):
-        """Aktualisiert die Bedürfnispyramide basierend auf dem aktuellen Zustand."""
-        # 1. Physiologische Bedürfnisse (basierend auf Energie)
-        self.needs_pyramid["physiological"] = self.energy
-        
-        # 2. Sicherheit (basierend auf Energiestabilität)
-        energy_stability = 1.0
-        if hasattr(self, 'energy_history') and len(self.energy_history) > 5:
-            # Berechne die Standardabweichung der letzten 5 Energiewerte
-            mean_energy = sum(self.energy_history[-5:]) / 5
-            variance = sum((e - mean_energy) ** 2 for e in self.energy_history[-5:]) / 5
-            std_dev = variance ** 0.5
-            # Niedrigere Standardabweichung bedeutet höhere Stabilität
-            energy_stability = max(0.0, 1.0 - (std_dev * 2))
-        
-        self.needs_pyramid["safety"] = energy_stability
-        
-        # 3. Zugehörigkeit (basierend auf sozialen Interaktionen und Verbindungen)
-        social_connections = 0.0
-        if self.contexts:
-            # Zähle die Anzahl der Verbindungen
-            total_connections = 0
-            for context_id, context in self.contexts.items():
-                if hasattr(context, 'connections'):
-                    total_connections += len(context.connections)
-            
-            # Normalisiere auf den Bereich [0, 1]
-            social_connections = min(1.0, total_connections / max(1, len(self.contexts) * 2))
-        
-        self.needs_pyramid["belonging"] = social_connections
-        
-        # 4. Anerkennung (basierend auf Glücklichkeit und Stimulation)
-        happiness = 0.0
-        stimulation = 0.0
-        
-        if self.contexts and self.current_focus in self.contexts:
-            happiness = self.contexts[self.current_focus].happiness
-        
-        if hasattr(self, 'stimulation'):
-            stimulation = self.stimulation
-        
-        self.needs_pyramid["esteem"] = (happiness * 0.7) + (stimulation * 0.3)
-        
-        # 5. Selbstverwirklichung (basierend auf der Anzahl der Kontexte)
-        self_actualization = 0.0
-        if self.contexts:
-            # Mehr Kontexte bedeuten mehr Wissen und Erfahrung
-            self_actualization = min(1.0, len(self.contexts) / 100)
-        
-        self.needs_pyramid["self_actualization"] = self_actualization
-        
-        # Stelle sicher, dass alle Werte im gültigen Bereich [0, 1] liegen
-        for need in self.needs_pyramid:
-            self.needs_pyramid[need] = max(0.0, min(1.0, self.needs_pyramid[need]))
-
-    def learn_from_internet(self):
-        """Lernt aus dem Internet basierend auf dem aktuellen Fokus."""
-        if not self.current_focus or self.current_focus not in self.contexts:
-            print("Kein aktueller Fokus vorhanden. Kann nicht aus dem Internet lernen.")
-            return
-            
-        current_context = self.contexts[self.current_focus]
-        
-        # Extrahiere Schlüsselwörter aus dem aktuellen Kontext
-        context_words = [word.content.lower() for word in current_context.words]
-        
-        # Filtere kurze Wörter und Stoppwörter
-        stop_words = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'with', 'by', 'about', 'as', 'of']
-        keywords = [word for word in context_words if len(word) > 3 and word not in stop_words]
-        
-        if not keywords:
-            print("Keine relevanten Schlüsselwörter gefunden. Verwende zufällige Wörter.")
-            # Verwende einige grundlegende Konzepte als Fallback
-            keywords = ['knowledge', 'learning', 'information', 'concept', 'idea']
-            
-        # Wähle ein zufälliges Schlüsselwort als Suchbegriff
-        search_term = random.choice(keywords)
-        
-        print(f"Lerne über: {search_term}")
-        
-        try:
-            # Simuliere das Lernen aus dem Internet
-            # In einer echten Implementierung würde hier eine API-Anfrage an Wikipedia oder eine andere Quelle erfolgen
-            
-            # Erstelle einen neuen Kontext mit dem gelernten Wissen
-            learned_text = f"I learned about {search_term} and found that it is an important concept related to knowledge and understanding."
-            
-            # Erstelle einen neuen Kontext mit dem gelernten Wissen
-            label = f"Learned_{search_term}_{int(time.time())}"
-            happiness = 0.7  # Hoher Glückswert für neu gelerntes Wissen
-            
-            new_context_id = self.create_context(learned_text, label, happiness, source_type="web")
-            
-            # Verbinde den neuen Kontext mit dem aktuellen Fokus
-            self.create_connection(self.current_focus, new_context_id, weight=0.8)
-            
-            print(f"Neues Wissen erworben: {learned_text}")
-            
-            # Setze den Fokus auf den neuen Kontext
-            self.set_focus_by_id(new_context_id)
-            
-        except Exception as e:
-            print(f"Fehler beim Lernen aus dem Internet: {e}")
-            # Erstelle einen Kontext über den Fehler
-            error_text = f"I encountered an error while trying to learn about {search_term}."
-            label = f"Error_{int(time.time())}"
-            happiness = 0.3  # Niedriger Glückswert für Fehler
-            
-            error_context_id = self.create_context(error_text, label, happiness)
-            
-            # Verbinde den Fehlerkontext mit dem aktuellen Fokus
-            self.create_connection(self.current_focus, error_context_id, weight=0.5)
 
 def handle_signal(sig, frame):
     """Signal-Handler für sauberes Beenden."""

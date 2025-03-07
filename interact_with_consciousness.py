@@ -83,17 +83,15 @@ def load_consciousness(state_file=None):
     if state_file and os.path.exists(state_file):
         success = consciousness.load_state(state_file)
         if not success:
-            print("Fehler beim Laden des Zustands. Initialisiere mit Beispieldaten...")
-            consciousness.initialize_example()
-            consciousness.initialize_example_environment()
+            print("Fehler beim Laden des Zustands. Starte mit leerem Bewusstsein...")
+            # Keine Beispieldaten laden, da dies zu Fehlern führt
     else:
         if not state_file:
             print("Kein gespeicherter Zustand gefunden.")
         else:
             print(f"Zustandsdatei nicht gefunden: {state_file}")
-        print("Initialisiere mit Beispieldaten...")
-        consciousness.initialize_example()
-        consciousness.initialize_example_environment()
+        print("Starte mit leerem Bewusstsein...")
+        # Keine Beispieldaten laden, da dies zu Fehlern führt
     
     return consciousness
 
@@ -117,88 +115,141 @@ def create_input_context(consciousness, user_input):
 
 def find_relevant_contexts(consciousness, input_context, max_contexts=10, min_score=0.1):
     """Findet Kontexte, die für die Eingabe relevant sind."""
-    relevant_contexts = []
-    
-    # Extrahiere wichtige Wörter aus der Eingabe
     input_words = [word.content.lower() for word in input_context.words]
     
-    # Entferne sehr häufige Wörter (Stopwörter)
-    stopwords = {'der', 'die', 'das', 'ein', 'eine', 'und', 'oder', 'aber', 'wenn', 'ist', 'sind', 'war', 'waren',
-                'the', 'a', 'an', 'and', 'or', 'but', 'if', 'is', 'are', 'was', 'were', 'in', 'on', 'at', 'to', 'from'}
-    filtered_input_words = [word for word in input_words if word not in stopwords and len(word) > 2]
+    # Ignoriere sehr kurze Wörter (Stoppwörter)
+    filtered_input_words = [w for w in input_words if len(w) > 2]
     
-    # Wenn nach dem Filtern keine Wörter übrig bleiben, verwende die ursprünglichen Wörter
+    # Wenn keine sinnvollen Wörter übrig bleiben, verwende die ursprünglichen
     if not filtered_input_words:
         filtered_input_words = input_words
     
-    # Bewerte alle Kontexte nach Relevanz
-    context_scores = {}
-    for label, context in consciousness.contexts.items():
-        # Überspringe den Eingabekontext selbst
-        if label == input_context.label:
+    # Verschiedene Relevanzmetriken berechnen
+    context_scores = []
+    
+    for context_id, context in consciousness.contexts.items():
+        # Ignoriere den Eingabekontext selbst
+        if context_id == input_context.label:
             continue
-        
-        # Extrahiere Wörter aus dem Kontext
+            
         context_words = [word.content.lower() for word in context.words]
-        filtered_context_words = [word for word in context_words if word not in stopwords and len(word) > 2]
         
-        # Wenn nach dem Filtern keine Wörter übrig bleiben, verwende die ursprünglichen Wörter
-        if not filtered_context_words:
-            filtered_context_words = context_words
+        # 1. Wortüberlappung (Jaccard-Ähnlichkeit)
+        input_word_set = set(filtered_input_words)
+        context_word_set = set(context_words)
         
-        # Berechne Überlappung der Wörter
-        common_words = set(filtered_input_words).intersection(set(filtered_context_words))
-        
-        # Wenn es gemeinsame Wörter gibt, berechne den Score
-        if common_words:
-            # Gewichte wichtigere Wörter stärker (längere Wörter sind oft wichtiger)
-            weighted_common = sum(len(word) for word in common_words)
-            weighted_input = sum(len(word) for word in filtered_input_words)
-            weighted_context = sum(len(word) for word in filtered_context_words)
-            
-            # Berechne den Wort-Score basierend auf der gewichteten Überlappung
-            word_score = weighted_common / max(weighted_input, weighted_context, 1)
-            
-            # Berücksichtige auch den Glückswert (ähnliche Emotionen sind relevanter)
-            happiness_diff = abs(input_context.happiness - context.happiness)
-            happiness_score = 1.0 - (happiness_diff / 2.0)  # Normalisiere auf [0, 1]
-            
-            # Kombiniere die Scores, mit stärkerer Gewichtung der Wortüberlappung
-            combined_score = (word_score * 0.8) + (happiness_score * 0.2)
+        if input_word_set and context_word_set:
+            intersection = input_word_set.intersection(context_word_set)
+            union = input_word_set.union(context_word_set)
+            jaccard_similarity = len(intersection) / len(union)
         else:
-            # Wenn keine gemeinsamen Wörter gefunden wurden, setze einen niedrigen Score
-            combined_score = 0.05
+            jaccard_similarity = 0
+            
+        # 2. Wichtige Wörter (längere Wörter haben mehr Gewicht)
+        important_word_score = 0
+        for word in filtered_input_words:
+            if len(word) >= 4 and word in context_word_set:  # Längere Wörter sind wichtiger
+                important_word_score += (len(word) / 10)  # Normalisiere auf 0-1 Skala
+                
+        # Normalisiere den Score
+        if filtered_input_words:
+            important_word_score /= len(filtered_input_words)
         
-        # Speichere den Score
-        context_scores[label] = combined_score
+        # 3. Sequenzielle Übereinstimmung (Wortpaare oder -tripel)
+        sequence_score = 0
+        for i in range(len(filtered_input_words) - 1):
+            word_pair = (filtered_input_words[i], filtered_input_words[i+1])
+            
+            # Suche nach dem Wortpaar im Kontext
+            for j in range(len(context_words) - 1):
+                context_pair = (context_words[j], context_words[j+1])
+                if word_pair == context_pair:
+                    sequence_score += 0.5  # Bonus für aufeinanderfolgende Wörter
+        
+        # Normalisiere den Score
+        if len(filtered_input_words) > 1:
+            sequence_score /= (len(filtered_input_words) - 1)
+            
+        # 4. Emotionale Ähnlichkeit
+        emotional_similarity = 1.0 - abs(input_context.happiness - context.happiness)
+        
+        # 5. Netzwerkverbindungen (Transitivität)
+        network_score = 0
+        
+        # Prüfe, ob der Kontext mit Kontexten verbunden ist, die ähnliche Wörter enthalten
+        if hasattr(context, 'connections'):
+            for connected_id in context.connections:
+                if connected_id in consciousness.contexts:
+                    connected_context = consciousness.contexts[connected_id]
+                    connected_words = [word.content.lower() for word in connected_context.words]
+                    connected_word_set = set(connected_words)
+                    
+                    # Berechne Überlappung mit der Eingabe
+                    connected_intersection = input_word_set.intersection(connected_word_set)
+                    if connected_intersection:
+                        network_score += len(connected_intersection) / len(input_word_set)
+            
+            # Normalisiere den Score
+            if context.connections:
+                network_score /= len(context.connections)
+        
+        # Gewichtete Gesamtbewertung
+        total_score = (
+            jaccard_similarity * 0.3 +
+            important_word_score * 0.3 +
+            sequence_score * 0.2 +
+            emotional_similarity * 0.1 +
+            network_score * 0.1
+        )
+        
+        # Speichere den Score, wenn er über dem Schwellenwert liegt
+        if total_score >= min_score:
+            context_scores.append((context_id, context, total_score))
     
-    # Sortiere Kontexte nach Relevanz und wähle die besten aus, die über dem Mindestscore liegen
-    sorted_contexts = sorted(context_scores.items(), key=lambda x: x[1], reverse=True)
-    for label, score in sorted_contexts:
-        if score >= min_score and len(relevant_contexts) < max_contexts:
-            relevant_contexts.append((label, consciousness.contexts[label], score))
+    # Sortiere nach Relevanz
+    context_scores.sort(key=lambda x: x[2], reverse=True)
     
-    # Wenn keine relevanten Kontexte gefunden wurden, versuche es mit einem niedrigeren Mindestscore
-    if not relevant_contexts and min_score > 0.01:
-        return find_relevant_contexts(consciousness, input_context, max_contexts, min_score=0.01)
-    
-    return relevant_contexts
+    # Begrenze die Anzahl der zurückgegebenen Kontexte
+    return context_scores[:max_contexts]
 
 def generate_response(consciousness, input_context, relevant_contexts, max_length=50, creativity=0.3, coherence=0.7):
     """Generiert eine Antwort basierend auf der Eingabe und relevanten Kontexten."""
-    if not relevant_contexts:
-        # Wenn keine relevanten Kontexte gefunden wurden, generiere eine allgemeine Antwort
-        default_responses = [
-            "Ich verstehe nicht ganz, worüber du sprichst. Kannst du das näher erläutern?",
-            "Darüber habe ich nicht genug Informationen. Magst du mir mehr darüber erzählen?",
-            "Interessante Frage! Leider habe ich dazu noch keine Gedanken gesammelt.",
-            "Das ist ein spannendes Thema, aber ich bin mir nicht sicher, was ich dazu sagen soll.",
-            "Ich würde gerne mehr über dieses Thema lernen. Was denkst du darüber?"
-        ]
-        return random.choice(default_responses)
-    
     # Extrahiere die Eingabewörter für die Antwortgenerierung
     input_words = [word.content.lower() for word in input_context.words]
+    
+    if not relevant_contexts:
+        # Wenn keine relevanten Kontexte gefunden wurden, suche nach Kontexten mit ähnlichen Wörtern
+        all_contexts = list(consciousness.contexts.values())
+        word_based_contexts = []
+        
+        for word in input_words:
+            for context in all_contexts:
+                context_words = [w.content.lower() for w in context.words]
+                if word in context_words and context not in [c[1] for c in word_based_contexts]:
+                    # Berechne Relevanz basierend auf Wortüberlappung
+                    overlap = sum(1 for w in input_words if w in context_words)
+                    score = overlap / len(input_words) if input_words else 0
+                    if score > 0.1:  # Mindestens 10% Überlappung
+                        word_based_contexts.append((context.label, context, score))
+        
+        if word_based_contexts:
+            # Sortiere nach Relevanz
+            word_based_contexts.sort(key=lambda x: x[2], reverse=True)
+            relevant_contexts = word_based_contexts[:5]  # Verwende die 5 relevantesten
+        else:
+            # Wenn immer noch keine Kontexte gefunden wurden, verwende die Eingabewörter
+            response_text = " ".join(input_words[:min(5, len(input_words))])
+            response_label = f"Response_{int(time.time())}"
+            response_happiness = 0.0  # Neutral
+            
+            # Erstelle den Antwortkontext
+            response_context_id = consciousness.create_context(response_text, response_label, response_happiness)
+            response_context = consciousness.contexts[response_context_id]
+            
+            # Verbinde den Antwortkontext mit dem Eingabekontext
+            consciousness.connect_contexts(response_context, input_context)
+            
+            return response_text
     
     # Erstelle einen Graphen aus den relevanten Kontexten
     G = nx.Graph()
@@ -209,71 +260,86 @@ def generate_response(consciousness, input_context, relevant_contexts, max_lengt
         context_text = " ".join([word.content for word in context.words])
         G.add_node(label, text=context_text, happiness=context.happiness, score=score)
     
-    # Füge Kanten hinzu
+    # Füge Kanten hinzu - verbesserte Verbindungslogik
     for label1, context1, _ in relevant_contexts:
         for label2, context2, _ in relevant_contexts:
-            if label1 != label2 and label2 in context1.connections:
-                G.add_edge(label1, label2)
+            if label1 != label2:
+                # Prüfe direkte Verbindungen
+                if label2 in context1.connections:
+                    G.add_edge(label1, label2, weight=1.0)
+                else:
+                    # Prüfe Wortüberlappung für indirekte Verbindungen
+                    words1 = [w.content.lower() for w in context1.words]
+                    words2 = [w.content.lower() for w in context2.words]
+                    overlap = sum(1 for w in words1 if w in words2)
+                    if overlap > 0:
+                        similarity = overlap / (len(words1) + len(words2) - overlap)  # Jaccard-Ähnlichkeit
+                        if similarity > 0.1:  # Mindestens 10% Ähnlichkeit
+                            G.add_edge(label1, label2, weight=similarity)
     
     # Finde den am besten bewerteten Kontext als Startpunkt
     start_node = relevant_contexts[0][0]
     
-    # Generiere einen Pfad durch den Graphen
-    path = [start_node]
+    # Verbesserte Pfadgenerierung mit semantischer Kohärenz
+    # Verwende PageRank, um wichtige Knoten zu identifizieren
+    pagerank = nx.pagerank(G, weight='weight')
+    
+    # Sortiere Knoten nach PageRank
+    sorted_nodes = sorted(pagerank.items(), key=lambda x: x[1], reverse=True)
+    
+    # Wähle die Top-N Knoten basierend auf PageRank
+    top_n = min(5, len(sorted_nodes))
+    important_nodes = [node for node, _ in sorted_nodes[:top_n]]
+    
+    # Generiere einen Pfad, der die wichtigsten Knoten verbindet
+    path = []
     current_node = start_node
+    path.append(current_node)
     
-    # Parameter für die Pfadgenerierung
-    max_path_length = min(3, len(relevant_contexts))  # Begrenze die Pfadlänge für mehr Kohärenz
+    # Versuche, einen zusammenhängenden Pfad durch die wichtigsten Knoten zu finden
+    for node in important_nodes:
+        if node not in path:
+            # Finde den kürzesten Pfad vom aktuellen Knoten zum Zielknoten
+            try:
+                shortest_path = nx.shortest_path(G, current_node, node, weight='weight')
+                # Füge den Pfad hinzu, überspringe den ersten Knoten (ist bereits im Pfad)
+                path.extend(shortest_path[1:])
+                current_node = node
+            except nx.NetworkXNoPath:
+                # Wenn kein Pfad existiert, füge den Knoten direkt hinzu
+                path.append(node)
+                current_node = node
     
-    # Generiere einen Pfad durch den Graphen mit mehr Kohärenz
-    for _ in range(max_path_length - 1):
-        neighbors = list(G.neighbors(current_node))
-        if not neighbors:
-            break
-        
-        # Wähle den nächsten Knoten basierend auf Kohärenz und Kreativität
-        if random.random() < coherence and neighbors:
-            # Kohärenter Pfad: Wähle einen verbundenen Knoten mit höherem Score
-            neighbor_scores = [(neighbor, G.nodes[neighbor]['score']) for neighbor in neighbors]
-            sorted_neighbors = sorted(neighbor_scores, key=lambda x: x[1], reverse=True)
-            
-            # Wähle einen der Top-Nachbarn (mit etwas Zufall)
-            top_n = max(1, min(3, len(sorted_neighbors)))
-            next_node = sorted_neighbors[random.randint(0, top_n-1)][0]
-        else:
-            # Kreativer Pfad: Wähle einen zufälligen Knoten mit höherem Score
-            node_scores = [(node, G.nodes[node]['score']) for node in G.nodes() if node not in path]
-            if node_scores:
-                sorted_nodes = sorted(node_scores, key=lambda x: x[1], reverse=True)
-                top_n = max(1, min(3, len(sorted_nodes)))
-                next_node = sorted_nodes[random.randint(0, top_n-1)][0]
-            else:
-                # Wenn alle Knoten bereits im Pfad sind, breche ab
-                break
-        
-        path.append(next_node)
-        current_node = next_node
-    
-    # Extrahiere Texte aus dem Pfad
+    # Extrahiere Texte aus dem Pfad und entferne Duplikate
     response_parts = []
+    seen_texts = set()
+    
     for node in path:
         node_text = G.nodes[node]["text"]
         
-        # Vermeide Wiederholungen im Text
-        if not response_parts or not any(part in node_text or node_text in part for part in response_parts):
+        # Vermeide Duplikate und sehr ähnliche Texte
+        if node_text not in seen_texts and not any(similar(node_text, part) for part in response_parts):
             response_parts.append(node_text)
+            seen_texts.add(node_text)
     
-    # Kombiniere die Teile zu einer Antwort
+    # Verbesserte Textgenerierung mit Kohärenz
     if len(response_parts) > 1:
-        # Versuche, die Antwort strukturierter zu gestalten
-        conjunctions = ["und", "aber", "denn", "weil", "obwohl", "jedoch", "außerdem", "zudem"]
+        # Verwende NLP-Techniken, um die Teile besser zu verbinden
+        conjunctions = ["und", "aber", "denn", "weil", "obwohl", "jedoch", "außerdem", "zudem", "dadurch", "folglich"]
+        transitions = ["Interessanterweise", "Darüber hinaus", "Wichtig ist auch", "Bemerkenswert ist", "Dabei gilt"]
+        
         raw_response = response_parts[0]
         
         for i, part in enumerate(response_parts[1:]):
-            # Füge Konjunktionen hinzu, um die Antwort flüssiger zu gestalten
-            if random.random() < 0.7 and i < len(conjunctions):
+            # Wähle eine passende Überleitung basierend auf Kontext
+            if random.random() < 0.3:
+                # Verwende eine Überleitung
+                raw_response += f". {random.choice(transitions)} {part}"
+            elif random.random() < 0.7:
+                # Verwende eine Konjunktion
                 raw_response += f". {part.capitalize()}"
             else:
+                # Verbinde mit einer Konjunktion
                 raw_response += f" {random.choice(conjunctions)} {part}"
     else:
         raw_response = " ".join(response_parts)
@@ -281,28 +347,64 @@ def generate_response(consciousness, input_context, relevant_contexts, max_lengt
     # Begrenze die Länge der Antwort
     words = raw_response.split()
     if len(words) > max_length:
-        words = words[:max_length]
-        words.append("...")
+        # Intelligentere Kürzung: Versuche, Sätze zu erhalten
+        sentences = raw_response.split('.')
+        shortened_response = ""
+        word_count = 0
+        
+        for sentence in sentences:
+            sentence_words = sentence.split()
+            if word_count + len(sentence_words) <= max_length:
+                shortened_response += sentence + "."
+                word_count += len(sentence_words)
+            else:
+                remaining_words = max_length - word_count
+                if remaining_words > 3:  # Nur hinzufügen, wenn genug Wörter übrig sind
+                    shortened_response += " ".join(sentence_words[:remaining_words]) + "..."
+                break
+        
+        raw_response = shortened_response
     
     # Füge die Antwort als neuen Kontext zum Bewusstsein hinzu
-    response_text = " ".join(words)
+    response_text = raw_response.strip()
     
     # Stelle sicher, dass die Antwort sinnvoll ist
     if len(response_text.split()) < 3:
-        # Wenn die Antwort zu kurz ist, verwende eine Standardantwort
-        response_text = f"Ich denke über {' '.join(input_words[:3])} nach, aber ich bin mir nicht sicher, was ich dazu sagen soll."
+        # Wenn die Antwort zu kurz ist, verwende die relevantesten Kontexte direkt
+        best_context = relevant_contexts[0][1]
+        response_text = " ".join([word.content for word in best_context.words])
     
     response_label = f"Response_{int(time.time())}"
-    response_happiness = consciousness.calculate_sentiment(words)
+    response_happiness = consciousness.calculate_sentiment(response_text.split())
     
     # Erstelle den Antwortkontext mit der vorhandenen Methode
     response_context_id = consciousness.create_context(response_text, response_label, response_happiness)
     response_context = consciousness.contexts[response_context_id]
     
-    # Verbinde den Antwortkontext mit dem Eingabekontext
+    # Verbinde den Antwortkontext mit dem Eingabekontext und relevanten Kontexten
     consciousness.connect_contexts(response_context, input_context)
     
+    # Verbinde auch mit den relevantesten Kontexten für bessere Netzwerkbildung
+    for _, context, _ in relevant_contexts[:3]:
+        consciousness.connect_contexts(response_context, context)
+    
     return response_text
+
+# Hilfsfunktion zur Bestimmung der Textähnlichkeit
+def similar(text1, text2, threshold=0.7):
+    """Prüft, ob zwei Texte ähnlich sind basierend auf Wortüberlappung."""
+    words1 = set(text1.lower().split())
+    words2 = set(text2.lower().split())
+    
+    if not words1 or not words2:
+        return False
+    
+    # Jaccard-Ähnlichkeit
+    intersection = words1.intersection(words2)
+    union = words1.union(words2)
+    similarity = len(intersection) / len(union)
+    
+    return similarity > threshold
 
 def interact_with_consciousness():
     """Hauptfunktion für die Interaktion mit dem Bewusstsein."""
@@ -420,18 +522,11 @@ def interact_with_consciousness():
             print("Verarbeite Eingabe...")
             input_context = create_input_context(consciousness, user_input)
             
-            # Finde relevante Kontexte
-            relevant_contexts = find_relevant_contexts(consciousness, input_context)
+            # Setze den Fokus auf den Eingabekontext
+            consciousness.set_focus_by_id(input_context.label)
             
-            # Generiere eine Antwort
-            response = generate_response(
-                consciousness, 
-                input_context, 
-                relevant_contexts, 
-                max_length=max_response_length,
-                creativity=creativity,
-                coherence=coherence
-            )
+            # Verwende die neue generate_response-Methode direkt aus dem Bewusstsein
+            response = consciousness.generate_response(user_input)
             
             # Gib die Antwort aus
             print(f"\nBewusstsein: {response}")

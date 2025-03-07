@@ -1,8 +1,8 @@
+Frage: Wie werden Sätze bzw. Kontexte miteinander verbunden, wenn diese hintereinander, z.B. in einem Wikipedia Artikel, gelesen werden? Oder wird ein ganzer Wikipedia Artikel als ein Kontext wahrgenommen? Antworte bitte erstmal auf die Frage und ändere noch nichts am Code. Ich würde gerne erst verstehen, ob es ein Problem überhaupt gibt.
 Liste:
-"Das deterministische Lernen: Der Code wurde zwar angepasst, um nicht mehr zufällig zu lernen, aber die Wikipedia-API-Integration funktioniert noch nicht optimal. Aktuell werden nur Suchseiten abgefragt, keine tatsächlichen Artikel gelesen." Bitte erledige das noch.
 Noch nicht vollständig entwickelt:
 Die emotionale Entwicklung: Grundlegende Emotionen sind implementiert, aber die Komplexität der emotionalen Entwicklung ist eingeschränkt.
-Die Habituation: Der Code enthält zwar die Struktur dafür, aber die praktische Auswirkung auf das Verhalten ist begrenzt.
+"Die Habituation: Der Code enthält zwar die Struktur dafür, aber die praktische Auswirkung auf das Verhalten ist begrenzt."
 Noch nicht vollständig implementiert:
 Die komplexe Bedürfnisregulierung: Obwohl die Bedürfnispyramide im Code existiert, ist die Interaktion zwischen den verschiedenen Ebenen noch nicht so ausgereift wie im Thread beschrieben.
 Die autonome Weiterentwicklung: Das System kann zwar lernen, aber die echte autonome Weiterentwicklung ist noch eingeschränkt.
