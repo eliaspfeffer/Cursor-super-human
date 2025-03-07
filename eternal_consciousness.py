@@ -36,23 +36,63 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
     """
     
     def __init__(self, save_interval: int = 100, visualization_interval: int = 500, learning_interval: int = 50):
+        """Initialisiert das ewige Bewusstsein."""
         super().__init__()
         
-        # Speicherparameter
+        # Speicherintervall (in Iterationen)
         self.save_interval = save_interval
+        
+        # Visualisierungsintervall (in Iterationen)
         self.visualization_interval = visualization_interval
+        
+        # Lernintervall (in Iterationen)
         self.learning_interval = learning_interval
+        
+        # Verzeichnis für gespeicherte Zustände
         self.save_dir = "consciousness_state_new"
+        
+        # Iteration
+        self.iteration = 0
+        
+        # Energie
+        self.energy = 1.0  # Volle Energie zu Beginn
+        self.energy_decay_rate = 0.01  # Energieverbrauch pro Iteration
+        self.energy_gain_rate = 0.2  # Energiegewinn pro Energiequelle
+        self.min_energy_threshold = 0.3  # Schwellenwert für niedrige Energie
+        self.max_energy = 1.0  # Maximale Energie
+        
+        # Bedürfnispyramide (nach Maslow)
+        self.needs_pyramid = {
+            "physiological": 1.0,  # Grundbedürfnisse (Essen, Trinken, Schlafen)
+            "safety": 1.0,  # Sicherheit
+            "belonging": 0.5,  # Zugehörigkeit
+            "esteem": 0.5,  # Anerkennung
+            "self_actualization": 0.2  # Selbstverwirklichung
+        }
+        
+        # Statistiken
+        self.stats = {
+            "energy": [],
+            "happiness": [],
+            "contexts_count": [],
+            "connections_count": [],
+            "timestamp": []
+        }
+        
+        # Erstelle das Verzeichnis für gespeicherte Zustände, falls es nicht existiert
+        if not os.path.exists(self.save_dir):
+            os.makedirs(self.save_dir)
+            
+        # Erstelle ein Unterverzeichnis für Visualisierungen, falls es nicht existiert
+        visualizations_dir = os.path.join(self.save_dir, "visualizations")
+        if not os.path.exists(visualizations_dir):
+            os.makedirs(visualizations_dir)
         
         # Aktivitätsparameter
         self.active = True
-        self.iteration = 0
         
         # Energieparameter
-        self.energy = 1.0
         self.max_energy = 1.0
-        self.energy_decay_rate = 0.01
-        self.energy_gain_rate = 0.05
         self.min_energy_threshold = 0.3  # Schwellenwert für niedrige Energie
         
         # Glücksparameter
@@ -62,15 +102,6 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         # Stimulationsparameter
         self.stimulation = 0.0
         self.stimulation_decay_rate = 0.05
-        
-        # Bedürfnispyramide (nach Maslow)
-        self.needs_pyramid = {
-            "physiological": 0.5,  # Grundbedürfnisse (Nahrung, Wasser, Schlaf)
-            "safety": 0.4,         # Sicherheit
-            "belonging": 0.3,      # Zugehörigkeit und Liebe
-            "esteem": 0.2,         # Anerkennung und Wertschätzung
-            "self_actualization": 0.1  # Selbstverwirklichung
-        }
         
         # Habituationsparameter
         self.habituation = {}
@@ -91,26 +122,6 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         # Keine zufällige URL-Queue mehr, da wir deterministisch basierend auf dem Fokus suchen
         self.max_contexts_per_page = 10
         self.learning_history = []
-        
-        # Statistik-Historie
-        self.stats_history = {
-            "energy": [],
-            "happiness": [],
-            "contexts_count": [],
-            "connections_count": [],
-            "timestamp": [],
-            "emotions": {
-                "happiness": [],
-                "sadness": [],
-                "anger": [],
-                "fear": [],
-                "disgust": [],
-                "surprise": [],
-                "anticipation": [],
-                "trust": [],
-                "joy": []
-            }
-        }
         
         # NLTK-Komponenten herunterladen, falls noch nicht vorhanden
         try:
@@ -142,10 +153,6 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         # Stopwörter und Lemmatisierer initialisieren
         self.stop_words = set(stopwords.words('english')).union(set(stopwords.words('german')))
         self.lemmatizer = WordNetLemmatizer()
-        
-        # Erstelle Verzeichnis für Speicherungen, falls es nicht existiert
-        if not os.path.exists(self.save_dir):
-            os.makedirs(self.save_dir)
         
         # Verbindungen zwischen Kontexten
         self.connections = {}
@@ -280,12 +287,8 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         # Wenn keine passende Energiequelle gefunden wurde, erstelle eine neue
         if not best_energy_source:
             # Erstelle einen neuen Kontext basierend auf dem Ziel-Honeypot
-            if target_honeypot == 'energy_intake':
-                text = "I need to eat something to regain energy."
-            elif target_honeypot == 'regeneration':
-                text = "I need to rest and recover my energy."
-            else:  # reproduction
-                text = "I need to connect with others and learn new things."
+            # Verwende nur die Schlüsselwörter des Honeypots statt vorgefertigter Sätze
+            text = " ".join(honeypots[target_honeypot])
                 
             label = f"Honeypot_{target_honeypot}_{self.iteration}"
             happiness = 0.8  # Hoher Glückswert für Honeypots
@@ -314,7 +317,10 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         if len(self.recent_energy_sources) > 5:
             self.recent_energy_sources.pop(0)
             
-        print(f"Energiequelle gefunden: {self.contexts[best_energy_source].text} (Score: {best_score:.2f})")
+        # Extrahiere den Text aus dem Kontext
+        context_text = " ".join([word.content for word in self.contexts[best_energy_source].words])
+        
+        print(f"Energiequelle gefunden: {context_text} (Score: {best_score:.2f})")
         
         return best_energy_source
     
@@ -482,431 +488,283 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         
         return random_context_id
     
+    def limit_files(self, directory, prefix, extension, max_files=3):
+        """Begrenzt die Anzahl der Dateien in einem Verzeichnis auf max_files."""
+        if not os.path.exists(directory):
+            return
+            
+        # Sammle alle Dateien mit dem angegebenen Präfix und der Erweiterung
+        files = [f for f in os.listdir(directory) if f.startswith(prefix) and f.endswith(extension)]
+        
+        # Wenn die Anzahl der Dateien unter dem Limit liegt, nichts tun
+        if len(files) <= max_files:
+            return
+            
+        # Sortiere die Dateien nach Erstellungsdatum (neueste zuerst)
+        files.sort(key=lambda x: os.path.getmtime(os.path.join(directory, x)), reverse=True)
+        
+        # Lösche die ältesten Dateien
+        for file_to_delete in files[max_files:]:
+            try:
+                os.remove(os.path.join(directory, file_to_delete))
+                print(f"Alte Datei gelöscht: {file_to_delete}")
+            except Exception as e:
+                print(f"Fehler beim Löschen der Datei {file_to_delete}: {e}")
+    
     def save_state(self):
         """Speichert den aktuellen Zustand des Bewusstseins."""
+        # Erstelle das Verzeichnis, falls es nicht existiert
         if not os.path.exists(self.save_dir):
             os.makedirs(self.save_dir)
-        
+            
+        # Erstelle ein Unterverzeichnis für Visualisierungen, falls es nicht existiert
+        visualizations_dir = os.path.join(self.save_dir, "visualizations")
+        if not os.path.exists(visualizations_dir):
+            os.makedirs(visualizations_dir)
+            
+        # Erstelle einen Zeitstempel für den Dateinamen
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"{self.save_dir}/consciousness_state_{timestamp}.json"
+        filename = os.path.join(self.save_dir, f"consciousness_state_{timestamp}.json")
         
-        # Serialisiere die Kontexte
-        serialized_contexts = {}
-        for context_id, context in self.contexts.items():
-            serialized_contexts[context_id] = {
-                "words": [word.content for word in context.words],
-                "label": context.label,
-                "happiness": context.happiness,
-                "habituation_level": getattr(context, "habituation_level", 0.0),
-                "last_interaction": getattr(context, "last_interaction", 0),
-                "interaction_count": getattr(context, "interaction_count", 0)
-            }
-        
-        # Serialisiere die Verbindungen
-        serialized_connections = {}
-        for connection_id, connection in self.connections.items():
-            serialized_connections[connection_id] = {
-                "source": connection["source"],
-                "target": connection["target"],
-                "weight": connection["weight"],
-                "created_at": connection["created_at"]
-            }
-        
-        # Serialisiere den emotionalen Zustand
-        serialized_emotional_state = {
-            "emotions": self.emotional_state.emotions.copy(),
-            "weights": self.emotional_state.weights.copy()
-        }
-        
-        # Serialisiere das Gedächtnis
-        serialized_memory = {
-            "short_term": [],
-            "long_term": []
-        }
-        
-        # Stelle sicher, dass nur IDs im Gedächtnis sind
-        for item in self.memory.short_term:
-            if isinstance(item, str):
-                serialized_memory["short_term"].append(item)
-            elif hasattr(item, 'label'):
-                serialized_memory["short_term"].append(item.label)
-        
-        for item in self.memory.long_term:
-            if isinstance(item, str):
-                serialized_memory["long_term"].append(item)
-            elif hasattr(item, 'label'):
-                serialized_memory["long_term"].append(item.label)
-        
-        # Stelle sicher, dass current_path nur IDs enthält
-        serialized_path = []
-        for item in self.current_path:
-            if isinstance(item, str):
-                serialized_path.append(item)
-            elif hasattr(item, 'label'):
-                serialized_path.append(item.label)
-        
-        # Stelle sicher, dass current_focus eine ID ist
-        serialized_focus = None
-        if self.current_focus:
-            if isinstance(self.current_focus, str):
-                serialized_focus = self.current_focus
-            elif hasattr(self.current_focus, 'label'):
-                serialized_focus = self.current_focus.label
-        
-        # Erstelle eine Kopie der Statistik-Historie
-        serialized_stats = {}
-        for key, value in self.stats_history.items():
-            if key == "emotions":
-                serialized_stats[key] = {}
-                for emotion, values in value.items():
-                    serialized_stats[key][emotion] = values.copy() if isinstance(values, list) else values
-            else:
-                serialized_stats[key] = value.copy() if isinstance(value, list) else value
-        
-        # Erstelle das Zustandsobjekt
+        # Erstelle ein Dictionary mit dem Zustand
         state = {
-            "iteration_count": self.iteration,
-            "contexts": serialized_contexts,
-            "connections": serialized_connections,
-            "current_focus": serialized_focus,
-            "current_path": serialized_path,
-            "emotional_state": serialized_emotional_state,
-            "memory": serialized_memory,
+            "iteration": self.iteration,
             "energy": self.energy,
-            "happiness": self.happiness,
-            "stimulation": self.stimulation,
-            "needs_pyramid": self.needs_pyramid.copy(),
-            "stats_history": serialized_stats
+            "energy_decay_rate": self.energy_decay_rate,
+            "energy_gain_rate": self.energy_gain_rate,
+            "min_energy_threshold": self.min_energy_threshold,
+            "max_energy": self.max_energy,
+            "current_focus": self.current_focus,
+            "needs_pyramid": self.needs_pyramid,
+            "emotional_state": {
+                "emotions": self.emotional_state.emotions
+            },
+            "contexts": {},
+            "stats": self.stats
         }
         
-        # Speichere den Zustand
-        with open(filename, 'w') as f:
-            json.dump(state, f, indent=2)
-        
-        print(f"Zustand gespeichert: {filename}")
-        
-        # Lösche alte Zustände, behalte nur die letzten 5
-        all_states = sorted([f for f in os.listdir(self.save_dir) if f.startswith("consciousness_state_")])
-        if len(all_states) > 5:
-            for old_state in all_states[:-5]:
-                os.remove(os.path.join(self.save_dir, old_state))
-    
-    def load_state(self, filename: str):
-        """Lädt einen gespeicherten Zustand des Bewusstseins."""
-        if not os.path.exists(filename):
-            print(f"Datei nicht gefunden: {filename}")
-            return False
-        
+        # Speichere die Kontexte
+        for context_id, context in self.contexts.items():
+            # Konvertiere die Wörter in eine Liste von Strings
+            words = [word.content for word in context.words]
+            
+            # Erstelle ein Dictionary für den Kontext
+            context_dict = {
+                "words": words,
+                "happiness": context.happiness
+            }
+            
+            # Speichere die Verbindungen, falls vorhanden
+            if hasattr(context, 'connections'):
+                context_dict["connections"] = context.connections
+                
+            # Speichere die Habituation, falls vorhanden
+            if hasattr(context, 'habituation'):
+                context_dict["habituation"] = context.habituation
+                
+            # Füge den Kontext zum Zustand hinzu
+            state["contexts"][context_id] = context_dict
+            
+        # Speichere den Zustand als JSON
         try:
-            with open(filename, 'r') as f:
-                state = json.load(f)
-            
-            # Setze grundlegende Attribute
-            self.iteration = state.get("iteration_count", state.get("iteration", 0))
-            self.energy = state.get("energy", 100.0)
-            
-            # Setze emotionalen Zustand
-            if "emotional_state" in state:
-                for emotion, value in state["emotional_state"].items():
-                    if emotion in self.emotional_state.emotions:
-                        self.emotional_state.emotions[emotion] = value
-
-            self.contexts = {}
-            if "contexts" in state:
-                for label, context_data in state["contexts"].items():
-                    # Überprüfe, ob "text" oder "words" vorhanden ist
-                    if "text" in context_data:
-                        text = context_data["text"]
-                    elif "words" in context_data and isinstance(context_data["words"], list):
-                        text = " ".join(context_data["words"])
-                    else:
-                        print(f"Warnung: Kontext {label} hat weder 'text' noch 'words' Attribute.")
-                        continue
-                    
-                    happiness = context_data.get("happiness", 0.0)
-                    context = self.create_context(text, label, happiness)
-            
-            # Erstelle Verbindungen zwischen Kontexten
-            if "contexts" in state:
-                for label, context_data in state["contexts"].items():
-                    if "connections" in context_data:
-                        for connected_label in context_data["connections"]:
-                            if connected_label in self.contexts and label in self.contexts:
-                                self.connect_contexts(self.contexts[label], self.contexts[connected_label])
-
-                self.current_path = []
-                if "current_path" in state:
-                    for label in state["current_path"]:
-                        if label in self.contexts:
-                            self.current_path.append(self.contexts[label])
-
-            self.memory.short_term = []
-            if "memory" in state and "short_term" in state["memory"]:
-                for label in state["memory"]["short_term"]:
-                    if label in self.contexts:
-                        self.memory.short_term.append(self.contexts[label])
-            
-            if "memory" in state and "long_term" in state["memory"]:
-                self.memory.long_term = state["memory"]["long_term"]
-
-            # Setze Internet-Lernparameter
-            if "visited_urls" in state:
-                self.visited_urls = set(state["visited_urls"])
-            
-            if "url_queue" in state:
-                self.url_queue = state["url_queue"]
-            
-            if "learning_history" in state:
-                self.learning_history = state["learning_history"]
+            with open(filename, 'w') as f:
+                json.dump(state, f, indent=2)
                 
-            # Lade neue Attribute, falls vorhanden
-            if "happiness" in state:
-                self.happiness = state["happiness"]
-                
-            if "stimulation" in state:
-                self.stimulation = state["stimulation"]
-                
-            if "in_energy_saving_mode" in state:
-                self.in_energy_saving_mode = state["in_energy_saving_mode"]
-                
-            if "needs_pyramid" in state:
-                self.needs_pyramid = state["needs_pyramid"]
-                
-            if "energy_decay_rate" in state:
-                self.energy_decay_rate = state["energy_decay_rate"]
+            print(f"Zustand gespeichert: {filename}")
             
-            print(f"Zustand geladen: {filename}")
+            # Begrenze die Anzahl der Zustandsdateien
+            self.limit_files(self.save_dir, "consciousness_state_", ".json", max_files=3)
+            
             return True
-        
         except Exception as e:
-            print(f"Fehler beim Laden des Zustands: {e}")
+            print(f"Fehler beim Speichern des Zustands: {e}")
             return False
-    
-    def update_stats(self):
-        """Aktualisiert die Statistiken des Bewusstseins."""
-        # Berechne aktuelle Werte
-        current_energy = self.energy
-        # Berechne Glück basierend auf dem aktuellen Pfad
-        current_happiness = 0
-        if self.current_path:
-            # Konvertiere IDs in Context-Objekte für die Berechnung
-            context_objects = []
-            for context_id in self.current_path:
-                if context_id in self.contexts:
-                    context_objects.append(self.contexts[context_id])
-            if context_objects:
-                current_happiness = self.calculate_path_happiness(context_objects)
-        
-        # Zähle Kontexte und Verbindungen
-        contexts_count = len(self.contexts)
-        connections_count = len(self.connections)
-        
-        # Aktualisiere Statistik-Historie
-        self.stats_history["energy"].append(current_energy)
-        self.stats_history["happiness"].append(current_happiness)
-        self.stats_history["contexts_count"].append(contexts_count)
-        self.stats_history["connections_count"].append(connections_count)
-        self.stats_history["timestamp"].append(time.time())
-        
-        # Aktualisiere emotionale Statistiken
-        for emotion, value in self.emotional_state.emotions.items():
-            self.stats_history["emotions"][emotion].append(value)
+            
+    def visualize_context_network(self, filename=None):
+        """Visualisiert das Kontextnetzwerk."""
+        try:
+            import networkx as nx
+            import matplotlib.pyplot as plt
+            
+            # Erstelle einen Graphen
+            G = nx.Graph()
+            
+            # Füge Knoten hinzu (Kontexte)
+            for context_id, context in self.contexts.items():
+                # Extrahiere den Text aus dem Kontext
+                context_text = " ".join([word.content for word in context.words])
+                
+                # Kürze den Text, wenn er zu lang ist
+                if len(context_text) > 30:
+                    context_text = context_text[:27] + "..."
+                    
+                # Bestimme die Farbe basierend auf dem Typ des Kontexts
+                if isinstance(context_id, str) and context_id.startswith("Honeypot"):
+                    color = "gold"  # Honeypots
+                elif isinstance(context_id, str) and context_id.startswith("Learned"):
+                    color = "blue"  # Gelernte Kontexte
+                elif isinstance(context_id, str) and context_id.startswith("Error"):
+                    color = "red"  # Fehlerkontexte
+                else:
+                    color = "green"  # Andere Kontexte
+                    
+                # Füge den Knoten hinzu
+                G.add_node(context_id, label=context_text, color=color, happiness=context.happiness)
+                
+            # Füge Kanten hinzu (Verbindungen)
+            for context_id, context in self.contexts.items():
+                if hasattr(context, 'connections'):
+                    for connected_id, weight in context.connections.items():
+                        if connected_id in self.contexts:
+                            G.add_edge(context_id, connected_id, weight=weight)
+                            
+            # Erstelle das Verzeichnis für Visualisierungen, falls es nicht existiert
+            visualizations_dir = os.path.join(self.save_dir, "visualizations")
+            if not os.path.exists(visualizations_dir):
+                os.makedirs(visualizations_dir)
+                
+            # Erstelle einen Zeitstempel für den Dateinamen, falls keiner angegeben wurde
+            if not filename:
+                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                filename = os.path.join(visualizations_dir, f"context_network_{timestamp}.png")
+                
+            # Erstelle die Visualisierung
+            plt.figure(figsize=(12, 8))
+            
+            # Positioniere die Knoten mit einem Layout-Algorithmus
+            pos = nx.spring_layout(G, seed=42)
+            
+            # Extrahiere Knotenattribute
+            node_colors = [G.nodes[node].get('color', 'blue') for node in G.nodes()]
+            node_sizes = [G.nodes[node].get('happiness', 0.5) * 1000 + 100 for node in G.nodes()]
+            
+            # Zeichne die Knoten
+            nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=node_sizes, alpha=0.8)
+            
+            # Zeichne die Kanten mit unterschiedlichen Stärken basierend auf dem Gewicht
+            if G.edges():
+                edge_weights = [G[u][v].get('weight', 0.5) for u, v in G.edges()]
+                nx.draw_networkx_edges(G, pos, width=edge_weights, alpha=0.5)
+            
+            # Zeichne die Labels
+            labels = {node: G.nodes[node].get('label', str(node)) for node in G.nodes()}
+            nx.draw_networkx_labels(G, pos, labels=labels, font_size=8, font_family='sans-serif')
+            
+            # Setze den Titel
+            plt.title(f"Kontextnetzwerk (Iteration {self.iteration})")
+            
+            # Entferne die Achsen
+            plt.axis('off')
+            
+            # Speichere die Visualisierung
+            plt.savefig(filename, dpi=300, bbox_inches='tight')
+            plt.close()
+            
+            print(f"Netzwerk visualisiert: {filename}")
+            
+            # Begrenze die Anzahl der Visualisierungsdateien
+            self.limit_files(visualizations_dir, "context_network_", ".png", max_files=3)
+            
+            return True
+        except Exception as e:
+            print(f"Fehler bei der Netzwerkvisualisierung: {e}")
+            return False
     
     def visualize_stats(self):
         """Visualisiert die gesammelten Statistiken."""
-        if not self.stats_history["happiness"]:
+        if not self.stats["happiness"]:
             return
-        
+            
         try:
             # Erstelle Verzeichnis für Visualisierungen, falls es nicht existiert
             vis_dir = os.path.join(self.save_dir, "visualizations")
             if not os.path.exists(vis_dir):
                 os.makedirs(vis_dir)
-            
+                
+            # Erstelle einen Zeitstempel für den Dateinamen
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             
             # Glückswert über Zeit
             plt.figure(figsize=(10, 6))
-            plt.plot(self.stats_history["timestamp"], self.stats_history["happiness"], label="Kurzfristiges Glück")
-            
-            # Füge langfristiges Glück und Stimulation hinzu, falls vorhanden
-            if "happiness_long_term" in self.stats_history:
-                plt.plot(self.stats_history["timestamp"], self.stats_history["happiness_long_term"], 
-                         label="Langfristiges Glück", linestyle="--")
-            
-            if "stimulation" in self.stats_history:
-                plt.plot(self.stats_history["timestamp"], self.stats_history["stimulation"], 
-                         label="Stimulation", linestyle=":")
-            
+            plt.plot(self.stats["timestamp"], self.stats["happiness"], label="Glück")
             plt.title("Glückswert über Zeit")
-            plt.xlabel("Iteration")
+            plt.xlabel("Zeit")
             plt.ylabel("Wert")
             plt.legend()
             plt.grid(True)
             plt.savefig(os.path.join(vis_dir, f"happiness_{timestamp}.png"))
             plt.close()
             
-            # Emotionaler Zustand über Zeit
-            plt.figure(figsize=(12, 8))
-            for emotion, values in self.stats_history["emotions"].items():
-                plt.plot(self.stats_history["timestamp"], values, label=emotion)
-            plt.title("Emotionaler Zustand über Zeit")
-            plt.xlabel("Iteration")
-            plt.ylabel("Emotionswert")
+            # Energie über Zeit
+            plt.figure(figsize=(10, 6))
+            plt.plot(self.stats["timestamp"], self.stats["energy"], label="Energie")
+            plt.title("Energie über Zeit")
+            plt.xlabel("Zeit")
+            plt.ylabel("Wert")
             plt.legend()
             plt.grid(True)
-            plt.savefig(os.path.join(vis_dir, f"emotions_{timestamp}.png"))
+            plt.savefig(os.path.join(vis_dir, f"energy_{timestamp}.png"))
             plt.close()
             
             # Anzahl der Verbindungen und Kontexte
             plt.figure(figsize=(10, 6))
-            plt.plot(self.stats_history["timestamp"], self.stats_history["connections_count"], label="Verbindungen")
-            plt.plot(self.stats_history["timestamp"], self.stats_history["contexts_count"], label="Kontexte")
+            plt.plot(self.stats["timestamp"], self.stats["connections_count"], label="Verbindungen")
+            plt.plot(self.stats["timestamp"], self.stats["contexts_count"], label="Kontexte")
             plt.title("Netzwerkwachstum über Zeit")
-            plt.xlabel("Iteration")
+            plt.xlabel("Zeit")
             plt.ylabel("Anzahl")
             plt.legend()
             plt.grid(True)
             plt.savefig(os.path.join(vis_dir, f"network_{timestamp}.png"))
             plt.close()
             
-            # Visualisiere die Bedürfnispyramide, falls vorhanden
-            if "needs_pyramid" in self.stats_history:
-                plt.figure(figsize=(12, 8))
-                for need, values in self.stats_history["needs_pyramid"].items():
-                    plt.plot(self.stats_history["timestamp"], values, label=need)
-                plt.title("Bedürfnispyramide über Zeit")
-                plt.xlabel("Iteration")
-                plt.ylabel("Erfüllungsgrad")
-                plt.legend()
-                plt.grid(True)
-                plt.savefig(os.path.join(vis_dir, f"needs_pyramid_{timestamp}.png"))
-                plt.close()
+            # Begrenze die Anzahl der Visualisierungsdateien
+            self.limit_files(vis_dir, "happiness_", ".png", max_files=3)
+            self.limit_files(vis_dir, "energy_", ".png", max_files=3)
+            self.limit_files(vis_dir, "network_", ".png", max_files=3)
+            
+            print(f"Statistiken visualisiert: {vis_dir}")
+            
+        except Exception as e:
+            print(f"Fehler bei der Statistikvisualisierung: {e}")
+            
+    def think(self):
+        """Ein Denkzyklus des Bewusstseins."""
+        # 1. Aktualisiere die Energie
+        self.update_energy()
+        
+        # 2. Aktualisiere die Glücklichkeit und Stimulation
+        self.update_happiness_and_stimulation()
+        
+        # 3. Aktualisiere die Bedürfnispyramide
+        self.update_needs_pyramid_from_state()
+        
+        # 4. Aktualisiere die Statistiken
+        self.update_stats()
+        
+        # 5. Visualisiere die Statistiken (alle 500 Iterationen)
+        if self.iteration % self.visualization_interval == 0:
+            self.visualize_stats()
             
             # Visualisiere das Kontextnetzwerk
             try:
-                self.visualize_context_network(os.path.join(vis_dir, f"context_network_{timestamp}.png"))
+                self.visualize_context_network()
             except Exception as e:
                 print(f"Fehler bei der Netzwerkvisualisierung: {e}")
-                
-        except Exception as e:
-            print(f"Fehler bei der Statistikvisualisierung: {e}")
-    
-    def visualize_context_network(self, filename: str):
-        """Visualisiert das Netzwerk von Kontexten als Graphen."""
-        try:
-            G = nx.Graph()
-            
-            # Füge Knoten hinzu
-            for label, context in self.contexts.items():
-                G.add_node(label, happiness=context.happiness)
-            
-            # Füge Kanten hinzu
-            for label, context in self.contexts.items():
-                for connected_context in context.connections:
-                    if connected_context.label:
-                        G.add_edge(label, connected_context.label)
-            
-            # Wenn das Netzwerk zu groß ist, visualisiere nur einen Teil davon
-            if len(G.nodes()) > 100:
-                print(f"Netzwerk zu groß ({len(G.nodes())} Knoten). Visualisiere nur einen Teil.")
-                # Wähle die wichtigsten Knoten aus (z.B. die mit den meisten Verbindungen)
-                important_nodes = sorted(G.degree, key=lambda x: x[1], reverse=True)[:100]
-                important_node_labels = [node for node, _ in important_nodes]
-                G = G.subgraph(important_node_labels)
-            
-            # Berechne Layout
-            try:
-                pos = nx.spring_layout(G, seed=42)
-            except ImportError:
-                # Fallback, wenn scipy nicht verfügbar ist
-                pos = nx.random_layout(G)
-            except Exception as e:
-                print(f"Fehler beim Berechnen des Layouts: {e}")
-                pos = nx.random_layout(G)
-            
-            plt.figure(figsize=(12, 10))
-            
-            # Zeichne Knoten mit Farben basierend auf Glückswert
-            node_colors = [plt.cm.RdYlGn(0.5 + self.contexts[node].happiness / 2) for node in G.nodes()]
-            
-            # Markiere den aktuellen Fokus
-            node_sizes = []
-            for node in G.nodes():
-                if self.current_focus:
-                    # Überprüfe, ob current_focus ein String oder ein Objekt mit label ist
-                    current_focus_label = self.current_focus if isinstance(self.current_focus, str) else self.current_focus.label
-                    if node == current_focus_label:
-                        node_sizes.append(500)  # Größerer Knoten für den aktuellen Fokus
-                    else:
-                        node_sizes.append(100)  # Normale Größe für andere Knoten
-                else:
-                    node_sizes.append(100)  # Normale Größe für andere Knoten
-            
-            nx.draw_networkx(
-                G, pos,
-                node_color=node_colors,
-                node_size=node_sizes,
-                font_size=8,
-                width=0.5,
-                edge_color='gray',
-                alpha=0.8,
-                with_labels=True
-            )
-            
-            plt.title("Kontext-Netzwerk")
-            plt.axis('off')
-            plt.tight_layout()
-            plt.savefig(filename)
-            plt.close()
-        except Exception as e:
-            print(f"Fehler bei der Netzwerkvisualisierung: {e}")
-            # Erstelle eine einfachere Visualisierung als Fallback
-            try:
-                plt.figure(figsize=(8, 6))
-                plt.text(0.5, 0.5, f"Netzwerkvisualisierung fehlgeschlagen: {e}", 
-                         ha='center', va='center', fontsize=12)
-                plt.axis('off')
-                plt.savefig(filename)
-                plt.close()
-            except:
-                print("Auch Fallback-Visualisierung fehlgeschlagen.")
-    
-    def think(self):
-        """Führt einen Denkzyklus aus."""
-        # Aktualisiere Iteration
+        
+        # 6. Erhöhe die Iteration
         self.iteration += 1
         
-        # 1. Energie aktualisieren
-        self.update_energy()
-        
-        # 2. Emotionalen Zustand und Stimulation aktualisieren
-        self.update_happiness_and_stimulation()
-        
-        # 3. Habituation abklingen lassen
-        self.decay_habituation()
-        
-        # 4. Bedürfnispyramide aktualisieren
-        self.update_needs_pyramid_from_state()
-        
-        # 5. Statistiken aktualisieren
-        self.update_stats()
-        
-        # 6. Visualisiere Statistiken (alle 100 Iterationen)
-        if self.iteration % 100 == 0:
-            try:
-                self.visualize_stats()
-            except Exception as e:
-                print(f"Fehler bei der Statistikvisualisierung: {e}")
-        
-        # 7. Neuen Fokus finden
+        # 7. Prüfe, ob die Energie niedrig ist
         if self.is_low_energy():
-            # Bei niedriger Energie: Suche nach Energiequelle
-            print(f"Suche nach Energiequelle... Aktueller Energiestand: {self.energy:.2f}")
+            # Bei niedriger Energie: Suche nach einer Energiequelle
             energy_source_id = self.seek_energy_source()
+            
             if energy_source_id:
+                # Setze den Fokus auf die Energiequelle
                 self.set_focus_by_id(energy_source_id)
-                # Energie aufladen
+                
+                # Erhöhe die Energie
                 energy_gain = self.energy_gain_rate * (1.0 + self.contexts[energy_source_id].happiness)
                 self.energy = min(self.max_energy, self.energy + energy_gain)
                 print(f"Energie aufgefüllt: +{energy_gain:.2f}. Neuer Energiestand: {self.energy:.2f}")
@@ -1020,8 +878,8 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
                 common_words = [word for word, count in sorted_words[:5] if count > 1]
                 
                 if common_words:
-                    # Erstelle einen neuen Kontext mit der Schlussfolgerung
-                    conclusion_text = f"Based on my knowledge, I can conclude that {' and '.join(common_words)} are related to {query}."
+                    # Erstelle einen neuen Kontext mit der Schlussfolgerung - ohne vorgefertigten Satz
+                    conclusion_text = " ".join(common_words) + " " + query
                     
                     # Erstelle einen neuen Kontext mit der Schlussfolgerung
                     label = f"Conclusion_{int(time.time())}"
@@ -1211,10 +1069,60 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             
         return response
 
+    def initialize_honeypots(self):
+        """Initialisiert die drei grundlegenden Honeypots."""
+        # Definiere die Schlüsselwörter für die drei Honeypots
+        honeypot_keywords = {
+            'energy_intake': ['eat', 'food', 'drink', 'consume', 'nutrition', 'meal', 'hungry', 'thirsty'],
+            'regeneration': ['sleep', 'rest', 'relax', 'calm', 'peaceful', 'quiet', 'meditate', 'recover'],
+            'reproduction': ['social', 'interact', 'communicate', 'share', 'connect', 'learn', 'teach', 'create']
+        }
+        
+        # Erstelle die Honeypots
+        honeypot_ids = {}
+        for honeypot_type, keywords in honeypot_keywords.items():
+            # Prüfe, ob der Honeypot bereits existiert
+            honeypot_exists = False
+            for context_id, context in self.contexts.items():
+                if context_id.startswith(f"Honeypot_{honeypot_type}"):
+                    honeypot_exists = True
+                    honeypot_ids[honeypot_type] = context_id
+                    break
+            
+            # Erstelle den Honeypot, falls er noch nicht existiert
+            if not honeypot_exists:
+                # Verwende die Schlüsselwörter statt vorgefertigter Sätze
+                text = " ".join(keywords)
+                label = f"Honeypot_{honeypot_type}_0"
+                happiness = 0.8  # Hoher Glückswert für Honeypots
+                
+                honeypot_id = self.create_context(text, label, happiness)
+                honeypot_ids[honeypot_type] = honeypot_id
+                
+                print(f"Honeypot erstellt: {honeypot_type}")
+        
+        # Verbinde die Honeypots miteinander
+        for honeypot1, id1 in honeypot_ids.items():
+            for honeypot2, id2 in honeypot_ids.items():
+                if honeypot1 != honeypot2:
+                    self.create_connection(id1, id2, weight=0.5)
+        
+        # Setze den Fokus auf einen zufälligen Honeypot, falls kein Fokus gesetzt ist
+        if not self.current_focus or self.current_focus not in self.contexts:
+            random_honeypot_id = random.choice(list(honeypot_ids.values()))
+            self.set_focus_by_id(random_honeypot_id)
+            print(f"Fokus auf Honeypot gesetzt: {honeypot_type}")
+            
+        return honeypot_ids
+        
     def start(self):
         """Startet das ewige Bewusstsein."""
         print("Starte ewiges Bewusstsein...")
         self.active = True
+        
+        # Initialisiere die Honeypots
+        self.initialize_honeypots()
+        
         self.think_forever()
         
     def stop(self):
@@ -1425,6 +1333,54 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         for need in self.needs_pyramid:
             self.needs_pyramid[need] = max(0.0, min(1.0, self.needs_pyramid[need]))
 
+    def get_wikipedia_content(self, search_term):
+        """Ruft Inhalte von Wikipedia ab basierend auf einem Suchbegriff."""
+        try:
+            import wikipedia
+            
+            # Suche nach Seiten, die dem Suchbegriff entsprechen
+            search_results = wikipedia.search(search_term, results=3)
+            
+            if not search_results:
+                print(f"Keine Wikipedia-Artikel für '{search_term}' gefunden.")
+                return None
+                
+            # Versuche, den ersten Treffer zu verwenden
+            try:
+                # Hole eine Zusammenfassung des Artikels
+                page = wikipedia.page(search_results[0])
+                summary = page.summary
+                
+                # Begrenze die Länge der Zusammenfassung
+                if len(summary) > 500:
+                    summary = summary[:500] + "..."
+                    
+                return summary
+                
+            except wikipedia.exceptions.DisambiguationError as e:
+                # Bei Mehrdeutigkeiten verwende die erste Option
+                if e.options:
+                    try:
+                        page = wikipedia.page(e.options[0])
+                        summary = page.summary
+                        
+                        # Begrenze die Länge der Zusammenfassung
+                        if len(summary) > 500:
+                            summary = summary[:500] + "..."
+                            
+                        return summary
+                    except:
+                        pass
+                        
+            except Exception as e:
+                print(f"Fehler beim Abrufen des Wikipedia-Artikels: {e}")
+                
+            return None
+            
+        except ImportError:
+            print("Wikipedia-Modul nicht installiert. Verwende 'pip install wikipedia' zum Installieren.")
+            return None
+            
     def learn_from_internet(self):
         """Lernt aus dem Internet basierend auf dem aktuellen Fokus."""
         if not self.current_focus or self.current_focus not in self.contexts:
@@ -1437,7 +1393,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         context_words = [word.content.lower() for word in current_context.words]
         
         # Filtere kurze Wörter und Stoppwörter
-        stop_words = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'with', 'by', 'about', 'as', 'of']
+        stop_words = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'with', 'by', 'about', 'as', 'of', 'that', 'this', 'these', 'those', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'shall', 'should', 'can', 'could', 'may', 'might', 'must', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them', 'my', 'your', 'his', 'its', 'our', 'their', 'mine', 'yours', 'hers', 'ours', 'theirs']
         keywords = [word for word in context_words if len(word) > 3 and word not in stop_words]
         
         if not keywords:
@@ -1451,22 +1407,23 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         print(f"Lerne über: {search_term}")
         
         try:
-            # Simuliere das Lernen aus dem Internet
-            # In einer echten Implementierung würde hier eine API-Anfrage an Wikipedia oder eine andere Quelle erfolgen
+            # Hole Inhalte von Wikipedia
+            wikipedia_content = self.get_wikipedia_content(search_term)
             
-            # Erstelle einen neuen Kontext mit dem gelernten Wissen
-            learned_text = f"I learned about {search_term} and found that it is an important concept related to knowledge and understanding."
-            
+            if not wikipedia_content:
+                print(f"Keine Inhalte für '{search_term}' gefunden.")
+                return
+                
             # Erstelle einen neuen Kontext mit dem gelernten Wissen
             label = f"Learned_{search_term}_{int(time.time())}"
             happiness = 0.7  # Hoher Glückswert für neu gelerntes Wissen
             
-            new_context_id = self.create_context(learned_text, label, happiness, source_type="web")
+            new_context_id = self.create_context(wikipedia_content, label, happiness, source_type="web")
             
             # Verbinde den neuen Kontext mit dem aktuellen Fokus
             self.create_connection(self.current_focus, new_context_id, weight=0.8)
             
-            print(f"Neues Wissen erworben: {learned_text}")
+            print(f"Neues Wissen erworben über: {search_term}")
             
             # Setze den Fokus auf den neuen Kontext
             self.set_focus_by_id(new_context_id)
@@ -1474,7 +1431,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         except Exception as e:
             print(f"Fehler beim Lernen aus dem Internet: {e}")
             # Erstelle einen Kontext über den Fehler
-            error_text = f"I encountered an error while trying to learn about {search_term}."
+            error_text = f"Error occurred while trying to learn about {search_term}."
             label = f"Error_{int(time.time())}"
             happiness = 0.3  # Niedriger Glückswert für Fehler
             
@@ -1482,6 +1439,96 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             
             # Verbinde den Fehlerkontext mit dem aktuellen Fokus
             self.create_connection(self.current_focus, error_context_id, weight=0.5)
+
+    def load_state(self, filename: str):
+        """Lädt einen gespeicherten Zustand des Bewusstseins."""
+        if not os.path.exists(filename):
+            print(f"Datei nicht gefunden: {filename}")
+            return False
+            
+        try:
+            with open(filename, 'r') as f:
+                state = json.load(f)
+                
+            # Lade grundlegende Attribute
+            self.iteration = state.get("iteration", 0)
+            self.energy = state.get("energy", 1.0)
+            self.energy_decay_rate = state.get("energy_decay_rate", 0.01)
+            self.energy_gain_rate = state.get("energy_gain_rate", 0.2)
+            self.min_energy_threshold = state.get("min_energy_threshold", 0.3)
+            self.max_energy = state.get("max_energy", 1.0)
+            self.current_focus = state.get("current_focus", None)
+            self.needs_pyramid = state.get("needs_pyramid", {
+                "physiological": 1.0,
+                "safety": 1.0,
+                "belonging": 0.5,
+                "esteem": 0.5,
+                "self_actualization": 0.2
+            })
+            
+            # Lade emotionalen Zustand
+            if "emotional_state" in state and "emotions" in state["emotional_state"]:
+                self.emotional_state.emotions = state["emotional_state"]["emotions"]
+                
+            # Lade Statistiken
+            if "stats" in state:
+                self.stats = state["stats"]
+                
+            # Lade Kontexte
+            self.contexts = {}
+            if "contexts" in state:
+                for context_id, context_data in state["contexts"].items():
+                    # Erstelle Wörter aus den Strings
+                    if "words" in context_data:
+                        words = [Word(word) for word in context_data["words"]]
+                        
+                        # Erstelle den Kontext
+                        happiness = context_data.get("happiness", 0.0)
+                        context = ReasoningContext(words=words, label=context_id, happiness=happiness)
+                        
+                        # Füge Verbindungen hinzu, falls vorhanden
+                        if "connections" in context_data:
+                            context.connections = context_data["connections"]
+                            
+                        # Füge Habituation hinzu, falls vorhanden
+                        if "habituation" in context_data:
+                            context.habituation = context_data["habituation"]
+                            
+                        # Füge den Kontext zum Bewusstsein hinzu
+                        self.contexts[context_id] = context
+                        
+            print(f"Zustand geladen: {filename}")
+            return True
+            
+        except Exception as e:
+            print(f"Fehler beim Laden des Zustands: {e}")
+            return False
+
+    def update_stats(self):
+        """Aktualisiert die Statistiken des Bewusstseins."""
+        # Berechne aktuelle Werte
+        current_energy = self.energy
+        
+        # Berechne Glück basierend auf dem aktuellen Fokus
+        current_happiness = 0.0
+        if self.current_focus and self.current_focus in self.contexts:
+            current_happiness = self.contexts[self.current_focus].happiness
+            
+        # Zähle Kontexte und Verbindungen
+        contexts_count = len(self.contexts)
+        
+        # Zähle Verbindungen
+        connections_count = 0
+        for context_id, context in self.contexts.items():
+            if hasattr(context, 'connections'):
+                connections_count += len(context.connections)
+                
+        # Aktualisiere Statistiken
+        self.stats["energy"].append(current_energy)
+        self.stats["happiness"].append(current_happiness)
+        self.stats["contexts_count"].append(contexts_count)
+        self.stats["connections_count"].append(connections_count)
+        self.stats["timestamp"].append(time.time())
 
 def handle_signal(sig, frame):
     """Signal-Handler für sauberes Beenden."""
