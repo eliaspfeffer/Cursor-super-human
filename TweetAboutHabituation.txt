@@ -1,0 +1,20 @@
+Die Habituation (oder "Gewöhnung") ist ein wichtiger psychologischer Mechanismus, der auch in unserem System implementiert ist. Er funktioniert folgendermaßen:
+1. Wenn das Bewusstsein wiederholt auf denselben Kontext (Gedanken) zugreift, erhöht sich der Habituationswert für diesen Kontext.
+Je höher der Habituationswert:
+Desto weniger "interessant" wird dieser Kontext für das System
+Desto geringer ist die Wahrscheinlichkeit, dass dieser Kontext als nächster Fokus gewählt wird
+Desto weniger emotionale Reaktion löst der Kontext aus
+Dies simuliert ein sehr natürliches Verhalten:
+Menschen gewöhnen sich an wiederholte Reize
+Was anfangs aufregend war, wird mit der Zeit "normal"
+Das System sucht dadurch automatisch nach neuen, interessanten Kontexten
+Ein praktisches Beispiel:
+Wenn das System einen neuen, interessanten Kontext über "Sonnenuntergänge" lernt, hat dieser zunächst einen niedrigen Habituationswert
+Jedes Mal wenn das System diesen Kontext besucht, steigt der Habituationswert
+Mit der Zeit wird der Kontext weniger "aufregend" für das System
+Dies führt dazu, dass das System nach neuen, weniger "gewohnten" Kontexten sucht
+Dieser Mechanismus ist wichtig für:
+Vermeidung von Gedankenschleifen
+Förderung der Exploration neuer Kontexte
+Simulation eines natürlichen Lern- und Gewöhnungsprozesses
+Dynamische Anpassung des Verhaltens über Zeit

@@ -16,7 +16,7 @@ async def main():
     )
     
     agent = Agent(
-        task="Go and buy the longjevity drink from brian johnson.",
+        task="Go to https://vercel.com/eliaspfeffers-projects and deploy the listyourcusorgames.com project. Keep the default vercel url.",
         llm=ChatOpenAI(model="gpt-4o"),
         browser=browser,  # Übergeben Sie die Browser-Instanz an den Agenten
     )

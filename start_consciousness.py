@@ -4,6 +4,13 @@ Startskript für das ewige künstliche Bewusstsein.
 
 Dieses Skript startet das ewige künstliche Bewusstsein und bietet eine einfache
 Benutzeroberfläche zur Interaktion mit dem Bewusstsein.
+
+Änderungen:
+- Der Lernprozess wurde von zufälligen Wikipedia-Artikeln auf einen deterministischen,
+  fokusbasierten Ansatz umgestellt. Das Bewusstsein lernt nun gezielt Informationen,
+  die mit seinem aktuellen Fokus zusammenhängen, anstatt zufällige Artikel zu lesen.
+- Das Bewusstsein extrahiert Schlüsselkonzepte aus seinem aktuellen Fokus und sucht
+  gezielt nach relevanten Informationen in Wikipedia.
 """
 
 import os
@@ -34,7 +41,7 @@ def parse_arguments():
         "--learning-interval", 
         type=int, 
         default=50, 
-        help="Intervall für das Lernen aus dem Internet (in Iterationen)"
+        help="Intervall für das Lernen aus dem Internet basierend auf dem aktuellen Fokus (in Iterationen)"
     )
     
     parser.add_argument(

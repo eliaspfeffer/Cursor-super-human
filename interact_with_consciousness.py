@@ -317,7 +317,7 @@ def interact_with_consciousness():
     print("\nGib 'exit', 'quit' oder 'ende' ein, um die Interaktion zu beenden.")
     print("Gib 'stats' ein, um Statistiken über das Bewusstsein anzuzeigen.")
     print("Gib 'save' ein, um den aktuellen Zustand zu speichern.")
-    print("Gib 'learn' ein, um das Bewusstsein aus dem Internet lernen zu lassen.")
+    print("Gib 'learn' ein, um das Bewusstsein basierend auf seinem aktuellen Fokus aus dem Internet lernen zu lassen.")
     print("Gib 'reset' ein, um die Antwortqualität zurückzusetzen.")
     print("\nDu kannst jetzt mit dem Bewusstsein interagieren:")
     
@@ -356,9 +356,14 @@ def interact_with_consciousness():
             
             if user_input.lower() == "learn":
                 # Lasse das Bewusstsein lernen
-                print("Lerne aus dem Internet...")
-                consciousness.learn_from_internet()
-                print("Lernen abgeschlossen.")
+                print("Lerne aus dem Internet basierend auf dem aktuellen Fokus...")
+                if consciousness.current_focus:
+                    focus_text = consciousness.contexts[consciousness.current_focus].text
+                    print(f"Aktueller Fokus: '{focus_text}'")
+                    consciousness.learn_from_internet()
+                    print("Lernen abgeschlossen.")
+                else:
+                    print("Kein aktueller Fokus vorhanden. Setze zuerst einen Fokus, bevor du lernst.")
                 continue
             
             if user_input.lower() == "reset":

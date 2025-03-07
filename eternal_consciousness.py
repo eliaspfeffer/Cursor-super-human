@@ -36,62 +36,80 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
     
     def __init__(self, save_interval: int = 100, visualization_interval: int = 500, learning_interval: int = 50):
         super().__init__()
-        self.active = False
-        self.iteration_count = 0
+        
+        # Speicherparameter
         self.save_interval = save_interval
         self.visualization_interval = visualization_interval
         self.learning_interval = learning_interval
         self.save_dir = "consciousness_state"
-        self.stats_history = {
-            "energy": [],
-            "happiness": [],
-            "emotions": {
-                "happiness": [],
-                "sadness": [],
-                "fear": [],
-                "anger": [],
-                "surprise": [],
-                "disgust": [],
-                "trust": [],
-                "anticipation": []
-            },
-            "contexts_count": [],
-            "connections_count": [],
-            "timestamp": []
-        }
-        self.energy = 100.0  # Energie des Systems
-        self.energy_decay_rate = 0.05  # Rate, mit der Energie abnimmt
-        self.energy_gain_rate = 0.2  # Rate, mit der Energie durch Glück zunimmt
-        self.min_energy_threshold = 30.0  # Schwellenwert für niedrige Energie
-        self.max_energy = 100.0  # Maximale Energie
         
-        # Neue Attribute für verbessertes Glückskonzept
-        self.happiness = 0.5  # Langfristiges, stabiles Glück (0-1)
-        self.stimulation = 0.0  # Kurzfristige Stimulation (-1 bis 1)
-        self.happiness_decay_rate = 0.01  # Langsame Abnahme des Glücks
-        self.stimulation_decay_rate = 0.1  # Schnelle Abnahme der Stimulation
-        self.in_energy_saving_mode = False  # Energiesparmodus
+        # Aktivitätsparameter
+        self.active = True
+        self.iteration = 0
         
-        # Bedürfnispyramide nach Maslow
+        # Energieparameter
+        self.energy = 1.0
+        self.max_energy = 1.0
+        self.energy_decay_rate = 0.01
+        self.energy_gain_rate = 0.05
+        self.min_energy_threshold = 0.3  # Schwellenwert für niedrige Energie
+        
+        # Glücksparameter
+        self.happiness = 0.5
+        self.happiness_decay_rate = 0.01
+        
+        # Stimulationsparameter
+        self.stimulation = 0.0
+        self.stimulation_decay_rate = 0.05
+        
+        # Bedürfnispyramide (nach Maslow)
         self.needs_pyramid = {
-            "physiological": 0.5,  # Grundbedürfnisse (Essen, Schlafen)
-            "safety": 0.3,         # Sicherheit
-            "belonging": 0.2,      # Zugehörigkeit und Liebe
-            "esteem": 0.1,         # Anerkennung und Wertschätzung
-            "self_actualization": 0.0  # Selbstverwirklichung
+            "physiological": 0.5,  # Grundbedürfnisse (Nahrung, Wasser, Schlaf)
+            "safety": 0.4,         # Sicherheit
+            "belonging": 0.3,      # Zugehörigkeit und Liebe
+            "esteem": 0.2,         # Anerkennung und Wertschätzung
+            "self_actualization": 0.1  # Selbstverwirklichung
         }
+        
+        # Habituationsparameter
+        self.habituation = {}
+        self.habituation_rate = 0.1
+        self.habituation_decay_rate = 0.01
+        
+        # Emotionaler Zustand
+        self.emotional_state = EmotionalState()
+        
+        # Gedächtnis
+        self.memory = Memory()
+        
+        # Pfad des aktuellen Denkens
+        self.current_path = []
         
         # Internet-Lernparameter
         self.visited_urls = set()
-        self.url_queue = [
-            "https://de.wikipedia.org/wiki/Spezial:Zuf%C3%A4llige_Seite",
-            "https://en.wikipedia.org/wiki/Special:Random",
-            "https://simple.wikipedia.org/wiki/Special:Random"
-        ]
-        self.max_urls_per_session = 5
-        self.current_url_count = 0
+        # Keine zufällige URL-Queue mehr, da wir deterministisch basierend auf dem Fokus suchen
         self.max_contexts_per_page = 10
         self.learning_history = []
+        
+        # Statistik-Historie
+        self.stats_history = {
+            "energy": [],
+            "happiness": [],
+            "contexts_count": [],
+            "connections_count": [],
+            "timestamp": [],
+            "emotions": {
+                "happiness": [],
+                "sadness": [],
+                "anger": [],
+                "fear": [],
+                "disgust": [],
+                "surprise": [],
+                "anticipation": [],
+                "trust": [],
+                "joy": []
+            }
+        }
         
         # NLTK-Komponenten herunterladen, falls noch nicht vorhanden
         try:
@@ -879,7 +897,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
                 print("Auch Fallback-Visualisierung fehlgeschlagen.")
     
     def think(self):
-        """Führt einen Denkzyklus aus."""
+        """Ein einzelner Denkschritt des Bewusstseins."""
         self.iteration_count += 1
         
         # Energie verbrauchen
@@ -937,7 +955,11 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         
         # Lerne in regelmäßigen Abständen
         if self.iteration_count % self.learning_interval == 0:
-            self.learn_from_internet()
+            # Stelle sicher, dass ein aktueller Fokus vorhanden ist, bevor wir lernen
+            if self.current_focus:
+                self.learn_from_internet()
+            else:
+                print("Kein aktueller Fokus vorhanden. Lernen aus dem Internet wird übersprungen.")
         
         # Aktualisiere Statistiken
         self.update_stats()
@@ -981,159 +1003,238 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         print("Ewiges Bewusstsein gestoppt.")
 
     def learn_from_internet(self):
-        """Lernt neue Kontexte aus dem Internet."""
-        if self.current_url_count >= self.max_urls_per_session:
-            self.current_url_count = 0
+        """
+        Lernt neue Kontexte aus dem Internet basierend auf dem aktuellen Fokus.
+        Anstatt zufällige Wikipedia-Artikel zu verwenden, wird gezielt nach Informationen
+        gesucht, die mit dem aktuellen Fokus zusammenhängen.
+        """
+        if not self.current_focus or self.current_focus not in self.contexts:
+            print("Kein aktueller Fokus vorhanden. Kann nicht gezielt lernen.")
             return
         
-        if not self.url_queue:
+        # Extrahiere Schlüsselkonzepte aus dem aktuellen Fokus
+        focus_context = self.contexts[self.current_focus]
+        focus_text = str(focus_context)
+        print(f"Lerne basierend auf aktuellem Fokus: {focus_text}")
+        
+        # Extrahiere Schlüsselwörter aus dem Fokus
+        focus_words = focus_text.lower().split()
+        # Entferne Stoppwörter
+        focus_keywords = [word for word in focus_words if word not in self.stop_words and len(word) > 3]
+        
+        if not focus_keywords:
+            print("Keine relevanten Schlüsselwörter im aktuellen Fokus gefunden.")
             return
         
-        url = self.url_queue.pop(0)
-        print(f"Lerne von URL: {url}")
+        # Priorisiere Schlüsselwörter (längere Wörter sind oft bedeutungsvoller)
+        focus_keywords.sort(key=len, reverse=True)
         
-        try:
-            # Hole die Webseite
-            response = requests.get(url, timeout=10)
-            if response.status_code != 200:
-                print(f"Fehler beim Abrufen von {url}: Status {response.status_code}")
-                return
-            
-            # Parse den HTML-Inhalt
-            soup = BeautifulSoup(response.text, 'html.parser')
-            
-            # Entferne JavaScript und CSS
-            for script in soup(["script", "style"]):
-                script.extract()
-            
-            # Entferne Navigations- und Metainformationen, die typischerweise in Wikipedia-Artikeln vorkommen
-            for nav in soup.find_all(['nav', 'footer', 'header']):
-                nav.extract()
+        # Wähle die Top-3 Schlüsselwörter (oder weniger, falls nicht genug vorhanden)
+        top_keywords = focus_keywords[:min(3, len(focus_keywords))]
+        print(f"Schlüsselwörter für die Suche: {', '.join(top_keywords)}")
+        
+        # Erstelle eine deterministische Suchanfrage basierend auf den Schlüsselwörtern
+        search_query = "+".join(top_keywords)
+        
+        # Erstelle deterministische URLs für die Suche in verschiedenen Sprachen
+        urls = [
+            f"https://de.wikipedia.org/wiki/Special:Search?search={search_query}&go=Go",
+            f"https://en.wikipedia.org/wiki/Special:Search?search={search_query}&go=Go",
+            f"https://simple.wikipedia.org/wiki/Special:Search?search={search_query}&go=Go"
+        ]
+        
+        # Verarbeite jede URL
+        contexts_learned = 0
+        for url in urls:
+            if contexts_learned >= self.max_contexts_per_page:
+                break
                 
-            # Entferne spezifische Elemente, die in Wikipedia-Artikeln vorkommen
-            for element in soup.find_all(class_=lambda x: x and any(term in str(x).lower() for term in 
-                                                                 ['navigation', 'menu', 'sidebar', 'footer', 'header', 
-                                                                  'login', 'search', 'terms', 'policy', 'cookie', 
-                                                                  'privacy', 'disclaimer', 'license'])):
-                element.extract()
+            if url in self.visited_urls:
+                continue
                 
-            # Bei Wikipedia-Artikeln: Versuche, nur den Hauptinhalt zu extrahieren
-            if 'wikipedia.org' in url:
-                main_content = soup.find(id='mw-content-text')
-                if main_content:
-                    # Entferne Infoboxen, Navigationsleisten und andere Metainformationen
-                    for box in main_content.find_all(class_=lambda x: x and any(term in str(x).lower() for term in 
-                                                                           ['infobox', 'navbox', 'metadata', 'catlinks', 
-                                                                            'references', 'reflist', 'hatnote'])):
-                        box.extract()
+            print(f"Lerne von URL: {url}")
+            
+            try:
+                # Hole die Webseite
+                response = requests.get(url, timeout=10)
+                if response.status_code != 200:
+                    print(f"Fehler beim Abrufen von {url}: Status {response.status_code}")
+                    continue
+                
+                # Parse den HTML-Inhalt
+                soup = BeautifulSoup(response.text, 'html.parser')
+                
+                # Entferne JavaScript und CSS
+                for script in soup(["script", "style"]):
+                    script.extract()
+                
+                # Entferne Navigations- und Metainformationen
+                for nav in soup.find_all(['nav', 'footer', 'header']):
+                    nav.extract()
                     
-                    # Verwende nur den Hauptinhalt
-                    text = main_content.get_text()
-                else:
-                    # Hole den Text aus dem gesamten Dokument, wenn der Hauptinhalt nicht gefunden wurde
-                    text = soup.get_text()
-            else:
-                # Für andere Websites: Hole den Text aus dem gesamten Dokument
-                text = soup.get_text()
-            
-            # Bereinige den Text
-            lines = (line.strip() for line in text.splitlines())
-            chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-            text = '\n'.join(chunk for chunk in chunks if chunk)
-            
-            # Tokenisiere den Text in Sätze
-            sentences = sent_tokenize(text)
-            
-            # Filtere Sätze, die wahrscheinlich Metainformationen enthalten
-            filtered_sentences = []
-            for sentence in sentences:
-                # Überspringe Sätze, die wahrscheinlich Metainformationen enthalten
-                if any(term in sentence.lower() for term in ['cookie', 'privacy', 'terms of use', 'disclaimer', 
-                                                           'license', 'copyright', 'wikimedia', 'foundation', 
-                                                           'login', 'sign in', 'register', 'account', 'password',
-                                                           'username', 'edit', 'view history', 'talk', 'contributions']):
-                    continue
-                filtered_sentences.append(sentence)
-            
-            # Wähle zufällig einige Sätze aus (maximal max_contexts_per_page)
-            if len(filtered_sentences) > self.max_contexts_per_page:
-                filtered_sentences = random.sample(filtered_sentences, self.max_contexts_per_page)
-            
-            # Erstelle neue Kontexte aus den Sätzen
-            for sentence in filtered_sentences:
-                # Bereinige und tokenisiere den Satz
-                words = word_tokenize(sentence.lower())
+                # Entferne spezifische Elemente
+                for element in soup.find_all(class_=lambda x: x and any(term in str(x).lower() for term in 
+                                                                     ['navigation', 'menu', 'sidebar', 'footer', 'header', 
+                                                                      'login', 'search', 'terms', 'policy', 'cookie', 
+                                                                      'privacy', 'disclaimer', 'license'])):
+                    element.extract()
                 
-                # Entferne Stoppwörter und Sonderzeichen
-                words = [word for word in words if word.isalnum() and len(word) > 1]
+                # Finde die Suchergebnisse oder den Hauptinhalt
+                main_content = None
                 
-                if len(words) < 3:  # Ignoriere zu kurze Sätze
-                    continue
+                # Bei Wikipedia-Suchergebnissen: Finde die Ergebnisliste
+                search_results = soup.find(id='mw-content-text')
+                if search_results:
+                    # Suche nach den ersten Artikellinks in den Suchergebnissen
+                    article_links = []
+                    for link in search_results.find_all('a', href=True):
+                        href = link['href']
+                        # Ignoriere spezielle Seiten und externe Links
+                        if ('Special:' in href or 'action=' in href or 
+                            'redlink=1' in href or href.startswith('#') or 
+                            href.startswith('http')):
+                            continue
+                        # Füge nur Wikipedia-Artikel hinzu
+                        if '/wiki/' in href and href not in article_links:
+                            article_links.append(href)
+                            if len(article_links) >= 3:  # Begrenze auf die ersten 3 Artikel
+                                break
+                    
+                    # Besuche die gefundenen Artikel
+                    for article_href in article_links:
+                        # Erstelle die vollständige URL
+                        base_url = '{uri.scheme}://{uri.netloc}'.format(uri=urlparse(url))
+                        article_url = base_url + article_href if article_href.startswith('/') else base_url + '/' + article_href
+                        
+                        if article_url in self.visited_urls:
+                            continue
+                            
+                        print(f"Besuche Artikel: {article_url}")
+                        
+                        try:
+                            # Hole den Artikel
+                            article_response = requests.get(article_url, timeout=10)
+                            if article_response.status_code != 200:
+                                continue
+                                
+                            article_soup = BeautifulSoup(article_response.text, 'html.parser')
+                            
+                            # Entferne JavaScript und CSS
+                            for script in article_soup(["script", "style"]):
+                                script.extract()
+                            
+                            # Bei Wikipedia-Artikeln: Versuche, nur den Hauptinhalt zu extrahieren
+                            article_content = article_soup.find(id='mw-content-text')
+                            if article_content:
+                                # Entferne Infoboxen, Navigationsleisten und andere Metainformationen
+                                for box in article_content.find_all(class_=lambda x: x and any(term in str(x).lower() for term in 
+                                                                                       ['infobox', 'navbox', 'metadata', 'catlinks', 
+                                                                                        'references', 'reflist', 'hatnote'])):
+                                    box.extract()
+                                
+                                # Verwende nur den Hauptinhalt
+                                text = article_content.get_text()
+                            else:
+                                # Hole den Text aus dem gesamten Dokument, wenn der Hauptinhalt nicht gefunden wurde
+                                text = article_soup.get_text()
+                            
+                            # Bereinige den Text
+                            lines = (line.strip() for line in text.splitlines())
+                            chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+                            text = '\n'.join(chunk for chunk in chunks if chunk)
+                            
+                            # Tokenisiere den Text in Sätze
+                            sentences = sent_tokenize(text)
+                            
+                            # Filtere Sätze, die wahrscheinlich Metainformationen enthalten
+                            filtered_sentences = []
+                            for sentence in sentences:
+                                # Überspringe Sätze, die wahrscheinlich Metainformationen enthalten
+                                if any(term in sentence.lower() for term in ['cookie', 'privacy', 'terms of use', 'disclaimer', 
+                                                                           'license', 'copyright', 'wikimedia', 'foundation', 
+                                                                           'login', 'sign in', 'register', 'account', 'password',
+                                                                           'username', 'edit', 'view history', 'talk', 'contributions']):
+                                    continue
+                                filtered_sentences.append(sentence)
+                            
+                            # Wähle die relevantesten Sätze aus (die, die Schlüsselwörter enthalten)
+                            relevant_sentences = []
+                            for sentence in filtered_sentences:
+                                # Prüfe, ob der Satz eines der Schlüsselwörter enthält
+                                if any(keyword in sentence.lower() for keyword in top_keywords):
+                                    relevant_sentences.append(sentence)
+                            
+                            # Falls keine relevanten Sätze gefunden wurden, verwende die ersten Sätze
+                            if not relevant_sentences and filtered_sentences:
+                                relevant_sentences = filtered_sentences[:min(self.max_contexts_per_page, len(filtered_sentences))]
+                            
+                            # Begrenze die Anzahl der Sätze
+                            if len(relevant_sentences) > self.max_contexts_per_page:
+                                # Sortiere nach Relevanz (Anzahl der enthaltenen Schlüsselwörter)
+                                relevant_sentences.sort(key=lambda s: sum(1 for kw in top_keywords if kw in s.lower()), reverse=True)
+                                relevant_sentences = relevant_sentences[:self.max_contexts_per_page]
+                            
+                            # Erstelle neue Kontexte aus den Sätzen
+                            for sentence in relevant_sentences:
+                                # Bereinige und tokenisiere den Satz
+                                words = word_tokenize(sentence.lower())
+                                
+                                # Entferne Stoppwörter und Sonderzeichen
+                                words = [word for word in words if word.isalnum() and len(word) > 1]
+                                
+                                if len(words) < 3:  # Ignoriere zu kurze Sätze
+                                    continue
+                                
+                                # Erstelle einen neuen Kontext
+                                context_id = self.create_context(" ".join(words))
+                                
+                                # Berechne den Glückswert basierend auf der Relevanz zum Fokus
+                                relevance = sum(1 for kw in top_keywords if kw in sentence.lower()) / len(top_keywords)
+                                happiness = 0.3 + (relevance * 0.4)  # Skaliere zwischen 0.3 und 0.7
+                                self.contexts[context_id].happiness = round(happiness, 2)
+                                
+                                # Verbinde mit dem aktuellen Fokus
+                                self.create_connection(self.current_focus, context_id, weight=0.8)
+                                
+                                # Verbinde mit anderen relevanten Kontexten
+                                for existing_id, existing_context in self.contexts.items():
+                                    if existing_id != context_id and existing_id != self.current_focus:
+                                        # Berechne die Ähnlichkeit zwischen dem neuen Kontext und dem existierenden Kontext
+                                        existing_text = str(existing_context).lower()
+                                        similarity = sum(1 for word in words if word in existing_text) / len(words)
+                                        if similarity > 0.3:  # Verbinde nur, wenn ausreichend ähnlich
+                                            self.create_connection(context_id, existing_id, weight=0.5)
+                                
+                                print(f"Neuer Kontext gelernt: {' '.join(words[:20])}{'...' if len(words) > 20 else ''} (Glück: {self.contexts[context_id].happiness:.2f})")
+                                contexts_learned += 1
+                                
+                                if contexts_learned >= self.max_contexts_per_page:
+                                    break
+                            
+                            # Füge die URL zu den besuchten URLs hinzu
+                            self.visited_urls.add(article_url)
+                            
+                        except Exception as e:
+                            print(f"Fehler beim Verarbeiten des Artikels {article_url}: {str(e)}")
+                        
+                        if contexts_learned >= self.max_contexts_per_page:
+                            break
                 
-                # Erstelle einen neuen Kontext
-                context_id = self.create_context(" ".join(words))
+                # Füge die URL zu den besuchten URLs hinzu
+                self.visited_urls.add(url)
                 
-                # Setze einen zufälligen Glückswert
-                self.contexts[context_id].happiness = round(random.uniform(-0.5, 0.5), 2)
-                
-                # Verbinde mit dem aktuellen Fokus, falls vorhanden
-                if self.current_focus:
-                    self.create_connection(self.current_focus, context_id, weight=0.5)
-                
-                # Verbinde mit einem zufälligen anderen Kontext
-                if len(self.contexts) > 1:
-                    random_context_id = random.choice(list(self.contexts.keys()))
-                    if random_context_id != context_id:
-                        self.create_connection(context_id, random_context_id, weight=0.3)
-                
-                print(f"Neuer Kontext gelernt: {' '.join(words[:20])}{'...' if len(words) > 20 else ''} (Glück: {self.contexts[context_id].happiness:.2f})")
-            
-            # Füge die URL zu den besuchten URLs hinzu
-            self.visited_urls.add(url)
-            
-            # Extrahiere Links für weitere Erkundung
-            links = []
-            for link in soup.find_all('a', href=True):
-                href = link['href']
-                
-                # Ignoriere relative Links und Anker
-                if href.startswith('#') or href.startswith('javascript:'):
-                    continue
-                
-                # Konvertiere relative URLs in absolute URLs
-                if not href.startswith('http'):
-                    base_url = '{uri.scheme}://{uri.netloc}'.format(uri=urlparse(url))
-                    href = base_url + href if href.startswith('/') else base_url + '/' + href
-                
-                # Füge den Link hinzu, wenn er noch nicht besucht wurde
-                if href not in self.visited_urls and href not in self.url_queue:
-                    links.append(href)
-            
-            # Füge einige zufällige Links zur Queue hinzu
-            if links:
-                random.shuffle(links)
-                self.url_queue.extend(links[:3])  # Maximal 3 neue Links
-            
-            # Aktualisiere den Zähler
-            self.current_url_count += 1
-            
-            # Füge zur Lernhistorie hinzu
-            self.learning_history.append({
-                "url": url,
-                "timestamp": time.time(),
-                "contexts_learned": len(filtered_sentences)
-            })
-            
-        except Exception as e:
-            print(f"Fehler beim Lernen von {url}: {str(e)}")
+            except Exception as e:
+                print(f"Fehler beim Lernen von {url}: {str(e)}")
         
-        # Füge immer eine zufällige Wikipedia-Seite hinzu, um die Erkundung zu fördern
-        if random.random() < 0.3:
-            self.url_queue.append(random.choice([
-                "https://de.wikipedia.org/wiki/Spezial:Zuf%C3%A4llige_Seite",
-                "https://en.wikipedia.org/wiki/Special:Random",
-                "https://simple.wikipedia.org/wiki/Special:Random"
-            ]))
+        # Füge zur Lernhistorie hinzu
+        self.learning_history.append({
+            "url": url,
+            "timestamp": time.time(),
+            "contexts_learned": contexts_learned,
+            "focus": focus_text
+        })
+        
+        print(f"Lernvorgang abgeschlossen. {contexts_learned} neue Kontexte gelernt.")
 
     def calculate_sentiment(self, words: List[str]) -> float:
         """Berechnet einen einfachen Sentiment-Score für eine Liste von Wörtern."""
