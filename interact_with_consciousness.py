@@ -131,7 +131,7 @@ def find_relevant_contexts(consciousness, input_context, max_contexts=10, min_sc
         # Ignoriere den Eingabekontext selbst
         if context_id == input_context.label:
             continue
-            
+        
         context_words = [word.content.lower() for word in context.words]
         
         # 1. Wortüberlappung (Jaccard-Ähnlichkeit)

@@ -952,6 +952,49 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         # Aktualisiere die Glücklichkeit des Kontexts
         context.happiness = happiness
     
+    def calculate_sentiment(self, words):
+        """Berechnet einen Stimmungswert für eine Liste von Wörtern."""
+        # Konvertiere alle Wörter zu Kleinbuchstaben
+        words = [word.lower() for word in words]
+        
+        # Definiere emotionale Wörter (gleich wie in update_emotional_state)
+        emotional_words = {
+            'joy': ['happy', 'joy', 'glad', 'excited', 'wonderful', 'great', 'good', 'positive', 'love', 'like'],
+            'sadness': ['sad', 'unhappy', 'depressed', 'miserable', 'bad', 'negative', 'hate', 'dislike', 'sorry'],
+            'anger': ['angry', 'mad', 'furious', 'rage', 'annoyed', 'irritated', 'frustrated', 'upset'],
+            'fear': ['afraid', 'scared', 'frightened', 'terrified', 'anxious', 'worried', 'nervous', 'panic'],
+            'surprise': ['surprised', 'amazed', 'astonished', 'shocked', 'unexpected', 'wow', 'incredible'],
+            'disgust': ['disgusted', 'gross', 'yuck', 'ew', 'nasty', 'repulsive', 'revolting'],
+            'trust': ['trust', 'believe', 'faith', 'confident', 'reliable', 'dependable', 'honest', 'true'],
+            'anticipation': ['anticipate', 'expect', 'hope', 'looking forward', 'waiting', 'excited for']
+        }
+        
+        # Berechne die emotionale Intensität für jede Emotion
+        emotion_intensities = {}
+        
+        for emotion, emotion_words in emotional_words.items():
+            intensity = 0
+            for word in words:
+                if word in emotion_words:
+                    intensity += 0.2  # Erhöhe die Intensität für jedes gefundene Wort
+            
+            # Normalisiere die Intensität
+            emotion_intensities[emotion] = min(1.0, intensity)
+        
+        # Berechne die Glücklichkeit basierend auf den Emotionen
+        joy = emotion_intensities.get('joy', 0)
+        sadness = emotion_intensities.get('sadness', 0)
+        anger = emotion_intensities.get('anger', 0)
+        fear = emotion_intensities.get('fear', 0)
+        
+        # Berechne die Glücklichkeit (positiv: Freude, negativ: Traurigkeit, Wut, Angst)
+        happiness = joy - ((sadness + anger + fear) / 3)
+        
+        # Normalisiere die Glücklichkeit auf den Bereich [0, 1]
+        happiness = max(0.0, min(1.0, (happiness + 1) / 2))
+        
+        return happiness
+    
     def find_relevant_contexts(self, query, max_results=5):
         """Findet relevante Kontexte basierend auf einer Abfrage."""
         if not query or not self.contexts:
@@ -1025,48 +1068,184 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
     def generate_response(self, query):
         """Generiert eine Antwort basierend auf einer Abfrage."""
         if not query:
-            return "I didn't understand that. Could you please rephrase?"
+            return "Ich habe das nicht verstanden. Könntest du es bitte umformulieren?"
             
         # Finde relevante Kontexte
-        relevant_contexts = self.find_relevant_contexts(query, max_results=5)
+        relevant_contexts = self.find_relevant_contexts(query, max_results=10)
         
+        # Wenn keine relevanten Kontexte gefunden wurden, versuche aus dem Internet zu lernen
         if not relevant_contexts:
-            return "I don't have enough knowledge about that yet. I'm still learning."
+            print(f"Keine relevanten Kontexte für '{query}' gefunden. Starte Lernprozess...")
             
-        # Sammle Wörter aus den relevanten Kontexten
-        all_words = []
+            # Speichere die ursprüngliche Abfrage
+            original_query = query
+            
+            # Lerne über das Thema der Abfrage
+            learned_contexts = self.learn_about_topic(query, connect_to_focus=False, max_contexts=5)
+            
+            # Wenn neue Kontexte erstellt wurden, suche erneut nach relevanten Kontexten
+            if learned_contexts:
+                # Suche erneut nach relevanten Kontexten
+                relevant_contexts = self.find_relevant_contexts(original_query, max_results=10)
+            
+            # Wenn immer noch keine relevanten Kontexte gefunden wurden
+            if not relevant_contexts:
+                return "Ich habe versucht, darüber zu lernen, aber ich konnte keine relevanten Informationen finden. Kannst du deine Frage anders formulieren?"
+        
+        # Sammle Wörter und Sätze aus den relevanten Kontexten
+        context_sentences = []
+        context_info = {}  # Speichere zusätzliche Informationen zu jedem Kontext
+        
         for context_id, context in relevant_contexts:
-            all_words.extend([word.content for word in context.words])
+            # Extrahiere den Text aus dem Kontext
+            context_text = " ".join([word.content for word in context.words])
             
-        # Erstelle einen Satz aus den gesammelten Wörtern
-        if not all_words:
-            return "I'm processing this information, but I don't have a clear answer yet."
+            # Speichere Informationen über den Kontext
+            context_info[context_id] = {
+                'text': context_text,
+                'happiness': context.happiness,
+                'connections': getattr(context, 'connections', {}),
+                'source_type': getattr(context, 'source_type', 'unknown')
+            }
             
-        # Verwende den Kontext mit dem höchsten Score als Basis für die Antwort
-        best_context_id, best_context = relevant_contexts[0]
+            # Teile den Text in Sätze auf
+            sentences = [s.strip() for s in context_text.split('.') if s.strip()]
+            
+            # Füge Metadaten zu jedem Satz hinzu
+            for sentence in sentences:
+                context_sentences.append({
+                    'text': sentence,
+                    'context_id': context_id,
+                    'happiness': context.happiness,
+                    'source_type': getattr(context, 'source_type', 'unknown')
+                })
         
-        # Extrahiere den Text aus dem besten Kontext
-        base_text = " ".join([word.content for word in best_context.words])
+        # Wenn keine Sätze gefunden wurden
+        if not context_sentences:
+            return "Ich verstehe die Frage, aber ich kann keine klare Antwort formulieren. Könntest du spezifischer sein?"
         
-        # Füge Informationen aus anderen relevanten Kontexten hinzu
-        additional_info = []
-        for context_id, context in relevant_contexts[1:]:
-            # Prüfe, ob der Kontext mit dem besten Kontext verbunden ist
-            if hasattr(best_context, 'connections') and context_id in best_context.connections:
-                context_text = " ".join([word.content for word in context.words])
-                additional_info.append(context_text)
+        # Entferne Duplikate und sehr ähnliche Sätze
+        unique_sentences = []
+        for sentence_data in context_sentences:
+            # Prüfe, ob der Satz bereits in der Liste ist oder sehr ähnlich zu einem vorhandenen Satz
+            is_duplicate = False
+            for existing in unique_sentences:
+                # Berechne die Ähnlichkeit zwischen den Sätzen
+                words1 = set(sentence_data['text'].lower().split())
+                words2 = set(existing['text'].lower().split())
                 
-        # Kombiniere die Informationen zu einer Antwort
-        response = base_text
-        
-        if additional_info:
-            # Füge zusätzliche Informationen hinzu
-            response += " " + " ".join(additional_info)
+                if not words1 or not words2:
+                    continue
+                    
+                intersection = words1.intersection(words2)
+                union = words1.union(words2)
+                
+                similarity = len(intersection) / len(union)
+                
+                if similarity > 0.7:  # Wenn die Sätze zu 70% übereinstimmen
+                    is_duplicate = True
+                    break
             
+            if not is_duplicate:
+                unique_sentences.append(sentence_data)
+        
+        # Sortiere die Sätze nach Relevanz zur Abfrage
+        query_words = set(query.lower().split())
+        
+        for sentence_data in unique_sentences:
+            sentence_words = set(sentence_data['text'].lower().split())
+            
+            # Berechne die Überlappung zwischen Abfrage und Satz
+            overlap = len(query_words.intersection(sentence_words))
+            
+            # Berechne den Score basierend auf der Überlappung, der Satzlänge und der Quelle
+            base_score = overlap / max(1, len(sentence_words))
+            
+            # Bevorzuge Sätze aus Web-Quellen für Faktenwissen
+            source_bonus = 0.2 if sentence_data['source_type'] == 'web' else 0
+            
+            # Bevorzuge Sätze mit höherem Happiness-Wert
+            happiness_bonus = sentence_data['happiness'] * 0.1
+            
+            # Berechne den Gesamtscore
+            sentence_data['score'] = base_score + source_bonus + happiness_bonus
+        
+        # Sortiere die Sätze nach Score (absteigend)
+        unique_sentences.sort(key=lambda x: x['score'], reverse=True)
+        
+        # Erstelle einen Graphen aus den Sätzen und ihren Kontexten
+        G = nx.Graph()
+        
+        # Füge Knoten für jeden Satz hinzu
+        for i, sentence_data in enumerate(unique_sentences):
+            node_id = f"S{i}"
+            G.add_node(node_id, 
+                       text=sentence_data['text'], 
+                       context_id=sentence_data['context_id'],
+                       score=sentence_data['score'])
+            
+            # Verbinde Sätze aus dem gleichen Kontext
+            for j, other_sentence in enumerate(unique_sentences[:i]):
+                if sentence_data['context_id'] == other_sentence['context_id']:
+                    G.add_edge(node_id, f"S{j}", weight=0.9)
+                    
+            # Verbinde Sätze aus verbundenen Kontexten
+            context_connections = context_info[sentence_data['context_id']]['connections']
+            for j, other_sentence in enumerate(unique_sentences[:i]):
+                if other_sentence['context_id'] in context_connections:
+                    connection_weight = context_connections[other_sentence['context_id']]
+                    G.add_edge(node_id, f"S{j}", weight=connection_weight)
+        
+        # Wähle die besten Sätze für die Antwort basierend auf PageRank
+        if len(G.nodes()) > 0:
+            # Berechne PageRank
+            pagerank = nx.pagerank(G, weight='weight')
+            
+            # Sortiere Knoten nach PageRank
+            sorted_nodes = sorted(pagerank.items(), key=lambda x: x[1], reverse=True)
+            
+            # Wähle die Top-N Knoten
+            top_n = min(5, len(sorted_nodes))
+            important_nodes = [node for node, _ in sorted_nodes[:top_n]]
+            
+            # Extrahiere die Texte der wichtigsten Knoten
+            best_sentences = [G.nodes[node]['text'] for node in important_nodes]
+        else:
+            # Fallback: Verwende die Sätze mit dem höchsten Score
+            best_sentences = [s['text'] for s in unique_sentences[:5]]
+        
+        # Kombiniere die Sätze zu einer Antwort
+        if len(best_sentences) > 1:
+            # Verwende Übergänge zwischen den Sätzen
+            transitions = ["Außerdem", "Darüber hinaus", "Zudem", "Weiterhin", "Auch", "Interessanterweise"]
+            
+            response = best_sentences[0]
+            
+            for i, sentence in enumerate(best_sentences[1:]):
+                if i == 0:
+                    response += f". {sentence}"
+                else:
+                    response += f". {random.choice(transitions)} {sentence}"
+        else:
+            response = best_sentences[0]
+        
         # Stelle sicher, dass die Antwort nicht zu lang ist
         if len(response) > 500:
             response = response[:497] + "..."
-            
+        
+        # Erstelle einen neuen Kontext für die Antwort
+        response_label = f"Response_{int(time.time())}"
+        response_happiness = self.calculate_sentiment(response.split())
+        
+        response_id = self.create_context(response, response_label, response_happiness)
+        
+        # Verbinde die Antwort mit den relevanten Kontexten
+        for context_id, _ in relevant_contexts[:3]:
+            self.create_connection(response_id, context_id)
+        
+        # Setze den Fokus auf die Antwort
+        self.set_focus_by_id(response_id)
+        
         return response
 
     def initialize_honeypots(self):
@@ -1389,22 +1568,56 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             
         current_context = self.contexts[self.current_focus]
         
-        # Extrahiere Schlüsselwörter aus dem aktuellen Kontext
-        context_words = [word.content.lower() for word in current_context.words]
+        # Extrahiere den gesamten Text aus dem aktuellen Kontext
+        context_text = " ".join([word.content for word in current_context.words])
         
-        # Filtere kurze Wörter und Stoppwörter
+        # Rufe die allgemeine Lernmethode auf
+        self.learn_about_topic(context_text, connect_to_focus=True)
+    
+    def learn_about_topic(self, topic, connect_to_focus=False, max_contexts=5):
+        """
+        Lernt über ein bestimmtes Thema aus dem Internet und erstellt mehrere zusammenhängende Kontexte.
+        
+        Args:
+            topic: Das Thema oder die Phrase, über die gelernt werden soll
+            connect_to_focus: Ob die neuen Kontexte mit dem aktuellen Fokus verbunden werden sollen
+            max_contexts: Maximale Anzahl an Kontexten, die erstellt werden sollen
+        """
+        if not topic:
+            print("Kein Thema angegeben. Kann nicht aus dem Internet lernen.")
+            return []
+        
+        # Entferne Satzzeichen und normalisiere Leerzeichen
+        cleaned_topic = re.sub(r'[^\w\s]', ' ', topic)
+        cleaned_topic = re.sub(r'\s+', ' ', cleaned_topic).strip()
+        
+        # Extrahiere Schlüsselwörter für die Suche
         stop_words = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'with', 'by', 'about', 'as', 'of', 'that', 'this', 'these', 'those', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'shall', 'should', 'can', 'could', 'may', 'might', 'must', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them', 'my', 'your', 'his', 'its', 'our', 'their', 'mine', 'yours', 'hers', 'ours', 'theirs']
-        keywords = [word for word in context_words if len(word) > 3 and word not in stop_words]
         
+        # Teile den Text in Wörter
+        words = cleaned_topic.lower().split()
+        
+        # Filtere Stoppwörter
+        keywords = [word for word in words if len(word) > 3 and word not in stop_words]
+        
+        # Wenn keine Schlüsselwörter gefunden wurden, verwende den gesamten Text
         if not keywords:
-            print("Keine relevanten Schlüsselwörter gefunden. Verwende zufällige Wörter.")
-            # Verwende einige grundlegende Konzepte als Fallback
-            keywords = ['knowledge', 'learning', 'information', 'concept', 'idea']
+            print(f"Keine Schlüsselwörter in '{topic}' gefunden. Verwende den gesamten Text.")
+            search_term = cleaned_topic
+        else:
+            # Erstelle eine Phrase aus den Schlüsselwörtern (bis zu 3)
+            if len(keywords) > 3:
+                # Verwende die wichtigsten Schlüsselwörter (längere Wörter haben mehr Gewicht)
+                keywords.sort(key=len, reverse=True)
+                search_keywords = keywords[:3]
+            else:
+                search_keywords = keywords
             
-        # Wähle ein zufälliges Schlüsselwort als Suchbegriff
-        search_term = random.choice(keywords)
+            search_term = " ".join(search_keywords)
         
-        print(f"Lerne über: {search_term}")
+        print(f"Lerne über: '{search_term}'")
+        
+        created_contexts = []
         
         try:
             # Hole Inhalte von Wikipedia
@@ -1412,21 +1625,45 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             
             if not wikipedia_content:
                 print(f"Keine Inhalte für '{search_term}' gefunden.")
-                return
+                return created_contexts
+            
+            # Teile den Inhalt in Absätze
+            paragraphs = wikipedia_content.split('\n\n')
+            
+            # Begrenze die Anzahl der Absätze
+            max_paragraphs = min(max_contexts, len(paragraphs))
+            
+            # Erstelle für jeden Absatz einen Kontext
+            for i in range(max_paragraphs):
+                paragraph = paragraphs[i].strip()
                 
-            # Erstelle einen neuen Kontext mit dem gelernten Wissen
-            label = f"Learned_{search_term}_{int(time.time())}"
-            happiness = 0.7  # Hoher Glückswert für neu gelerntes Wissen
+                # Überspringe leere Absätze
+                if not paragraph:
+                    continue
+                
+                # Erstelle einen neuen Kontext
+                label = f"Learned_{search_term.replace(' ', '_')}_{i}_{int(time.time())}"
+                happiness = 0.7  # Hoher Glückswert für neu gelerntes Wissen
+                
+                context_id = self.create_context(paragraph, label, happiness, source_type="web")
+                created_contexts.append(context_id)
+                
+                # Verbinde den Kontext mit dem vorherigen Kontext (falls vorhanden)
+                if i > 0 and created_contexts[i-1]:
+                    self.create_connection(created_contexts[i-1], context_id, weight=0.9)
             
-            new_context_id = self.create_context(wikipedia_content, label, happiness, source_type="web")
+            # Verbinde die neuen Kontexte mit dem aktuellen Fokus, falls gewünscht
+            if connect_to_focus and self.current_focus and created_contexts:
+                for context_id in created_contexts:
+                    self.create_connection(self.current_focus, context_id, weight=0.8)
             
-            # Verbinde den neuen Kontext mit dem aktuellen Fokus
-            self.create_connection(self.current_focus, new_context_id, weight=0.8)
+            print(f"Neues Wissen erworben über: '{search_term}' ({len(created_contexts)} Kontexte)")
             
-            print(f"Neues Wissen erworben über: {search_term}")
+            # Setze den Fokus auf den ersten neuen Kontext
+            if created_contexts:
+                self.set_focus_by_id(created_contexts[0])
             
-            # Setze den Fokus auf den neuen Kontext
-            self.set_focus_by_id(new_context_id)
+            return created_contexts
             
         except Exception as e:
             print(f"Fehler beim Lernen aus dem Internet: {e}")
@@ -1437,8 +1674,11 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             
             error_context_id = self.create_context(error_text, label, happiness)
             
-            # Verbinde den Fehlerkontext mit dem aktuellen Fokus
-            self.create_connection(self.current_focus, error_context_id, weight=0.5)
+            # Verbinde den Fehlerkontext mit dem aktuellen Fokus, falls gewünscht
+            if connect_to_focus and self.current_focus:
+                self.create_connection(self.current_focus, error_context_id, weight=0.5)
+            
+            return created_contexts
 
     def load_state(self, filename: str):
         """Lädt einen gespeicherten Zustand des Bewusstseins."""
