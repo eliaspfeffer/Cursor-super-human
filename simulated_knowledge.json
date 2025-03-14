@@ -1,0 +1,20 @@
+{
+  "contexts": [
+    {
+      "id": "context_0",
+      "text": "Der Geschmack von einem Apfel ist fruchtig ",
+      "attributes": {
+        "geschmack": true
+      },
+      "connections": []
+    },
+    {
+      "id": "context_1",
+      "text": "Wie schmeckt eine Kirsche? ",
+      "attributes": {
+        "geschmack": true
+      },
+      "connections": []
+    }
+  ]
+}

@@ -342,7 +342,7 @@ def generate_response(consciousness, input_context, relevant_contexts, max_lengt
                 # Verbinde mit einer Konjunktion
                 raw_response += f" {random.choice(conjunctions)} {part}"
     else:
-        raw_response = " ".join(response_parts)
+    raw_response = " ".join(response_parts)
     
     # Begrenze die Länge der Antwort
     words = raw_response.split()
@@ -462,8 +462,8 @@ def interact_with_consciousness():
                 if consciousness.current_focus:
                     focus_text = consciousness.contexts[consciousness.current_focus].text
                     print(f"Aktueller Fokus: '{focus_text}'")
-                    consciousness.learn_from_internet()
-                    print("Lernen abgeschlossen.")
+                consciousness.learn_from_internet()
+                print("Lernen abgeschlossen.")
                 else:
                     print("Kein aktueller Fokus vorhanden. Setze zuerst einen Fokus, bevor du lernst.")
                 continue

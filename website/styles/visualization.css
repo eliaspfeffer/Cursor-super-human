@@ -1,0 +1,659 @@
+/* Visualization Specific Styles */
+
+/* Page Header */
+.page-header {
+  padding: 4rem 0;
+  background: linear-gradient(
+    120deg,
+    var(--primary-color),
+    var(--primary-light)
+  );
+  color: white;
+  text-align: center;
+}
+
+.page-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.page-header p {
+  font-size: 1.2rem;
+  opacity: 0.9;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Controls Section */
+.visualization-controls {
+  padding: 2rem 0;
+  background-color: var(--bg-light);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Standardisierte Container-Stile für alle weißen Boxen */
+.card-container {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Einheitliche Überschriftenstile für alle Container */
+.card-container h3 {
+  margin-top: 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+}
+
+/* Control Panel mit flexiblerem Grid */
+.control-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.control-group {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  height: 100%;
+}
+
+.control-group h3 {
+  margin-top: 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.slider-control {
+  background-color: var(--bg-light);
+  padding: 10px;
+  border-radius: 8px;
+  margin: 5px 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.slider-control label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.checkbox-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.color-control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.color-control select {
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  background-color: white;
+}
+
+input[type="range"] {
+  width: 100%;
+  height: 6px;
+  background: var(--primary-light);
+  border-radius: 3px;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--primary-color);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+/* Network Visualization */
+.network-visualization {
+  padding: 3rem 0;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+section.network-visualization .container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: stretch;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  flex-wrap: nowrap;
+}
+
+.vis-container {
+  position: relative;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  overflow: visible;
+  height: 600px;
+  flex: 2;
+  min-width: 0;
+}
+
+#network {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: visible;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(99, 102, 241, 0.2);
+  border-radius: 50%;
+  border-top: 5px solid var(--primary-color);
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.node-info-panel {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  height: 600px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 250px;
+}
+
+.node-info-panel h3 {
+  margin-top: 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--primary-color);
+}
+
+#nodeInfo {
+  padding: 1rem 0;
+  flex-grow: 1;
+}
+
+.empty-state {
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+  line-height: 1.6;
+}
+
+.empty-state i {
+  font-size: 2rem;
+  color: var(--light-gray);
+  margin-bottom: 10px;
+}
+
+/* Network Stats */
+.network-stats {
+  padding: 3rem 0;
+  padding-top: 3rem;
+  background-color: var(--bg-light);
+  clear: both;
+  position: relative;
+  z-index: 1;
+  margin-top: 3rem;
+  display: block;
+  width: 100%;
+}
+
+.network-stats h2 {
+  margin-top: 12rem;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  text-align: center;
+  transition: transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  aspect-ratio: 1 / 1;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+}
+
+.stat-card i {
+  font-size: 2rem;
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+}
+
+.stat-card h3 {
+  margin: 0;
+  color: var(--text-dark);
+  font-size: 1.1rem;
+}
+
+.stat-card p {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin: 0.5rem 0 0;
+}
+
+/* Simulation Section */
+.simulation-section {
+  padding: 3rem 0;
+}
+
+.simulation-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.input-area,
+.simulation-results {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.input-area h3,
+.simulation-results h3 {
+  margin-top: 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+}
+
+.input-group {
+  margin-bottom: 1.5rem;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.input-group input,
+.input-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+.processing-log {
+  background-color: var(--bg-light);
+  border-radius: 5px;
+  padding: 1rem;
+  flex-grow: 1;
+  min-height: 200px;
+  overflow-y: auto;
+  font-family: "Roboto Mono", monospace;
+  font-size: 0.9rem;
+}
+
+.log-entry {
+  margin: 0.5rem 0;
+  line-height: 1.4;
+}
+
+.log-entry.info {
+  color: var(--text-dark);
+}
+
+.log-entry.success {
+  color: #10b981;
+}
+
+.log-entry.warning {
+  color: #f59e0b;
+}
+
+.log-entry.error {
+  color: #ef4444;
+}
+
+/* D3.js specific styles - Verbesserte Klickbarkeit */
+.node {
+  stroke: #fff;
+  stroke-width: 2px;
+  cursor: pointer;
+  pointer-events: all;
+}
+
+.node.selected {
+  stroke: var(--primary-color);
+  stroke-width: 3px;
+  filter: drop-shadow(0 0 3px rgba(99, 102, 241, 0.5));
+}
+
+.node text {
+  pointer-events: none;
+  font-size: 10px;
+  text-anchor: middle;
+  fill: var(--text-dark);
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+/* Verbesserter Klickbereich für kleine Knoten */
+.node[r="15"],
+.node[r="10"] {
+  pointer-events: visible;
+  cursor: pointer;
+}
+
+.link {
+  stroke: #999;
+  stroke-opacity: 0.6;
+  pointer-events: none;
+}
+
+.link.highlighted {
+  stroke: var(--primary-color);
+  stroke-opacity: 0.8;
+  stroke-width: 2px;
+}
+
+/* Verbesserte Hover-Effekte für Knoten */
+.node:hover {
+  stroke: var(--primary-color);
+  stroke-width: 3px;
+}
+
+/* Verhindern, dass SVG-Elemente Klicks blockieren */
+svg {
+  overflow: visible !important;
+}
+
+/* Fehlermeldung */
+.error-message {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: #ef4444;
+  width: 80%;
+}
+
+.error-message i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.error-message p {
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.error-message small {
+  color: #64748b;
+}
+
+/* Responsive styles - Verbesserte Breakpoints für fließendere Übergänge */
+@media (max-width: 1200px) {
+  .stats-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+
+  .control-panel {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  .vis-container {
+    height: 550px;
+  }
+}
+
+@media (max-width: 992px) {
+  section.network-visualization .container {
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: stretch;
+  }
+
+  .node-info-panel {
+    height: auto;
+    min-height: 300px;
+    max-height: 400px;
+    min-width: auto;
+  }
+
+  .vis-container {
+    height: 500px;
+    min-height: 450px;
+    width: 100%;
+  }
+
+  .simulation-container {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .network-stats {
+    margin-top: 1.5rem;
+    padding: 2rem 0;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    padding: 3rem 0;
+  }
+
+  .page-header h1 {
+    font-size: 2rem;
+  }
+
+  .stat-card {
+    aspect-ratio: auto;
+    padding: 1.25rem;
+  }
+
+  .stat-card p {
+    font-size: 2rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .control-panel {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .vis-container {
+    height: 450px;
+    min-height: 400px;
+  }
+}
+
+@media (max-width: 576px) {
+  .vis-container {
+    height: 400px;
+    min-height: 350px;
+    overflow: visible;
+  }
+
+  .node-info-panel {
+    min-height: 250px;
+  }
+
+  .card-container,
+  .control-group,
+  .stat-card,
+  .input-area,
+  .simulation-results,
+  .vis-container,
+  .node-info-panel {
+    padding: 1rem;
+  }
+
+  .stats-grid {
+    gap: 0.75rem;
+  }
+
+  .network-stats,
+  .simulation-section,
+  .network-visualization {
+    padding: 1.5rem 0;
+  }
+
+  #network {
+    overflow: visible;
+  }
+
+  .node {
+    stroke-width: 1.5px;
+  }
+
+  .node text {
+    font-size: 8px;
+  }
+}
+
+@media (min-width: 1600px) {
+  section.network-visualization .container {
+    max-width: 1400px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+}
+
+/* Centered Container */
+.centered-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Netzwerk-Hilfe Tooltip */
+.network-help {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 8px 12px;
+  border-radius: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-size: 0.9rem;
+  color: var(--gray-color);
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+.network-help i {
+  color: var(--primary-color);
+  margin-right: 5px;
+}
+
+.vis-container:hover .network-help {
+  opacity: 0.3;
+}

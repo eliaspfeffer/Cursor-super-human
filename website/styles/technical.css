@@ -1,0 +1,2387 @@
+/* Technical Page Styles */
+
+/* Page Header */
+.page-header {
+  padding: 8rem 0 3rem;
+  background: linear-gradient(
+    135deg,
+    var(--primary-color),
+    var(--secondary-color)
+  );
+  color: white;
+  text-align: center;
+}
+
+.page-header h1 {
+  margin-bottom: 1rem;
+  font-size: 3rem;
+}
+
+.page-header p {
+  font-size: 1.2rem;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* Architecture Section */
+.architecture-content {
+  display: flex;
+  gap: 3rem;
+  align-items: flex-start;
+}
+
+.architecture-text {
+  flex: 1;
+}
+
+.architecture-diagram {
+  flex: 1;
+}
+
+.component-list {
+  margin: 1.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.component-list li {
+  margin-bottom: 0.75rem;
+  position: relative;
+}
+
+.component-list li::before {
+  content: "";
+  position: absolute;
+  left: -1.5rem;
+  top: 0.5rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+}
+
+/* Diagram */
+.diagram {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  overflow: visible;
+}
+
+.diagram-node {
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: var(--transition);
+  z-index: 5;
+  padding: 0.5rem;
+  text-align: center;
+}
+
+.diagram-node:hover {
+  transform: scale(1.1);
+  z-index: 10;
+}
+
+.diagram-node i {
+  font-size: 1.8rem;
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+}
+
+.diagram-node span {
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.diagram-node.central {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 130px;
+  height: 130px;
+  background: var(--primary-color);
+  background: linear-gradient(135deg, #6366f1, #4338ca);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 6px 12px rgba(99, 102, 241, 0.4);
+  z-index: 10;
+  padding: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.diagram-node.central::after {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  right: -8px;
+  bottom: -8px;
+  border-radius: 50%;
+  border: 2px dashed rgba(255, 255, 255, 0.5);
+  animation: rotate 20s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.diagram-node.central i {
+  font-size: 2.5rem;
+  color: white;
+  margin-bottom: 0.7rem;
+}
+
+.diagram-node.central span {
+  color: white;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.diagram-node.central:hover {
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.diagram-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: radial-gradient(
+      circle at 50% 50%,
+      transparent 60px,
+      var(--primary-light) 60px,
+      var(--primary-light) 62px,
+      transparent 62px
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      transparent 120px,
+      var(--primary-light) 120px,
+      var(--primary-light) 122px,
+      transparent 122px
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      transparent 180px,
+      var(--primary-light) 180px,
+      var(--primary-light) 182px,
+      transparent 182px
+    );
+  opacity: 0.4;
+  z-index: 1;
+}
+
+/* Tooltips für die Knoten */
+.diagram-node::before {
+  content: attr(data-desc);
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.diagram-node:hover::before {
+  opacity: 1;
+}
+
+/* Diagramm-Beschreibung */
+.diagram-description {
+  text-align: center;
+  margin-top: 25px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s, transform 0.8s;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.diagram-description.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.diagram-description .fas {
+  color: var(--primary-color);
+  margin-right: 5px;
+}
+
+.diagram-description em {
+  font-style: italic;
+  font-weight: 500;
+  color: var(--primary-color);
+}
+
+/* Verbesserte Verbindungslinien */
+.diagram svg line {
+  transition: stroke-width 0.3s, stroke 0.3s;
+}
+
+.diagram-node:hover + svg line {
+  stroke-width: 3px;
+  stroke: rgba(99, 102, 241, 0.9);
+}
+
+/* Context Network Section */
+.section-intro {
+  text-align: center;
+  max-width: 900px;
+  margin: 0 auto 3rem;
+  font-size: 1.1rem;
+}
+
+.detail-row {
+  display: flex;
+  gap: 3rem;
+}
+
+.detail-col {
+  flex: 1;
+}
+
+.code-block {
+  background-color: #1e293b;
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  overflow-x: auto;
+}
+
+.code-block pre {
+  color: #f8fafc;
+  font-family: "Fira Code", monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* Energy System Section */
+.energy-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3rem;
+}
+
+.energy-text {
+  flex: 1 1 400px;
+}
+
+.energy-chart {
+  flex: 1 1 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.honeypots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+  width: 100%;
+}
+
+.honeypot {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  height: 100%;
+  transition: transform 0.3s ease;
+  margin: 0;
+}
+
+.honeypot:hover {
+  transform: translateY(-5px);
+}
+
+.honeypot-icon {
+  width: 55px;
+  height: 55px;
+  background-color: #6366f1;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  box-shadow: 0 3px 6px rgba(99, 102, 241, 0.3);
+  margin-right: 5px;
+}
+
+.honeypot-info {
+  flex: 1;
+  min-width: 0; /* Wichtig für Textabschneidung in Flexbox */
+}
+
+.honeypot-info h4 {
+  margin: 0 0 10px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #2d3748;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
+  line-height: 1.3;
+}
+
+.honeypot-info p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
+}
+
+.chart-container {
+  background-color: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  padding: 1.5rem;
+}
+
+.chart-label {
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.chart-bar {
+  height: 20px;
+  background-color: var(--light-gray);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.chart-fill {
+  height: 100%;
+  background-color: var(--primary-color);
+  width: 75%;
+  border-radius: 10px;
+  transition: width 1s ease;
+}
+
+#honeypotSearch {
+  width: 20%;
+  background-color: var(--accent-color);
+}
+
+.chart-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--gray-color);
+  margin-bottom: 1rem;
+}
+
+.chart-description {
+  font-size: 0.9rem;
+  color: var(--gray-color);
+  margin-top: 1rem;
+}
+
+/* Thinking Process Section */
+.process-diagram {
+  margin-top: 3rem;
+}
+
+.process-step {
+  display: flex;
+  align-items: flex-start;
+  background-color: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  transition: var(--transition);
+  position: relative;
+}
+
+.process-step:hover {
+  transform: translateY(-5px);
+}
+
+.process-step::after {
+  content: "";
+  position: absolute;
+  bottom: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 15px;
+  background-color: var(--light-gray);
+}
+
+.process-step:last-child::after {
+  display: none;
+}
+
+.step-icon {
+  width: 50px;
+  height: 50px;
+  background-color: var(--primary-light);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+  margin-right: 1.5rem;
+  flex-shrink: 0;
+}
+
+.step-number {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  width: 30px;
+  height: 30px;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  z-index: 5;
+}
+
+.step-content {
+  flex: 1;
+}
+
+.code-snippet {
+  background-color: #f1f5f9;
+  border-radius: var(--border-radius);
+  padding: 1rem;
+  margin-top: 1rem;
+  overflow-x: auto;
+}
+
+.code-snippet pre {
+  font-family: "Fira Code", monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* Learning Process Section */
+.learning-content {
+  display: flex;
+  gap: 3rem;
+  align-items: flex-start;
+}
+
+.learning-text {
+  flex: 1;
+}
+
+.learning-diagram {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.process-list {
+  counter-reset: process-counter;
+  margin: 2rem 0;
+  padding-left: 0;
+}
+
+.process-list li {
+  counter-increment: process-counter;
+  position: relative;
+  padding-left: 3rem;
+  margin-bottom: 2rem;
+}
+
+.process-list li::before {
+  content: counter(process-counter);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 35px;
+  height: 35px;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.process-list li strong {
+  display: block;
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.process-list li p {
+  margin-bottom: 0;
+}
+
+.diagram-container {
+  width: 100%;
+  max-width: 400px;
+  background-color: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  padding: 2rem;
+}
+
+/* Implementation Status Section */
+.status-table {
+  margin-top: 3rem;
+  overflow-x: auto;
+}
+
+.status-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.status-table th,
+.status-table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--light-gray);
+}
+
+.status-table th {
+  background-color: #f1f5f9;
+  font-weight: 600;
+}
+
+.status-table tr:hover {
+  background-color: #f8fafc;
+}
+
+.status {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  font-weight: 600;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.status.complete {
+  background-color: #bbf7d0;
+  color: #166534;
+}
+
+.status.partial {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.status.planned {
+  background-color: #e0e7ff;
+  color: #3730a3;
+}
+
+/* Animation for Energy Level */
+@keyframes energyFluctuation {
+  0% {
+    width: 75%;
+  }
+  25% {
+    width: 70%;
+  }
+  50% {
+    width: 80%;
+  }
+  75% {
+    width: 65%;
+  }
+  100% {
+    width: 75%;
+  }
+}
+
+#energyLevel {
+  animation: energyFluctuation 8s infinite;
+}
+
+@keyframes honeypotSearchFluctuation {
+  0% {
+    width: 20%;
+  }
+  50% {
+    width: 35%;
+  }
+  100% {
+    width: 20%;
+  }
+}
+
+#honeypotSearch {
+  animation: honeypotSearchFluctuation 12s infinite;
+}
+
+/* Responsive Styles */
+@media (max-width: 1200px) {
+  .honeypots {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+}
+
+@media (max-width: 992px) {
+  .architecture-content,
+  .detail-row,
+  .energy-content,
+  .learning-content {
+    flex-direction: column;
+  }
+
+  .diagram {
+    height: 350px;
+    margin-top: 2rem;
+  }
+
+  .diagram-node {
+    width: 70px;
+    height: 70px;
+  }
+
+  .diagram-node.central {
+    width: 100px;
+    height: 100px;
+  }
+
+  .diagram-node i {
+    font-size: 1.5rem;
+  }
+
+  .diagram-node.central i {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-header h1 {
+    font-size: 2.5rem;
+  }
+
+  .honeypots {
+    grid-template-columns: 1fr;
+  }
+
+  .honeypot {
+    max-width: 100%;
+  }
+
+  .process-step {
+    padding: 1.5rem;
+  }
+
+  .step-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .page-header h1 {
+    font-size: 2rem;
+  }
+
+  .page-header p {
+    font-size: 1rem;
+  }
+
+  .process-step {
+    padding: 1rem;
+  }
+
+  .step-icon {
+    width: 35px;
+    height: 35px;
+  }
+
+  .code-snippet pre {
+    font-size: 0.8rem;
+  }
+
+  .status-table th,
+  .status-table td {
+    padding: 0.5rem;
+  }
+
+  .status {
+    padding: 0.25rem 0.5rem;
+  }
+}
+
+/* Neuer Zyklus-Fortschrittsbalken */
+.cycle-container {
+  margin-top: 20px;
+}
+
+.cycle-progress {
+  height: 8px;
+  background-color: var(--light-gray);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 15px 0;
+  position: relative;
+}
+
+.cycle-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  width: 0%;
+  border-radius: 4px;
+  transition: width 0.5s linear;
+  position: relative;
+}
+
+.cycle-progress-bar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 100%;
+  background-color: white;
+  opacity: 0.6;
+  animation: pulsate 1s infinite;
+}
+
+@keyframes pulsate {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+
+.cycle-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.btn-small {
+  font-size: 0.8rem;
+  padding: 5px 10px;
+  background-color: var(--bg-light);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-small:hover {
+  background-color: var(--primary-light);
+  color: white;
+}
+
+.btn-small i {
+  font-size: 0.9rem;
+}
+
+.cycle-info {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.cycle-info i {
+  color: var(--primary-color);
+}
+
+#cycleTimeDisplay {
+  font-family: "Fira Code", monospace;
+  font-weight: 500;
+  padding: 2px 5px;
+  background-color: var(--primary-light);
+  color: white;
+  border-radius: 3px;
+  margin-left: 5px;
+  font-size: 0.9rem;
+}
+
+.btn-small.active {
+  background-color: var(--primary-color);
+  color: white;
+  transform: scale(0.95);
+}
+
+/* Energiesteuerung Styles */
+.energy-level-display,
+.honeypot-intensity-display {
+  font-family: "Fira Code", monospace;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+  font-size: 14px;
+}
+
+.energy-level-display {
+  background-color: var(--primary-color);
+  color: white;
+  transition: background-color 0.5s;
+}
+
+.energy-level-display.low {
+  background-color: #ef4444;
+}
+
+.energy-level-display.medium {
+  background-color: #f59e0b;
+}
+
+.energy-level-display.high {
+  background-color: #10b981;
+}
+
+.honeypot-intensity-display {
+  background-color: var(--accent-color);
+  color: white;
+}
+
+.energy-controls {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.energy-controls label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.energy-slider {
+  width: 100%;
+  height: 8px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(90deg, #ef4444, #f59e0b, #10b981);
+  border-radius: 4px;
+  outline: none;
+  margin: 0.5rem 0 1.5rem;
+}
+
+.energy-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+  border: 2px solid var(--primary-color);
+  transition: all 0.2s;
+}
+
+.energy-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.energy-state-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+}
+
+.energy-state {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.energy-state .indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.energy-state.low .indicator {
+  background-color: #ef4444;
+}
+
+.energy-state.medium .indicator {
+  background-color: #f59e0b;
+}
+
+.energy-state.high .indicator {
+  background-color: #10b981;
+}
+
+.chart-control-toggle {
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart-control-toggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+
+.chart-control-toggle label {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: normal;
+}
+
+.correlation-note {
+  font-size: 0.8rem;
+  color: var(--primary-color);
+  font-style: italic;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.correlation-note i {
+  font-size: 0.9rem;
+}
+
+/* Wave Container für die Wellenform-Visualisierung */
+.wave-container {
+  width: 100%;
+  height: 100px;
+  margin: 20px 0;
+  background-color: var(--bg-light);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
+  display: block;
+}
+
+/* Canvas für die Wellenform */
+canvas#energyWave,
+canvas#honeypotWave {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* Farbverlauf-Overlay für die Wellenformen */
+.wave-container::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0) 50%,
+    rgba(0, 0, 0, 0.05) 100%
+  );
+  pointer-events: none;
+}
+
+/* Fokus-Radar-Visualisierung */
+.focus-radar-container {
+  margin-top: 40px;
+  border-top: 1px solid var(--border-color);
+  padding-top: 30px;
+}
+
+.radar-visualization {
+  width: 100%;
+  height: 300px;
+  background-color: var(--bg-light);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
+  margin: 20px 0;
+}
+
+canvas#focusRadar {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.radar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: rgba(255, 255, 255, 0.6);
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin: 5px 10px;
+}
+
+.legend-color {
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.honeypot-color {
+  background-color: #f97316; /* Orange für Honeypots */
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.low-energy-color {
+  background-color: rgba(239, 68, 68, 0.6); /* Rot für niedrige Energie */
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.high-energy-color {
+  background-color: rgba(16, 185, 129, 0.6); /* Grün für hohe Energie */
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+/* Fokus-Netzwerk-Visualisierung */
+.honeypot-focus-network {
+  padding: 3rem 0;
+  background-color: var(--bg-light);
+  border-top: 1px solid var(--border-color);
+}
+
+.network-visualization-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 30px;
+}
+
+.controls-panel {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  flex: 1;
+  min-width: 250px;
+}
+
+.controls-panel .control-group {
+  margin-bottom: 20px;
+}
+
+.controls-panel h3 {
+  font-size: 18px;
+  margin-bottom: 15px;
+  color: var(--primary-color);
+  border-bottom: 1px solid var(--light-gray);
+  padding-bottom: 10px;
+}
+
+.energy-selector-container {
+  margin-bottom: 15px;
+}
+
+.energy-selector-container label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.honeypot-selector {
+  margin-bottom: 15px;
+}
+
+.honeypot-selector label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.honeypot-selector select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 5px;
+  border: 1px solid var(--light-gray);
+  background-color: white;
+  font-size: 14px;
+}
+
+.checkbox-control {
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-control input[type="checkbox"] {
+  margin-right: 8px;
+  width: 16px;
+  height: 16px;
+}
+
+#networkEnergyValue {
+  display: inline-block;
+  font-family: "Fira Code", monospace;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+  font-size: 14px;
+  background-color: var(--primary-color);
+  color: white;
+  transition: background-color 0.5s;
+}
+
+#networkEnergyValue.low {
+  background-color: #ef4444;
+}
+
+#networkEnergyValue.medium {
+  background-color: #f59e0b;
+}
+
+#networkEnergyValue.high {
+  background-color: #10b981;
+}
+
+.vis-container {
+  position: relative;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  overflow: visible;
+  height: 500px;
+  flex: 2;
+  min-width: 400px;
+}
+
+#focusNetwork {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: visible;
+}
+
+.network-help {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: var(--gray-color);
+  font-size: 0.85rem;
+  padding: 8px;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-top: 1px solid var(--light-gray);
+  transition: opacity 0.3s;
+}
+
+.network-help i {
+  color: var(--primary-color);
+  margin-right: 5px;
+}
+
+.node-info-panel {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  flex: 1;
+  min-width: 250px;
+  max-width: 350px;
+}
+
+.node-info-panel h3 {
+  font-size: 18px;
+  margin-bottom: 15px;
+  color: var(--primary-color);
+  border-bottom: 1px solid var(--light-gray);
+  padding-bottom: 10px;
+}
+
+#contextInfo {
+  min-height: 200px;
+  position: relative;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--gray-color);
+  font-size: 14px;
+  padding: 20px;
+  height: 100%;
+}
+
+.empty-state i {
+  font-size: 2rem;
+  margin-bottom: 15px;
+  color: var(--light-gray);
+}
+
+.focus-explanation {
+  margin-top: 20px;
+  border-top: 1px solid var(--light-gray);
+  padding-top: 15px;
+}
+
+.focus-explanation h4 {
+  font-size: 16px;
+  margin-bottom: 10px;
+  color: var(--text-primary);
+}
+
+.focus-explanation ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.focus-explanation li {
+  margin-bottom: 8px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+}
+
+.energy-indicator {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.energy-indicator.low {
+  background-color: #ef4444;
+}
+
+.energy-indicator.medium {
+  background-color: #f59e0b;
+}
+
+.energy-indicator.high {
+  background-color: #10b981;
+}
+
+/* Netzwerk-Knoten und Verbindungen */
+.honeypot-node {
+  fill: #f97316;
+  stroke: #c2410c;
+  stroke-width: 2px;
+}
+
+.context-node {
+  fill: #6366f1;
+  stroke: #4f46e5;
+  stroke-width: 1px;
+}
+
+.context-node.focus {
+  fill: #a855f7;
+  stroke: #7e22ce;
+  stroke-width: 3px;
+  filter: drop-shadow(0 0 5px rgba(168, 85, 247, 0.5));
+}
+
+.context-node.food {
+  fill: #f97316;
+}
+
+.context-node.essential {
+  fill: #0ea5e9;
+}
+
+.context-node.distant {
+  fill: #a3a3a3;
+}
+
+.context-link {
+  stroke: #cbd5e1;
+  stroke-opacity: 0.6;
+}
+
+.context-link.food {
+  stroke: #fdba74;
+  stroke-opacity: 0.8;
+}
+
+.context-link.focus {
+  stroke: #c084fc;
+  stroke-width: 2px;
+  stroke-opacity: 0.9;
+}
+
+.node-label {
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  pointer-events: none;
+  text-anchor: middle;
+}
+
+/* Responsives Design */
+@media (max-width: 1200px) {
+  .network-visualization-container {
+    flex-direction: column;
+  }
+
+  .controls-panel,
+  .node-info-panel {
+    max-width: none;
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .vis-container {
+    height: 400px;
+  }
+}
+
+/* Kontext-Informationsanzeige */
+.context-details {
+  padding: 10px;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  border: 1px solid var(--border-color);
+}
+
+.context-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.context-emoji {
+  font-size: 24px;
+  margin-right: 10px;
+}
+
+.context-header h4 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--primary-color);
+  flex-grow: 1;
+}
+
+.context-type {
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  color: white;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.context-type.honeypot {
+  background-color: #f97316;
+  color: white;
+}
+
+.context-type.essential {
+  background-color: #0ea5e9;
+}
+
+.context-type.related {
+  background-color: #6366f1;
+}
+
+.context-type.distant {
+  background-color: #a3a3a3;
+}
+
+.context-type.fruit {
+  background-color: #3b82f6;
+}
+
+.context-type.property {
+  background-color: #22c55e;
+}
+
+.context-type.color,
+.context-type.taste,
+.context-type.size {
+  background-color: #f97316;
+}
+
+.context-type.category {
+  background-color: #8b5cf6;
+  color: white;
+}
+
+.context-body {
+  font-size: 14px;
+}
+
+.context-body p {
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.context-energy {
+  margin-bottom: 12px;
+  padding: 8px;
+  background-color: #f1f5f9;
+  border-radius: 4px;
+}
+
+.energy-value {
+  font-family: "Fira Code", monospace;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: white;
+}
+
+.energy-value.low {
+  background-color: #ef4444;
+}
+
+.energy-value.medium {
+  background-color: #f59e0b;
+}
+
+.energy-value.high {
+  background-color: #10b981;
+}
+
+.connected-contexts {
+  margin-top: 15px;
+}
+
+.connected-contexts strong {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.connected-contexts ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.connected-contexts li {
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  display: inline-block;
+}
+
+/* Wort-Visualisierung */
+.word-node {
+  opacity: 0;
+  animation: fadeIn 0.5s forwards;
+}
+
+.word-link {
+  opacity: 0;
+  animation: fadeIn 0.5s forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.word-node circle:hover {
+  r: 12;
+  transition: r 0.2s;
+  cursor: pointer;
+}
+
+.word-node text {
+  pointer-events: none;
+}
+
+/* Tooltip für Wörter */
+.word-tooltip {
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 100;
+  transition: opacity 0.3s;
+}
+
+/* Hervorhebung der Wort-Verbindungen */
+.word-link.highlighted {
+  stroke-width: 2;
+  stroke: #f97316;
+  opacity: 1;
+}
+
+/* Visual Indicator für expandierte Knoten */
+.node.expanded circle {
+  stroke: #f97316;
+  stroke-width: 3;
+  stroke-dasharray: 5, 2;
+  animation: pulse 2s infinite;
+}
+
+/* Erklärungstext für Doppelklick */
+.expand-hint {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.expand-hint i {
+  color: #f97316;
+  margin-right: 5px;
+}
+
+/* Simulation-Energie-Sektion */
+.simulation-energy-section {
+  padding: 4rem 0;
+  background-color: var(--bg-light);
+  border-top: 1px solid var(--border-color);
+}
+
+.simulation-controls-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin-top: 2rem;
+  align-items: stretch;
+}
+
+.simulation-controls-container .control-panel {
+  flex: 1;
+  min-width: 250px;
+  max-width: 350px;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+}
+
+.dynamic-network-container {
+  flex: 2;
+  min-width: 400px;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  position: relative;
+}
+
+#dynamic-network {
+  width: 100%;
+  height: 400px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background-color: #f9fafb;
+}
+
+.energy-level-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+  font-weight: 500;
+}
+
+#energy-value {
+  display: inline-block;
+  padding: 2px 6px;
+  margin-right: 2px;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 4px;
+  font-family: "Fira Code", monospace;
+  transition: background-color 0.3s;
+}
+
+.dynamic-node {
+  cursor: pointer;
+  transition: fill 0.3s, stroke 0.3s, stroke-width 0.3s;
+}
+
+.dynamic-node:hover {
+  stroke-width: 3px;
+}
+
+.dynamic-node.honeypot {
+  fill: #f97316;
+  stroke: #c2410c;
+}
+
+.dynamic-node.essential {
+  fill: #0ea5e9;
+  stroke: #0369a1;
+}
+
+.dynamic-node.related {
+  fill: #6366f1;
+  stroke: #4338ca;
+}
+
+.dynamic-node.distant {
+  fill: #a3a3a3;
+  stroke: #71717a;
+}
+
+.dynamic-node.focused {
+  fill: #a855f7;
+  stroke: #7e22ce;
+  stroke-width: 3px;
+  filter: drop-shadow(0 0 4px rgba(168, 85, 247, 0.6));
+  animation: pulse-focus 1.5s infinite;
+}
+
+@keyframes pulse-focus {
+  0% {
+    stroke-opacity: 0.8;
+  }
+  50% {
+    stroke-opacity: 1;
+  }
+  100% {
+    stroke-opacity: 0.8;
+  }
+}
+
+.dynamic-link {
+  stroke: #cbd5e1;
+  stroke-width: 1.5px;
+  opacity: 0.5;
+  transition: stroke 0.3s, opacity 0.3s, stroke-width 0.3s;
+}
+
+.dynamic-link.essential {
+  stroke: #0ea5e9;
+  opacity: 0.7;
+}
+
+.dynamic-link.related {
+  stroke: #6366f1;
+  opacity: 0.6;
+}
+
+.dynamic-link.distant {
+  stroke: #a3a3a3;
+  opacity: 0.4;
+}
+
+.dynamic-link.focused {
+  stroke: #a855f7;
+  stroke-width: 2.5px;
+  opacity: 0.8;
+}
+
+.network-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 15px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  justify-content: center;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 5px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.honeypot-color {
+  background-color: #f97316;
+}
+
+.essential-color {
+  background-color: #0ea5e9;
+}
+
+.related-color {
+  background-color: #6366f1;
+}
+
+.distant-color {
+  background-color: #a3a3a3;
+}
+
+.focus-color {
+  background-color: #a855f7;
+}
+
+.energy-focus-explanation {
+  margin-top: 2.5rem;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+}
+
+.energy-focus-explanation h3 {
+  color: var(--primary-color);
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--light-gray);
+  padding-bottom: 10px;
+}
+
+.focus-rules {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+.focus-rules li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.focus-instruction {
+  font-style: italic;
+  margin-top: 1rem;
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.focus-instruction::before {
+  content: "\f05a";
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
+}
+
+.focus-stats {
+  margin-top: 1.5rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.focus-stats h4 {
+  font-size: 16px;
+  margin-bottom: 10px;
+  color: var(--text-primary);
+}
+
+.focus-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.stat-label {
+  color: var(--text-muted);
+}
+
+.stat-value {
+  font-weight: 500;
+  font-family: "Fira Code", monospace;
+  background-color: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* Responsive Anpassungen */
+@media (max-width: 992px) {
+  .simulation-controls-container {
+    flex-direction: column;
+  }
+
+  .simulation-controls-container .control-panel,
+  .dynamic-network-container {
+    max-width: none;
+    width: 100%;
+  }
+
+  #dynamic-network {
+    height: 350px;
+  }
+}
+
+@media (max-width: 576px) {
+  #dynamic-network {
+    height: 300px;
+  }
+
+  .focus-stat {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+
+  .stat-value {
+    margin-top: 5px;
+  }
+}
+
+/* Neue Stile für semantisches Frucht-Netzwerk */
+.node.fruit circle {
+  fill: #3b82f6;
+}
+
+.node.property circle {
+  fill: #8b5cf6;
+}
+
+.node.color circle,
+.node.taste circle {
+  fill: #f97316;
+}
+
+.node.size circle {
+  fill: #22c55e;
+}
+
+.link.color {
+  stroke: #f97316;
+  stroke-dasharray: 5, 5;
+}
+
+.link.taste {
+  stroke: #22c55e;
+  stroke-dasharray: 3, 3;
+}
+
+.link.property {
+  stroke: #8b5cf6;
+}
+
+.link.size {
+  stroke: #14b8a6;
+}
+
+.node circle:hover {
+  r: 25;
+  cursor: pointer;
+}
+
+.node:hover text {
+  font-weight: bold;
+}
+
+.node-tooltip {
+  position: absolute;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.fallback-content {
+  display: block;
+  padding: 20px;
+  text-align: center;
+  background-color: #f9f9fa;
+  border: 1px dashed #ccc;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.fallback-content h3 {
+  color: #6366f1;
+  margin-bottom: 10px;
+}
+
+.fallback-content p {
+  color: #4b5563;
+  font-size: 14px;
+}
+
+.fallback-icon {
+  margin-top: 15px;
+  font-size: 3rem;
+  color: #a1a1aa;
+}
+
+/* Das folgender Stil sorgt dafür, dass der Fallback-Inhalt ausgeblendet wird,
+   wenn der Container ein SVG-Element hat (was bedeutet, dass D3 funktioniert) */
+#focusNetwork:has(svg) .fallback-content,
+#dynamic-network:has(svg) .fallback-content {
+  display: none;
+}
+
+/* Make sure the container has a height */
+#focusNetwork,
+#dynamic-network {
+  min-height: 300px;
+  position: relative;
+}
+
+/* Stile für das semantische Netzwerk */
+.node circle {
+  fill: #3b82f6;
+  cursor: pointer;
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+
+.node.fruit circle {
+  fill: #3b82f6;
+}
+
+.node.property circle {
+  fill: #8b5cf6;
+}
+
+.node.color circle,
+.node.taste circle {
+  fill: #f97316;
+}
+
+.node.size circle {
+  fill: #22c55e;
+}
+
+.link {
+  stroke: #999;
+  stroke-opacity: 0.6;
+}
+
+.link.color {
+  stroke: #f97316;
+  stroke-width: 2;
+}
+
+.link.taste {
+  stroke: #22c55e;
+  stroke-width: 1.5;
+}
+
+.link.property {
+  stroke: #8b5cf6;
+}
+
+.link.size {
+  stroke: #14b8a6;
+}
+
+.node circle:hover {
+  stroke: #f97316;
+  stroke-width: 3;
+}
+
+.node:hover text {
+  font-weight: bold;
+}
+
+.node-tooltip {
+  position: absolute;
+  padding: 5px 10px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border-radius: 4px;
+  pointer-events: none;
+  font-size: 12px;
+  z-index: 1000;
+}
+
+/* Fallback-Inhalt, wenn D3.js nicht geladen werden kann */
+.fallback-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+}
+
+.fallback-content h3 {
+  margin-top: 10px;
+}
+
+.fallback-content p {
+  color: #666;
+}
+
+.fallback-icon {
+  font-size: 3rem;
+  color: #cbd5e1;
+  margin-bottom: 10px;
+}
+
+/* Ausblenden des Fallback-Inhalts, wenn SVG vorhanden ist */
+#focusNetwork:has(svg) .fallback-content,
+#dynamic-network:has(svg) .fallback-content {
+  display: none;
+}
+
+/* Container-Stile für die Visualisierung */
+#focusNetwork,
+#dynamic-network {
+  min-height: 400px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background-color: #f9f9f9;
+}
+
+/* Stile für den Honeypot-Knoten */
+.node.honeypot circle {
+  fill: #f97316; /* Orange für Honeypot */
+  stroke: #c2410c;
+  stroke-width: 2px;
+}
+
+/* Stile für den Kategorie-Knoten */
+.node.category circle {
+  fill: #8b5cf6; /* Lila für Kategorien */
+  stroke: #6d28d9;
+  stroke-width: 1.5px;
+}
+
+/* Stile für die Honeypot-Verbindungen */
+.link.honeypot {
+  stroke: #f97316;
+  stroke-width: 3px;
+  stroke-dasharray: 5, 5; /* Gestrichelte Linie */
+}
+
+/* Stile für die Kategorie-Verbindungen */
+.link.category {
+  stroke: #8b5cf6;
+  stroke-width: 2px;
+}
+
+/* Stile für semantische Sätze und Verbindungen */
+.node.sentence circle {
+  fill: #3b82f6; /* Blau für Sätze */
+  stroke: #2563eb;
+  stroke-width: 2px;
+}
+
+.node.object circle {
+  fill: #16a34a; /* Grün für Objekte */
+  stroke: #15803d;
+  stroke-width: 1.5px;
+}
+
+.node.verb circle {
+  fill: #ea580c; /* Bernstein für Verben */
+  stroke: #c2410c;
+  stroke-width: 1.5px;
+}
+
+.node.pronoun circle {
+  fill: #8b5cf6; /* Lila für Pronomen */
+  stroke: #7c3aed;
+  stroke-width: 1.5px;
+}
+
+.node.property circle {
+  fill: #ec4899; /* Pink für Eigenschaften */
+  stroke: #db2777;
+  stroke-width: 1.5px;
+}
+
+.node.action circle {
+  fill: #d97706; /* Bernstein für Aktionen */
+  stroke: #b45309;
+  stroke-width: 1.5px;
+}
+
+/* Verbindungstypen */
+.link.part_of {
+  stroke: #6b7280; /* Grau für Teil-Ganzes-Beziehungen */
+  stroke-dasharray: 2, 2;
+  opacity: 0.7;
+}
+
+.link.semantic {
+  stroke: #3b82f6; /* Blau für semantische Beziehungen */
+  stroke-width: 2px;
+  opacity: 0.8;
+}
+
+/* Tooltips für Sätze */
+.node.sentence:hover text {
+  font-weight: bold;
+  font-size: 12px !important;
+}
+
+/* Interaktionen mit Sätzen */
+.node.sentence circle:hover {
+  fill: #2563eb;
+  stroke-width: 3px;
+  filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.5));
+}
+
+/* Anpassungen für das Info-Panel bei Satzauswahl */
+.context-type.sentence {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.context-type.object {
+  background-color: #16a34a;
+  color: white;
+}
+
+.context-type.verb {
+  background-color: #ea580c;
+  color: white;
+}
+
+.context-type.pronoun {
+  background-color: #8b5cf6;
+  color: white;
+}
+
+.context-type.property {
+  background-color: #ec4899;
+  color: white;
+}
+
+.context-type.action {
+  background-color: #d97706;
+  color: white;
+}
+
+/* Node-Tooltip */
+.node-tooltip {
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 100;
+  display: none;
+}
+
+/* Stile für hervorgehobene Links */
+.link.highlighted {
+  stroke-width: 3px;
+  opacity: 1;
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.3));
+}
+
+/* Hervorgehobene Verbindungen nach Typ */
+.link.part_of.highlighted {
+  stroke: #4b5563; /* Dunkleres Grau */
+  stroke-dasharray: 2, 2;
+}
+
+.link.semantic.highlighted {
+  stroke: #2563eb; /* Dunkleres Blau */
+  stroke-width: 3px;
+}
+
+.link.category.highlighted {
+  stroke: #7c3aed; /* Dunkleres Lila */
+  stroke-width: 3px;
+}
+
+.link.honeypot.highlighted {
+  stroke: #c2410c; /* Dunkleres Orange */
+  stroke-width: 4px;
+}
+
+/* Styles für die Netzwerk-Visualisierung */
+.node circle.selected {
+  stroke-width: 3px;
+  stroke: #ff6b6b;
+  filter: drop-shadow(0 0 5px rgba(255, 107, 107, 0.7));
+  animation: pulse-selection 1.5s infinite ease-in-out;
+}
+
+.node.connected circle {
+  stroke-width: 2px;
+  stroke: #4dabf7;
+}
+
+.link.highlighted {
+  stroke-width: 3px;
+  filter: drop-shadow(0 0 3px rgba(77, 171, 247, 0.6));
+}
+
+.help-text {
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.8;
+}
+
+/* Cursor-Stile für bessere Benutzerinteraktion */
+svg {
+  cursor: grab;
+}
+
+svg:active {
+  cursor: grabbing;
+}
+
+.node {
+  cursor: pointer;
+}
+
+.node.dragging {
+  cursor: grabbing;
+}
+
+/* Anpassungen für die Knotengrößenänderung */
+.resize-mode .node circle {
+  stroke-dasharray: 4, 2;
+}
+
+/* Animation für selektierte Knoten */
+@keyframes pulse-selection {
+  0% {
+    stroke-width: 3px;
+  }
+  50% {
+    stroke-width: 5px;
+  }
+  100% {
+    stroke-width: 3px;
+  }
+}
+
+.node circle.selected {
+  animation: pulse-selection 1.5s infinite ease-in-out;
+}
+
+/* Stile für das dynamische Netzwerk */
+.dynamic-node-group {
+  cursor: pointer;
+}
+
+.dynamic-node-group.dragging {
+  cursor: grabbing;
+}
+
+.dynamic-node {
+  transition: fill 0.3s ease, stroke-width 0.3s ease;
+}
+
+.dynamic-node.selected {
+  stroke-width: 3px;
+  stroke: #ff6b6b;
+  filter: drop-shadow(0 0 5px rgba(255, 107, 107, 0.7));
+  animation: pulse-selection 1.5s infinite ease-in-out;
+}
+
+.dynamic-node-group.connected .dynamic-node {
+  stroke-width: 2px;
+  stroke: #4dabf7;
+}
+
+.dynamic-link {
+  transition: stroke-width 0.3s ease;
+}
+
+.dynamic-link.highlighted {
+  stroke-width: 3px;
+  filter: drop-shadow(0 0 3px rgba(77, 171, 247, 0.6));
+}

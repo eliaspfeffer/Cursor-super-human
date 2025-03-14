@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
+  <rect width="300" height="300" fill="#e5e7eb"/>
+  <circle cx="150" cy="100" r="50" fill="#9ca3af"/>
+  <circle cx="150" cy="350" r="140" fill="#9ca3af"/>
+  <text x="150" y="250" font-family="Arial" font-size="20" fill="#4b5563" text-anchor="middle">Teammitglied</text>
+</svg> 

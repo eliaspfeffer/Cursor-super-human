@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kontextnetzwerk-Visualisierung | Künstliche Bewusstheit</title>
+    <link rel="stylesheet" href="styles/main.css" />
+    <link rel="stylesheet" href="styles/visualization.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="icon" href="images/favicon.svg" type="image/svg+xml" />
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+  </head>
+  <body>
+    <header>
+      <nav>
+        <div class="container">
+          <div class="logo">
+            <a href="index.html">
+              <span class="logo-icon"><i class="fas fa-brain"></i></span>
+              <span class="logo-text">KünstlichesBewusstsein</span>
+            </a>
+          </div>
+          <div class="nav-toggle" id="navToggle">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <ul class="nav-links">
+            <li><a href="index.html">Startseite</a></li>
+            <li><a href="features.html">Funktionen</a></li>
+            <li><a href="technical.html">Technische Details</a></li>
+            <li>
+              <a href="visualization.html" class="active">Visualisierung</a>
+            </li>
+            <li><a href="about.html">Über uns</a></li>
+          </ul>
+        </div>
+      </nav>
+      <div class="hero">
+        <div class="container">
+          <div class="hero-content">
+            <h1>Kontextnetzwerk-Visualisierung</h1>
+            <p>
+              Interaktive Darstellung des Lernnetzwerks der künstlichen
+              Bewusstheit
+            </p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="visualization-controls">
+        <div class="container">
+          <div class="control-panel">
+            <div class="control-group">
+              <h3>Netzwerk-Steuerung</h3>
+              <div class="controls">
+                <button id="addRandomNode" class="btn btn-primary">
+                  <i class="fas fa-plus"></i> Zufälligen Knoten hinzufügen
+                </button>
+                <button id="resetNetwork" class="btn btn-secondary">
+                  <i class="fas fa-redo"></i> Zurücksetzen
+                </button>
+                <div class="slider-control">
+                  <label for="nodeCharge">Knotenabstoßung:</label>
+                  <input
+                    type="range"
+                    id="nodeCharge"
+                    min="-1000"
+                    max="-10"
+                    value="-300"
+                  />
+                </div>
+                <div class="slider-control">
+                  <label for="linkDistance">Verbindungslänge:</label>
+                  <input
+                    type="range"
+                    id="linkDistance"
+                    min="10"
+                    max="300"
+                    value="100"
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="control-group">
+              <h3>Darstellungs-Optionen</h3>
+              <div class="controls">
+                <div class="checkbox-control">
+                  <input type="checkbox" id="showLabels" checked />
+                  <label for="showLabels">Bezeichnungen anzeigen</label>
+                </div>
+                <div class="checkbox-control">
+                  <input type="checkbox" id="showAttributes" checked />
+                  <label for="showAttributes">Attribute anzeigen</label>
+                </div>
+                <div class="checkbox-control">
+                  <input type="checkbox" id="highlightConnections" />
+                  <label for="highlightConnections"
+                    >Verbindungen hervorheben</label
+                  >
+                </div>
+                <div class="color-control">
+                  <label for="nodeColorScheme">Farbschema:</label>
+                  <select id="nodeColorScheme">
+                    <option value="category">Nach Kategorie</option>
+                    <option value="weight">Nach Gewichtung</option>
+                    <option value="age">Nach Alter</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="network-visualization">
+        <div class="container centered-container">
+          <div class="vis-container">
+            <div id="network"></div>
+            <div class="loading-overlay">
+              <div class="spinner"></div>
+              <p>Netzwerk wird geladen...</p>
+            </div>
+            <div class="network-help">
+              <i class="fas fa-info-circle"></i> Klicken Sie auf einen Knoten
+              für Details
+            </div>
+          </div>
+          <div class="node-info-panel">
+            <h3>Knoten-Information</h3>
+            <div id="nodeInfo">
+              <p class="empty-state">
+                <i class="fas fa-mouse-pointer"></i><br />
+                Wählen Sie einen Knoten aus, um Details anzuzeigen
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="network-stats">
+        <div class="container">
+          <h2>Netzwerk-Statistiken</h2>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <i class="fas fa-project-diagram"></i>
+              <h3>Knoten</h3>
+              <p id="nodeCount">0</p>
+            </div>
+            <div class="stat-card">
+              <i class="fas fa-link"></i>
+              <h3>Verbindungen</h3>
+              <p id="linkCount">0</p>
+            </div>
+            <div class="stat-card">
+              <i class="fas fa-star"></i>
+              <h3>Zentrale Knoten</h3>
+              <p id="centralNodes">0</p>
+            </div>
+            <div class="stat-card">
+              <i class="fas fa-cubes"></i>
+              <h3>Cluster</h3>
+              <p id="clusterCount">0</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="simulation-section">
+        <div class="container">
+          <h2>Live-Simulation</h2>
+          <div class="simulation-container">
+            <div class="input-area">
+              <h3>Neue Information hinzufügen</h3>
+              <div class="input-group">
+                <label for="newContext">Kontext:</label>
+                <input
+                  type="text"
+                  id="newContext"
+                  placeholder="Ein Apfel ist rot und schmeckt süß"
+                />
+              </div>
+              <div class="input-group">
+                <label for="contextCategory">Kategorie:</label>
+                <select id="contextCategory">
+                  <option value="food">Nahrung</option>
+                  <option value="object">Objekt</option>
+                  <option value="action">Aktion</option>
+                  <option value="attribute">Attribut</option>
+                  <option value="abstract">Abstrakt</option>
+                </select>
+              </div>
+              <button id="addContext" class="btn btn-primary">
+                Zum Netzwerk hinzufügen
+              </button>
+            </div>
+            <div class="simulation-results">
+              <h3>Verarbeitung</h3>
+              <div id="processingSteps" class="processing-log">
+                <p class="log-entry">Bereit für neue Eingaben...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-logo">
+            <i class="fas fa-brain"></i>
+            <span>Künstliche Bewusstheit</span>
+          </div>
+          <div class="footer-links">
+            <h3>Navigation</h3>
+            <ul>
+              <li><a href="index.html">Startseite</a></li>
+              <li><a href="features.html">Funktionen</a></li>
+              <li><a href="technical.html">Technische Details</a></li>
+              <li><a href="visualization.html">Visualisierung</a></li>
+              <li><a href="about.html">Über uns</a></li>
+            </ul>
+          </div>
+          <div class="footer-links">
+            <h3>Kontakt</h3>
+            <ul>
+              <li>
+                <a href="mailto:contact@artificialconsciousness.de"
+                  ><i class="fas fa-envelope"></i> E-Mail</a
+                >
+              </li>
+              <li>
+                <a href="https://github.com/yourusername" target="_blank"
+                  ><i class="fab fa-github"></i> GitHub</a
+                >
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2023 Künstliche Bewusstheit. Alle Rechte vorbehalten.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="scripts/main.js"></script>
+    <script src="scripts/visualization.js"></script>
+  </body>
+</html>

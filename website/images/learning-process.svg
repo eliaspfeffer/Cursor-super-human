@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="300" viewBox="0 0 600 300">
+  <rect width="100%" height="100%" fill="#f8f9fa"/>
+  
+  <!-- Schritt 1: Fokus -->
+  <g class="step step-1">
+    <circle cx="100" cy="150" r="40" fill="#6366f1" opacity="0.8"/>
+    <text x="100" y="150" font-family="Arial" font-size="12" fill="white" text-anchor="middle" dominant-baseline="middle">Fokus</text>
+    <text x="100" y="200" font-family="Arial" font-size="10" fill="#555" text-anchor="middle">Schritt 1</text>
+  </g>
+  
+  <!-- Pfeil 1 zu 2 -->
+  <g class="arrow">
+    <line x1="140" y1="150" x2="190" y2="150" stroke="#444" stroke-width="2" opacity="0.7"/>
+    <polygon points="190,150 180,145 180,155" fill="#444" opacity="0.7"/>
+  </g>
+  
+  <!-- Schritt 2: Schlüsselwörter extrahieren -->
+  <g class="step step-2">
+    <circle cx="230" cy="150" r="40" fill="#f59e0b" opacity="0.8"/>
+    <text x="230" y="140" font-family="Arial" font-size="10" fill="white" text-anchor="middle" dominant-baseline="middle">Schlüsselwörter</text>
+    <text x="230" y="155" font-family="Arial" font-size="10" fill="white" text-anchor="middle" dominant-baseline="middle">extrahieren</text>
+    <text x="230" y="200" font-family="Arial" font-size="10" fill="#555" text-anchor="middle">Schritt 2</text>
+  </g>
+  
+  <!-- Pfeil 2 zu 3 -->
+  <g class="arrow">
+    <line x1="270" y1="150" x2="320" y2="150" stroke="#444" stroke-width="2" opacity="0.7"/>
+    <polygon points="320,150 310,145 310,155" fill="#444" opacity="0.7"/>
+  </g>
+  
+  <!-- Schritt 3: Wikipedia-Suche -->
+  <g class="step step-3">
+    <circle cx="360" cy="150" r="40" fill="#22c55e" opacity="0.8"/>
+    <text x="360" y="140" font-family="Arial" font-size="10" fill="white" text-anchor="middle" dominant-baseline="middle">Informationen</text>
+    <text x="360" y="155" font-family="Arial" font-size="10" fill="white" text-anchor="middle" dominant-baseline="middle">suchen</text>
+    <text x="360" y="200" font-family="Arial" font-size="10" fill="#555" text-anchor="middle">Schritt 3</text>
+  </g>
+  
+  <!-- Pfeil 3 zu 4 -->
+  <g class="arrow">
+    <line x1="400" y1="150" x2="450" y2="150" stroke="#444" stroke-width="2" opacity="0.7"/>
+    <polygon points="450,150 440,145 440,155" fill="#444" opacity="0.7"/>
+  </g>
+  
+  <!-- Schritt 4: Kontexte erstellen -->
+  <g class="step step-4">
+    <circle cx="490" cy="150" r="40" fill="#3b82f6" opacity="0.8"/>
+    <text x="490" y="140" font-family="Arial" font-size="10" fill="white" text-anchor="middle" dominant-baseline="middle">Neue Kontexte</text>
+    <text x="490" y="155" font-family="Arial" font-size="10" fill="white" text-anchor="middle" dominant-baseline="middle">erstellen</text>
+    <text x="490" y="200" font-family="Arial" font-size="10" fill="#555" text-anchor="middle">Schritt 4</text>
+  </g>
+  
+  <!-- Feedback-Schleife -->
+  <g class="feedback-loop">
+    <path d="M 490,110 C 490,80 230,80 230,110" fill="none" stroke="#444" stroke-width="2" stroke-dasharray="5,5" opacity="0.5"/>
+    <polygon points="230,110 235,100 225,100" fill="#444" opacity="0.5"/>
+  </g>
+  
+  <!-- Titel -->
+  <text x="300" y="50" font-family="Arial" font-size="18" fill="#333" text-anchor="middle" font-weight="bold">Lernprozess</text>
+  
+  <!-- Beschreibung -->
+  <text x="300" y="260" font-family="Arial" font-size="12" fill="#555" text-anchor="middle">Der fokusbasierte Lernprozess des künstlichen Bewusstseins</text>
+  
+  <!-- Animierter Kreis an Schritt 1 -->
+  <circle cx="100" cy="150" r="45" stroke="#6366f1" stroke-width="2" fill="none">
+    <animate attributeName="opacity" values="0.8;0.2;0.8" dur="3s" repeatCount="indefinite"/>
+  </circle>
+  
+  <!-- Animierter Kreis an Schritt 4 -->
+  <circle cx="490" cy="150" r="45" stroke="#3b82f6" stroke-width="2" fill="none">
+    <animate attributeName="opacity" values="0.2;0.8;0.2" dur="3s" repeatCount="indefinite"/>
+  </circle>
+</svg> 

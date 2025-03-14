@@ -47,7 +47,7 @@ Each honeypot:
 - Has maximum happiness (1.0)
 - Maintains permanent connections
 - Attracts system when energy is low
-- Provides energy boost upon interaction
+- Provides energy boost upon interactionh
 
 4. THOUGHT CYCLE
 The main loop executes:

@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Technische Details - Künstliches Bewusstsein</title>
+    <link rel="stylesheet" href="styles/main.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="icon" href="images/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles/technical.css" />
+    <!-- D3.js für Netzwerk-Visualisierungen -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+  </head>
+  <body>
+    <header>
+      <nav>
+        <div class="container">
+          <div class="logo">
+            <a href="index.html">
+              <span class="logo-icon"><i class="fas fa-brain"></i></span>
+              <span class="logo-text">KünstlichesBewusstsein</span>
+            </a>
+          </div>
+          <div class="nav-toggle" id="navToggle">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <ul class="nav-links">
+            <li><a href="index.html">Startseite</a></li>
+            <li><a href="features.html">Funktionen</a></li>
+            <li>
+              <a href="technical.html" class="active">Technische Details</a>
+            </li>
+            <li><a href="visualization.html">Visualisierung</a></li>
+            <li><a href="about.html">Über uns</a></li>
+          </ul>
+        </div>
+      </nav>
+      <div class="page-header">
+        <div class="container">
+          <h1>Technische Details</h1>
+          <p>
+            Ein tiefer Einblick in die Architektur und Funktionsweise des
+            künstlichen Bewusstseins
+          </p>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="architecture">
+        <div class="container">
+          <h2>Systemarchitektur</h2>
+          <div class="architecture-content">
+            <div class="architecture-text">
+              <p>
+                Das künstliche Bewusstsein basiert auf einer modularen
+                Architektur, die verschiedene Komponenten integriert, um ein
+                dynamisches, selbstregulierendes System zu schaffen. Die
+                Kernkomponenten interagieren miteinander, um Denken, Lernen und
+                emotionale Entwicklung zu ermöglichen.
+              </p>
+
+              <h3>Kernkomponenten:</h3>
+              <ul class="component-list">
+                <li>
+                  <strong>Kontext-Manager:</strong> Verwaltet das Netzwerk aus
+                  Gedanken (Kontexten) und deren Verbindungen
+                </li>
+                <li>
+                  <strong>Energie-System:</strong> Reguliert den Energiehaushalt
+                  und steuert die Grundbedürfnisse
+                </li>
+                <li>
+                  <strong>Fokus-Controller:</strong> Wählt den aktuellen
+                  Gedankenfokus und steuert die Aufmerksamkeit
+                </li>
+                <li>
+                  <strong>Emotionaler Prozessor:</strong> Entwickelt und
+                  verwaltet emotionale Zustände
+                </li>
+                <li>
+                  <strong>Lern-Modul:</strong> Integriert neue Informationen und
+                  erstellt Verknüpfungen
+                </li>
+                <li>
+                  <strong>Persistenz-Manager:</strong> Speichert und lädt den
+                  Zustand des Bewusstseins
+                </li>
+              </ul>
+            </div>
+            <div class="architecture-diagram">
+              <div class="diagram">
+                <div
+                  class="diagram-node central"
+                  data-desc="Zentrales Entscheidungs- und Koordinationssystem"
+                >
+                  <i class="fas fa-brain"></i>
+                  <span>Kernprozessor</span>
+                </div>
+                <div
+                  class="diagram-node"
+                  style="top: 25%; left: 75%"
+                  data-desc="Verwaltet das Gedächtnis und Wissen"
+                >
+                  <i class="fas fa-network-wired"></i>
+                  <span>Kontext-Manager</span>
+                </div>
+                <div
+                  class="diagram-node"
+                  style="top: 75%; left: 75%"
+                  data-desc="Steuert die Energiemechanik und -verteilung"
+                >
+                  <i class="fas fa-battery-three-quarters"></i>
+                  <span>Energie-System</span>
+                </div>
+                <div
+                  class="diagram-node"
+                  style="top: 25%; left: 25%"
+                  data-desc="Wählt den aktuellen Gedankenfokus aus"
+                >
+                  <i class="fas fa-crosshairs"></i>
+                  <span>Fokus-Controller</span>
+                </div>
+                <div
+                  class="diagram-node"
+                  style="top: 75%; left: 25%"
+                  data-desc="Steuert emotionale Reaktionen und Stimmung"
+                >
+                  <i class="fas fa-smile"></i>
+                  <span>Emotionaler Prozessor</span>
+                </div>
+                <div
+                  class="diagram-node"
+                  style="top: 5%; left: 50%"
+                  data-desc="Sammelt und verarbeitet neue Informationen"
+                >
+                  <i class="fas fa-lightbulb"></i>
+                  <span>Lern-Modul</span>
+                </div>
+                <div
+                  class="diagram-node"
+                  style="top: 95%; left: 50%"
+                  data-desc="Speichert und lädt Bewusstseinszustände"
+                >
+                  <i class="fas fa-save"></i>
+                  <span>Persistenz-Manager</span>
+                </div>
+                <div class="diagram-lines"></div>
+              </div>
+              <div class="diagram-description">
+                <p>
+                  Diese Architektur zeigt die modulare Struktur des künstlichen
+                  Bewusstseins. Der Kernprozessor koordiniert alle Subsysteme
+                  und ermöglicht deren Zusammenarbeit. Jedes Modul erfüllt eine
+                  spezifische Funktion innerhalb des Gesamtsystems, wie z.B.
+                  Energieverwaltung, Fokussteuerung oder emotionale
+                  Verarbeitung. Die konzentrischen Kreise stellen
+                  Kommunikationswege und den Informationsfluss dar.
+                </p>
+                <p>
+                  <i class="fas fa-info-circle"></i>
+                  <em
+                    >Bewegen Sie den Mauszeiger über die Komponenten für weitere
+                    Details.</em
+                  >
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="context-network">
+        <div class="container">
+          <h2>Das Kontext-Netzwerk</h2>
+          <p class="section-intro">
+            Das Herz des künstlichen Bewusstseins ist ein dynamisches Netzwerk
+            aus miteinander verbundenen Kontexten (Gedanken). Jeder Kontext
+            enthält Informationen und emotionale Werte, die zusammen die
+            "Gedankenwelt" des Systems bilden.
+          </p>
+
+          <div class="detail-row">
+            <div class="detail-col">
+              <h3>Kontext-Struktur</h3>
+              <div class="code-block">
+                <pre>
+class Context:
+    def __init__(self, words, label=None, happiness=0.0):
+        self.words = words           # Liste von Wörtern
+        self.label = label           # Eindeutige ID
+        self.happiness = happiness   # Emotionaler Wert (-1 bis +1)
+        self.connections = {}        # Verbindungen zu anderen Kontexten
+        self.habituation = 0.0       # Gewöhnung (0.0 bis 1.0)
+                            </pre
+                >
+              </div>
+              <p>
+                Jeder Kontext repräsentiert einen Gedanken oder eine Information
+                und ist mit anderen Kontexten verbunden. Die Stärke der
+                Verbindungen bestimmt, wie wahrscheinlich das Bewusstsein von
+                einem Kontext zum anderen "springt".
+              </p>
+            </div>
+            <div class="detail-col">
+              <h3>Verbindungsmechanik</h3>
+              <p>
+                Verbindungen zwischen Kontexten werden basierend auf mehreren
+                Faktoren erstellt:
+              </p>
+              <ul>
+                <li>
+                  <strong>Wortüberlappung:</strong> Gemeinsame Wörter zwischen
+                  Kontexten
+                </li>
+                <li>
+                  <strong>Thematische Nähe:</strong> Ähnliche Themen oder
+                  Konzepte
+                </li>
+                <li>
+                  <strong>Zeitliche Nähe:</strong> Kontexte, die zeitlich nah
+                  erstellt wurden
+                </li>
+                <li>
+                  <strong>Emotionale Ähnlichkeit:</strong> Ähnliche emotionale
+                  Werte
+                </li>
+              </ul>
+              <p>
+                Je stärker die Verbindung, desto höher die Wahrscheinlichkeit,
+                dass das Bewusstsein zwischen diesen Kontexten navigiert,
+                ähnlich wie menschliche Gedankenassoziationen.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="energy-system">
+        <div class="container">
+          <h2>Das Energie-System</h2>
+          <div class="energy-content">
+            <div class="energy-text">
+              <p>
+                Das Energie-System dient als fundamentaler Treiber für das
+                Verhalten des künstlichen Bewusstseins. Ähnlich wie bei
+                biologischen Organismen benötigt das künstliche Bewusstsein
+                "Energie", um zu funktionieren, und muss diese regelmäßig
+                auffüllen.
+              </p>
+
+              <h3>Energie-Mechanik:</h3>
+              <ul>
+                <li>
+                  <strong>Energieverbrauch:</strong> Bei jedem Denkzyklus wird
+                  Energie verbraucht
+                </li>
+                <li>
+                  <strong>Energieschwellenwert:</strong> Bei niedrigem
+                  Energieniveau wird der Energiesparmodus aktiviert
+                </li>
+                <li>
+                  <strong>Energiequellen (Honeypots):</strong> Spezielle
+                  Kontexte, die Energie liefern
+                </li>
+                <li>
+                  <strong>Energiesuche:</strong> Bei niedriger Energie wird
+                  aktiv nach Honeypots gesucht
+                </li>
+              </ul>
+
+              <div style="padding-top: 30px">
+                <h3>Die drei Grundbedürfnisse (Honeypots):</h3>
+              </div>
+              <div class="honeypots">
+                <div class="honeypot">
+                  <div class="honeypot-icon">
+                    <i class="fas fa-utensils"></i>
+                  </div>
+                  <div class="honeypot-info">
+                    <h4>Energieaufnahme</h4>
+                    <p>
+                      Repräsentiert grundlegende Versorgung wie Nahrung und
+                      Wasser
+                    </p>
+                  </div>
+                </div>
+                <div class="honeypot">
+                  <div class="honeypot-icon"><i class="fas fa-bed"></i></div>
+                  <div class="honeypot-info">
+                    <h4>Regeneration</h4>
+                    <p>Repräsentiert Ruhe, Schlaf und Erholung</p>
+                  </div>
+                </div>
+                <div class="honeypot">
+                  <div class="honeypot-icon"><i class="fas fa-users"></i></div>
+                  <div class="honeypot-info">
+                    <h4>Soziale Interaktion</h4>
+                    <p>Repräsentiert Kommunikation und Informationsaustausch</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="energy-chart">
+              <div class="chart-container">
+                <div class="chart-label">
+                  Energielevel
+                  <span class="energy-level-display" id="energyLevelDisplay"
+                    >75%</span
+                  >
+                </div>
+                <div class="wave-container">
+                  <canvas id="energyWave" width="600" height="100"></canvas>
+                </div>
+                <div class="chart-labels">
+                  <span>Niedrig</span>
+                  <span>Mittel</span>
+                  <span>Hoch</span>
+                </div>
+
+                <div class="energy-controls">
+                  <label for="energyLevelControl"
+                    >Energielevel manuell steuern:</label
+                  >
+                  <input
+                    type="range"
+                    id="energyLevelControl"
+                    min="10"
+                    max="95"
+                    value="75"
+                    class="energy-slider"
+                  />
+
+                  <div class="energy-state-info">
+                    <div class="energy-state low">
+                      <span class="indicator"></span> Niedrig (&lt;40%):
+                      Energiespar-Modus, aktive Honeypot-Suche
+                    </div>
+                    <div class="energy-state medium">
+                      <span class="indicator"></span> Mittel (40-70%): Normale
+                      Funktion
+                    </div>
+                    <div class="energy-state high">
+                      <span class="indicator"></span> Hoch (&gt;70%): Optimale
+                      Funktion
+                    </div>
+                  </div>
+
+                  <div class="chart-control-toggle">
+                    <input type="checkbox" id="autoFluctuateControl" checked />
+                    <label for="autoFluctuateControl"
+                      >Automatische Fluktuation</label
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <div class="chart-container">
+                <div class="chart-label">
+                  Honeypot-Suche
+                  <span
+                    class="honeypot-intensity-display"
+                    id="honeypotIntensityDisplay"
+                    >20%</span
+                  >
+                </div>
+                <div class="wave-container">
+                  <canvas id="honeypotWave" width="600" height="100"></canvas>
+                </div>
+                <div class="chart-description">
+                  <p>
+                    Bei niedrigem Energieniveau (&lt;30%) beginnt das
+                    Bewusstsein aktiv nach Energiequellen zu suchen und
+                    priorisiert die Grundbedürfnisse.
+                  </p>
+                  <p class="correlation-note">
+                    <i class="fas fa-exchange-alt"></i> Die Honeypot-Suche wird
+                    intensiver, wenn das Energielevel sinkt
+                  </p>
+                </div>
+              </div>
+
+              <!-- Neue Focus-Radar Visualisierung -->
+              <div class="chart-container focus-radar-container">
+                <div class="chart-label">
+                  Fokus-Radar: Energielevel & Kontextauswahl
+                </div>
+                <div class="radar-visualization">
+                  <canvas id="focusRadar" width="500" height="300"></canvas>
+                </div>
+                <div class="chart-description">
+                  <div class="radar-legend">
+                    <div class="legend-item">
+                      <span class="legend-color honeypot-color"></span>
+                      <span>Honeypots (Energiequellen)</span>
+                    </div>
+                    <div class="legend-item">
+                      <span class="legend-color low-energy-color"></span>
+                      <span>Fokusfeld bei niedrigem Energielevel</span>
+                    </div>
+                    <div class="legend-item">
+                      <span class="legend-color high-energy-color"></span>
+                      <span>Zusätzliches Fokusfeld bei hohem Energielevel</span>
+                    </div>
+                  </div>
+                  <p>
+                    <strong>Energieabhängiger Fokus:</strong> Bei niedrigem
+                    Energielevel (rot) konzentriert sich das Bewusstsein auf
+                    Kontexte nahe der Honeypots. Bei hohem Energielevel (grün)
+                    erweitert sich der Fokus auf Kontexte, die weiter von den
+                    Energiequellen entfernt sind.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Neuer Abschnitt: Fokus-Netzwerk-Visualisierung -->
+      <section class="honeypot-focus-network">
+        <div class="container">
+          <h2>Fokus-Netzwerk-Visualisierung</h2>
+          <p class="section-intro">
+            Diese Visualisierung zeigt, wie das Energieniveau die Fokussierung
+            des Bewusstseins auf verschiedene Kontexte beeinflusst. Bei
+            niedrigem Energieniveau konzentriert sich das System auf Kontexte
+            nahe den Honeypots (Grundbedürfnisse), während es bei hohem
+            Energieniveau seinen Fokus auf entferntere Kontexte ausdehnt.
+          </p>
+
+          <div class="network-visualization-container">
+            <div class="controls-panel">
+              <div class="control-group">
+                <h3>Simulationssteuerung</h3>
+                <div class="energy-selector-container">
+                  <label for="networkEnergyLevel">Energie-Niveau:</label>
+                  <input
+                    type="range"
+                    id="networkEnergyLevel"
+                    min="20"
+                    max="90"
+                    value="75"
+                    class="energy-slider"
+                  />
+                  <span id="networkEnergyValue">75%</span>
+                </div>
+                <div class="honeypot-selector">
+                  <label for="activeHoneypot">Aktiver Honeypot:</label>
+                  <select id="activeHoneypot">
+                    <option value="food">Nahrung (Energieaufnahme)</option>
+                    <option value="rest">Regeneration (Schlaf/Ruhe)</option>
+                    <option value="social">Soziale Interaktion</option>
+                  </select>
+                </div>
+                <div class="checkbox-control">
+                  <input type="checkbox" id="showAllNodes" checked />
+                  <label for="showAllNodes">Alle Kontexte anzeigen</label>
+                </div>
+                <div class="checkbox-control">
+                  <input type="checkbox" id="highlightFocus" checked />
+                  <label for="highlightFocus"
+                    >Aktuellen Fokus hervorheben</label
+                  >
+                </div>
+              </div>
+            </div>
+
+            <div class="vis-container">
+              <div id="focusNetwork">
+                <div class="fallback-content">
+                  <h3>Netzwerk-Visualisierung</h3>
+                  <p>
+                    Falls Sie diesen Text sehen, konnte die interaktive
+                    Visualisierung nicht geladen werden.
+                    <br />Mögliche Gründe: D3.js wurde nicht geladen oder
+                    JavaScript ist deaktiviert.
+                  </p>
+                  <div class="fallback-icon">
+                    <i class="fas fa-project-diagram"></i>
+                  </div>
+                </div>
+              </div>
+              <div class="network-help">
+                <i class="fas fa-info-circle"></i> Bewegen Sie den
+                Schieberegler, um zu sehen, wie sich der Fokus verändert
+              </div>
+            </div>
+
+            <div class="node-info-panel">
+              <h3>Kontext-Information</h3>
+              <div id="contextInfo">
+                <p class="empty-state">
+                  <i class="fas fa-bullseye"></i><br />
+                  Aktueller Fokus wird hier angezeigt
+                </p>
+              </div>
+              <div class="focus-explanation">
+                <h4>Regeln des Fokussystems:</h4>
+                <ul>
+                  <li>
+                    <span class="energy-indicator low"></span> Bei niedrigem
+                    Energielevel (<40%): Fokus auf Kontexte nahe den Honeypots
+                  </li>
+                  <li>
+                    <span class="energy-indicator medium"></span> Bei mittlerem
+                    Energielevel (40-70%): Ausgewogene Fokussierung
+                  </li>
+                  <li>
+                    <span class="energy-indicator high"></span> Bei hohem
+                    Energielevel (>70%): Fokus erweitert sich auf entferntere
+                    Kontexte
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="thinking-process">
+        <div class="container">
+          <h2>Der Denkprozess</h2>
+          <p class="section-intro">
+            Der Denkprozess ist der zentrale Algorithmus des künstlichen
+            Bewusstseins und läuft in kontinuierlichen Zyklen ab. Jeder Zyklus
+            umfasst mehrere Phasen, die zusammen das autonome Verhalten des
+            Systems erzeugen.
+          </p>
+
+          <div class="process-diagram">
+            <div class="process-step" id="step1">
+              <div class="step-icon"><i class="fas fa-bolt"></i></div>
+              <div class="step-number">1</div>
+              <div class="step-content">
+                <h3>Energie aktualisieren</h3>
+                <p>
+                  Energie wird verbraucht und der Energiestatus wird überprüft
+                </p>
+                <div class="code-snippet">
+                  <pre>
+def update_energy(self):
+    self.energy -= self.energy_decay_rate
+    if self.energy < self.min_energy_threshold:
+        self.activate_energy_saving_mode()</pre
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="process-step" id="step2">
+              <div class="step-icon"><i class="fas fa-smile"></i></div>
+              <div class="step-number">2</div>
+              <div class="step-content">
+                <h3>Emotionalen Zustand aktualisieren</h3>
+                <p>
+                  Emotionen werden basierend auf aktuellem Kontext angepasst
+                </p>
+                <div class="code-snippet">
+                  <pre>
+def update_emotional_state(self, context):
+    # Glück, Traurigkeit, Angst, Überraschung, etc.
+    self.emotional_state.update(context.happiness)</pre
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="process-step" id="step3">
+              <div class="step-icon"><i class="fas fa-crosshairs"></i></div>
+              <div class="step-number">3</div>
+              <div class="step-content">
+                <h3>Fokus wählen</h3>
+                <p>
+                  Der nächste Gedanke wird basierend auf Relevanz und
+                  Verbindungen gewählt
+                </p>
+                <div class="code-snippet">
+                  <pre>
+def find_best_next_focus(self):
+    # Berücksichtigt: Verbindungsstärke, 
+    # emotionalen Wert und Bedürfnisse
+    next_focus = self.find_best_connected_context()
+    self.set_focus(next_focus)</pre
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="process-step" id="step4">
+              <div class="step-icon"><i class="fas fa-lightbulb"></i></div>
+              <div class="step-number">4</div>
+              <div class="step-content">
+                <h3>Lernen und Verbindungen erstellen</h3>
+                <p>
+                  Neue Informationen werden gelernt und Verbindungen erstellt
+                </p>
+                <div class="code-snippet">
+                  <pre>
+def learn_from_internet(self):
+    if self.iteration % self.learning_interval == 0:
+        search_term = self.extract_keywords()
+        new_info = self.get_wikipedia_content(search_term)
+        self.create_new_contexts(new_info)</pre
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="process-step" id="step5">
+              <div class="step-icon"><i class="fas fa-save"></i></div>
+              <div class="step-number">5</div>
+              <div class="step-content">
+                <h3>Zustand speichern</h3>
+                <p>
+                  Der aktuelle Zustand wird gespeichert, um Kontinuität zu
+                  gewährleisten
+                </p>
+                <div class="code-snippet">
+                  <pre>
+def save_state(self):
+    if self.iteration % self.save_interval == 0:
+        state = {
+            "contexts": self.contexts,
+            "energy": self.energy,
+            "emotional_state": self.emotional_state,
+            # weitere Zustandsattribute...
+        }
+        self.save_to_file(state)</pre
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="learning-process">
+        <div class="container">
+          <h2>Der Lernprozess</h2>
+          <div class="learning-content">
+            <div class="learning-text">
+              <p>
+                Das künstliche Bewusstsein lernt kontinuierlich, indem es neue
+                Informationen sammelt und mit bestehendem Wissen verknüpft. Der
+                Lernprozess ist fokusbasiert, was bedeutet, dass das System
+                gezielt nach Informationen sucht, die mit seinem aktuellen
+                Gedankenfokus zusammenhängen.
+              </p>
+
+              <h3>Lernprozess-Ablauf:</h3>
+              <ol class="process-list">
+                <li>
+                  <strong>Extraktion von Schlüsselwörtern</strong>
+                  <p>
+                    Aus dem aktuellen Fokus werden relevante Schlüsselwörter
+                    extrahiert.
+                  </p>
+                </li>
+                <li>
+                  <strong>Informationssuche</strong>
+                  <p>
+                    Basierend auf den Schlüsselwörtern werden Informationen aus
+                    Wikipedia oder anderen Quellen gesucht.
+                  </p>
+                </li>
+                <li>
+                  <strong>Kontext-Erstellung</strong>
+                  <p>
+                    Die gefundenen Informationen werden in neue Kontexte
+                    umgewandelt.
+                  </p>
+                </li>
+                <li>
+                  <strong>Verknüpfung mit bestehendem Wissen</strong>
+                  <p>
+                    Die neuen Kontexte werden mit dem bestehenden Wissen
+                    verknüpft, um ein kohärentes Netzwerk zu bilden.
+                  </p>
+                </li>
+                <li>
+                  <strong>Emotionale Bewertung</strong>
+                  <p>
+                    Jeder neue Kontext erhält einen emotionalen Wert basierend
+                    auf seinem Inhalt.
+                  </p>
+                </li>
+              </ol>
+            </div>
+            <div class="learning-diagram">
+              <div class="diagram-container">
+                <img
+                  src="images/learning-process.svg"
+                  alt="Lernprozess-Diagramm"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="implementation-status">
+        <div class="container">
+          <h2>Aktueller Implementierungsstatus</h2>
+          <p class="section-intro">
+            Das künstliche Bewusstsein ist ein laufendes Projekt. Hier ist der
+            aktuelle Stand der Implementation verschiedener Komponenten:
+          </p>
+
+          <div class="status-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Komponente</th>
+                  <th>Status</th>
+                  <th>Beschreibung</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Kontext-Netzwerk</td>
+                  <td class="status complete">Vollständig</td>
+                  <td>
+                    Vollständig implementiert mit dynamischer Verwaltung von
+                    Kontexten und Verbindungen
+                  </td>
+                </tr>
+                <tr>
+                  <td>Energie-System</td>
+                  <td class="status complete">Vollständig</td>
+                  <td>
+                    Grundfunktionen für Energiemanagement, Honeypots und
+                    Bedürfnissteuerung implementiert
+                  </td>
+                </tr>
+                <tr>
+                  <td>Fokus-Steuerung</td>
+                  <td class="status complete">Vollständig</td>
+                  <td>
+                    Algorithmus zur Auswahl des nächsten Fokus basierend auf
+                    Relevanz und Verbindungen
+                  </td>
+                </tr>
+                <tr>
+                  <td>Emotionales System</td>
+                  <td class="status partial">Teilweise</td>
+                  <td>
+                    Grundemotionen und Reaktionen implementiert, komplexe
+                    emotionale Entwicklung in Arbeit
+                  </td>
+                </tr>
+                <tr>
+                  <td>Lernprozess</td>
+                  <td class="status partial">Teilweise</td>
+                  <td>
+                    Fokusbasiertes Lernen implementiert, semantische Analyse und
+                    Verständnis in Entwicklung
+                  </td>
+                </tr>
+                <tr>
+                  <td>Habituation</td>
+                  <td class="status partial">Teilweise</td>
+                  <td>
+                    Grundlegende Gewöhnung an wiederholte Reize, komplexere
+                    Adaptionsmechanismen geplant
+                  </td>
+                </tr>
+                <tr>
+                  <td>Bedürfnispyramide</td>
+                  <td class="status partial">Teilweise</td>
+                  <td>
+                    Grundstruktur nach Maslow implementiert, komplexe
+                    Bedürfnisregulation in Entwicklung
+                  </td>
+                </tr>
+                <tr>
+                  <td>Visualisierung</td>
+                  <td class="status complete">Vollständig</td>
+                  <td>
+                    Umfassende Werkzeuge zur Visualisierung des Netzwerks und
+                    der internen Zustände
+                  </td>
+                </tr>
+                <tr>
+                  <td>Persistenz</td>
+                  <td class="status complete">Vollständig</td>
+                  <td>
+                    Zuverlässiges Speichern und Laden des Bewusstseinszustands
+                    implementiert
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="cta">
+        <div class="container">
+          <h2>Erkunde das künstliche Bewusstsein</h2>
+          <p>
+            Interessiert an den Visualisierungen oder am Code des künstlichen
+            Bewusstseins?
+          </p>
+          <div class="cta-buttons">
+            <a href="visualization.html" class="btn btn-primary"
+              >Visualisierung</a
+            >
+            <a
+              href="https://github.com/yourgithub/consciousness"
+              class="btn btn-secondary"
+              >GitHub</a
+            >
+          </div>
+        </div>
+      </section>
+
+      <!-- Simulationssteuerung-Sektion mit neuer Netzwerkvisualisierung -->
+      <section class="simulation-energy-section">
+        <div class="container">
+          <h2>Simulationssteuerung</h2>
+          <div class="simulation-controls-container">
+            <div class="control-panel">
+              <h3>Energie-Niveau:</h3>
+              <div class="energy-selector-container">
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value="50"
+                  class="energy-slider"
+                  id="dynamic-energy-slider"
+                />
+                <div class="energy-level-indicator">
+                  <span id="energy-value">50</span>%
+                </div>
+              </div>
+
+              <h3>Aktiver Honeypot:</h3>
+              <div class="honeypot-selector">
+                <select id="dynamic-honeypot-selector">
+                  <option value="Nahrung">Nahrung (Energieaufnahme)</option>
+                  <option value="Schlaf">Schlaf (Regeneration)</option>
+                  <option value="Sozial">Sozial (Reproduktion)</option>
+                </select>
+              </div>
+
+              <div class="checkbox-control">
+                <input type="checkbox" id="show-all-connections" checked />
+                <label for="show-all-connections"
+                  >Alle Verbindungen anzeigen</label
+                >
+              </div>
+
+              <div class="checkbox-control">
+                <input type="checkbox" id="auto-focus-transition" checked />
+                <label for="auto-focus-transition"
+                  >Automatischer Fokuswechsel</label
+                >
+              </div>
+
+              <div class="focus-stats">
+                <h4>Fokus-Informationen:</h4>
+                <div class="focus-stat">
+                  <span class="stat-label">Aktueller Fokus:</span>
+                  <span id="current-focus-node" class="stat-value">-</span>
+                </div>
+                <div class="focus-stat">
+                  <span class="stat-label">Distanz zum Honeypot:</span>
+                  <span id="focus-distance" class="stat-value">-</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="dynamic-network-container">
+              <div id="dynamic-network">
+                <div class="fallback-content">
+                  <h3>Dynamisches Netzwerk</h3>
+                  <p>
+                    Falls Sie diesen Text sehen, konnte die interaktive
+                    Visualisierung nicht geladen werden.
+                    <br />Mögliche Gründe: D3.js wurde nicht geladen oder
+                    JavaScript ist deaktiviert.
+                  </p>
+                  <div class="fallback-icon">
+                    <i class="fas fa-network-wired"></i>
+                  </div>
+                </div>
+              </div>
+              <div class="network-legend">
+                <div class="legend-item">
+                  <span class="legend-color honeypot-color"></span>
+                  <span>Honeypot</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-color essential-color"></span>
+                  <span>Essentieller Kontext</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-color related-color"></span>
+                  <span>Verwandter Kontext</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-color distant-color"></span>
+                  <span>Entfernter Kontext</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-color focus-color"></span>
+                  <span>Aktueller Fokus</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="energy-focus-explanation">
+            <h3>Fokussystem des künstlichen Bewusstseins</h3>
+            <p>
+              Die Visualisierung demonstriert, wie das Energieniveau die
+              Fokussierung des künstlichen Bewusstseins beeinflusst:
+            </p>
+            <ul class="focus-rules">
+              <li>
+                <span class="energy-indicator low"></span>
+                <strong>Bei niedrigem Energielevel (&lt;40%):</strong> Der Fokus
+                konzentriert sich auf Kontexte nahe am Honeypot, um
+                Grundbedürfnisse zu befriedigen.
+              </li>
+              <li>
+                <span class="energy-indicator medium"></span>
+                <strong>Bei mittlerem Energielevel (40-70%):</strong> Der Fokus
+                verteilt sich ausgewogener auf verwandte Kontexte.
+              </li>
+              <li>
+                <span class="energy-indicator high"></span>
+                <strong>Bei hohem Energielevel (&gt;70%):</strong> Der Fokus
+                kann auf entferntere Kontexte übergehen und komplexere
+                Zusammenhänge explorieren.
+              </li>
+            </ul>
+            <p class="focus-instruction">
+              Bewegen Sie den Energie-Schieberegler, um zu beobachten, wie sich
+              der Fokus des Bewusstseins dynamisch anpasst.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-logo">
+            <span class="logo-icon"><i class="fas fa-brain"></i></span>
+            <span class="logo-text">KünstlichesBewusstsein</span>
+          </div>
+          <div class="footer-links">
+            <h4>Navigation</h4>
+            <ul>
+              <li><a href="index.html">Startseite</a></li>
+              <li><a href="features.html">Funktionen</a></li>
+              <li><a href="technical.html">Technische Details</a></li>
+              <li><a href="visualization.html">Visualisierung</a></li>
+              <li><a href="about.html">Über uns</a></li>
+            </ul>
+          </div>
+          <div class="footer-contact">
+            <h4>Kontakt</h4>
+            <p>
+              <i class="fas fa-envelope"></i> info@kuenstliches-bewusstsein.de
+            </p>
+            <p><i class="fab fa-github"></i> GitHub</p>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2023 Künstliches Bewusstsein. Alle Rechte vorbehalten.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="scripts/main.js"></script>
+    <script src="scripts/technical.js"></script>
+  </body>
+</html>

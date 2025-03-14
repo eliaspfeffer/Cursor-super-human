@@ -1,3 +1,13 @@
+Ich glaube das muss so sein: Wenn ich suche wie schmeckt ein Apfel dann muss folgendes gegeben sein, um die Richtige Antwort aus dem Wissen heraus zu kriegen:
+Eine feste Verbindung zwischen dem Wort schmeckt und Geschmack
+Es muss erkannt werden, dass der Satz bzw. der Kontext "wie schmeckt ein Apfel" und "Der Geschmack von einem Apfel ist süß" am besten zueinander passen, weil der erste Kontext "schmeckt" und "Geschmack" die stärkste Verbindung haben und "Apfel" und "Apfel" von allen anderen Sätzen die das künstliche Bewusstsein weiß, die stärkste Verbindung hat.
+
+
+
+"Extrahiert Entitäten aus der Frage (z.B. "Apfel")" Bedeutet das, dass es bei jedem Wort schaut, ob es den Attributen Wer, Was, Wie, Wo, Wann zugeordnet werden kann?
+"Bei einer Geschmacksfrage beginnt die Antwort mit "Der Geschmack von [Entität] lässt sich wie folgt beschreiben: "" 
+Ich glaube das Weglassen der Attribute, wie ich es im "Reasoning Model for AGI" beschrieben habe, war doch keine gute Idee. Weil wenn ich frage "Wie schmeckt ein Apfel"
+Lösen ab wann es immer googelt und ab wann es 
 Kontexte sind im Kreis verbunden. Warum das? Außerdem sehe ich Kontexte doppelt in der Visualisierung. Warum das? Ändere erst mal noch nix am code. Ich würde nur gerne verstehen, ob es ein Problem gibt.
 Liste:
 Noch nicht vollständig entwickelt:

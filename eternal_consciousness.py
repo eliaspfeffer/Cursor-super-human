@@ -231,7 +231,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             target_honeypot = 'regeneration'
         elif self.needs_pyramid["belonging"] < 0.3:
             target_honeypot = 'reproduction'
-            
+        
         print(f"Ziel-Honeypot: {target_honeypot}")
         
         # Suche nach dem besten Kontext, der als Energiequelle dienen kann
@@ -267,7 +267,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
                 current_context = self.contexts[self.current_focus]
                 if hasattr(current_context, 'connections') and context_id in current_context.connections:
                     proximity = 1
-                    
+            
             # Berechne den Gesamtscore basierend auf Honeypot-Relevanz, Glücklichkeit und Nähe
             score = (honeypot_relevance * 2) + (context.happiness * 3) + (proximity * 1)
             
@@ -278,7 +278,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
                 score *= 1.1  # Mittlere Priorität für Regeneration
             elif target_honeypot == 'reproduction':
                 score *= 1.0  # Normale Priorität für Reproduktion
-                
+            
             # Aktualisiere den besten Energiequellenkontext
             if score > best_score:
                 best_energy_source = context_id
@@ -311,12 +311,12 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         if not hasattr(self, 'recent_energy_sources'):
             self.recent_energy_sources = []
             
-        self.recent_energy_sources.append(best_energy_source)
-        
-        # Begrenze die Liste auf die letzten 5 Energiequellen
-        if len(self.recent_energy_sources) > 5:
-            self.recent_energy_sources.pop(0)
+            self.recent_energy_sources.append(best_energy_source)
             
+            # Begrenze die Liste auf die letzten 5 Energiequellen
+            if len(self.recent_energy_sources) > 5:
+                self.recent_energy_sources.pop(0)
+                
         # Extrahiere den Text aus dem Kontext
         context_text = " ".join([word.content for word in self.contexts[best_energy_source].words])
         
@@ -429,7 +429,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             
             return True
         else:
-            return False
+        return False
     
     def create_context(self, text, label=None, happiness=0.0, source_type=None):
         """Erstellt einen neuen Kontext aus Text."""
@@ -516,7 +516,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         # Erstelle das Verzeichnis, falls es nicht existiert
         if not os.path.exists(self.save_dir):
             os.makedirs(self.save_dir)
-            
+        
         # Erstelle ein Unterverzeichnis für Visualisierungen, falls es nicht existiert
         visualizations_dir = os.path.join(self.save_dir, "visualizations")
         if not os.path.exists(visualizations_dir):
@@ -567,11 +567,11 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             
         # Speichere den Zustand als JSON
         try:
-            with open(filename, 'w') as f:
-                json.dump(state, f, indent=2)
-                
-            print(f"Zustand gespeichert: {filename}")
-            
+        with open(filename, 'w') as f:
+            json.dump(state, f, indent=2)
+        
+        print(f"Zustand gespeichert: {filename}")
+        
             # Begrenze die Anzahl der Zustandsdateien
             self.limit_files(self.save_dir, "consciousness_state_", ".json", max_files=3)
             
@@ -579,7 +579,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         except Exception as e:
             print(f"Fehler beim Speichern des Zustands: {e}")
             return False
-            
+        
     def visualize_context_network(self, filename=None):
         """Visualisiert das Kontextnetzwerk."""
         try:
@@ -674,13 +674,13 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         """Visualisiert die gesammelten Statistiken."""
         if not self.stats["happiness"]:
             return
-            
+        
         try:
             # Erstelle Verzeichnis für Visualisierungen, falls es nicht existiert
             vis_dir = os.path.join(self.save_dir, "visualizations")
             if not os.path.exists(vis_dir):
                 os.makedirs(vis_dir)
-                
+            
             # Erstelle einen Zeitstempel für den Dateinamen
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             
@@ -724,10 +724,10 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             self.limit_files(vis_dir, "network_", ".png", max_files=3)
             
             print(f"Statistiken visualisiert: {vis_dir}")
-            
+                
         except Exception as e:
             print(f"Fehler bei der Statistikvisualisierung: {e}")
-            
+    
     def think(self):
         """Ein Denkzyklus des Bewusstseins."""
         # 1. Aktualisiere die Energie
@@ -768,16 +768,16 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
                 energy_gain = self.energy_gain_rate * (1.0 + self.contexts[energy_source_id].happiness)
                 self.energy = min(self.max_energy, self.energy + energy_gain)
                 print(f"Energie aufgefüllt: +{energy_gain:.2f}. Neuer Energiestand: {self.energy:.2f}")
-        else:
-            # Bei ausreichender Energie: Normales Denken
-            # Versuche, logische Schlussfolgerungen zu ziehen
-            if self.current_focus and self.current_focus in self.contexts:
-                current_context = self.contexts[self.current_focus]
-                current_text = " ".join([word.content for word in current_context.words])
-                reasoning_result = self.reason_from_current_knowledge(current_text)
-            else:
-                reasoning_result = None
-            
+                    else:
+                # Bei ausreichender Energie: Normales Denken
+                # Versuche, logische Schlussfolgerungen zu ziehen
+                if self.current_focus and self.current_focus in self.contexts:
+                    current_context = self.contexts[self.current_focus]
+                    current_text = " ".join([word.content for word in current_context.words])
+                    reasoning_result = self.reason_from_current_knowledge(current_text)
+                else:
+                    reasoning_result = None
+
             if reasoning_result:
                 # Wenn eine neue Erkenntnis gewonnen wurde, setze den Fokus darauf
                 self.set_focus_by_id(reasoning_result)
@@ -867,7 +867,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
                     if word not in stop_words and len(word) > 3:
                         if word in word_counts:
                             word_counts[word] += 1
-                        else:
+            else:
                             word_counts[word] = 1
             
             # Sortiere die Wörter nach Häufigkeit
@@ -1008,7 +1008,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         for word in query_words:
             if word in query_vector:
                 query_vector[word] += 1
-            else:
+                else:
                 query_vector[word] = 1
                 
         # Berechne die Relevanz für jeden Kontext
@@ -1021,7 +1021,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             for word in context_words:
                 if word in context_vector:
                     context_vector[word] += 1
-                else:
+            else:
                     context_vector[word] = 1
                     
             # Berechne die Kosinus-Ähnlichkeit zwischen Abfrage und Kontext
@@ -1065,10 +1065,109 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         # Berechne die Kosinus-Ähnlichkeit
         return dot_product / (norm1 * norm2)
     
+    def format_answer_for_question(self, question_analysis, sentences):
+        """
+        Formatiert eine Antwort basierend auf dem Fragetyp und den Attributen.
+        
+        Args:
+            question_analysis: Die Analyse der Frage
+            sentences: Die gefundenen relevanten Sätze
+            
+        Returns:
+            Eine formatierte Antwort
+        """
+        if not sentences:
+            return "Ich konnte keine relevanten Informationen finden."
+        
+        # Extrahiere die Entitäten aus der Frage
+        entities = question_analysis['entities']
+        entity_str = ', '.join(entities) if entities else "das Thema"
+        
+        # Formatiere die Antwort basierend auf dem Fragetyp
+        fragetyp = question_analysis['type']
+        
+        if fragetyp == 'beschaffenheit':
+            # Bei "Wie"-Fragen
+            if 'geschmack' in question_analysis['attributes']:
+                # Geschmacksfragen
+                intro = f"Der Geschmack von {entity_str} lässt sich wie folgt beschreiben: "
+            elif 'aussehen' in question_analysis['attributes']:
+                # Aussehen
+                intro = f"{entity_str.capitalize()} sieht folgendermaßen aus: "
+            elif 'größe' in question_analysis['attributes']:
+                # Größe
+                intro = f"Die Größe von {entity_str} beträgt: "
+            elif 'alter' in question_analysis['attributes']:
+                # Alter
+                intro = f"Das Alter von {entity_str} ist: "
+            elif 'funktion' in question_analysis['attributes']:
+                # Funktion
+                intro = f"{entity_str.capitalize()} funktioniert folgendermaßen: "
+            else:
+                # Allgemeine Beschaffenheit
+                intro = f"Über {entity_str} kann ich Folgendes sagen: "
+        
+        elif fragetyp == 'grund':
+            # Bei "Warum"-Fragen
+            intro = f"Der Grund für {entity_str} ist: "
+        
+        elif fragetyp == 'person':
+            # Bei "Wer"-Fragen
+            intro = f"Die Person(en) im Zusammenhang mit {entity_str}: "
+        
+        elif fragetyp == 'definition':
+            # Bei "Was"-Fragen
+            intro = f"{entity_str.capitalize()} ist: "
+        
+        elif fragetyp == 'ort':
+            # Bei "Wo"-Fragen
+            intro = f"Der Ort für {entity_str} ist: "
+        
+        elif fragetyp == 'zeit':
+            # Bei "Wann"-Fragen
+            intro = f"Der Zeitpunkt für {entity_str} ist: "
+        
+        elif fragetyp == 'auswahl':
+            # Bei "Welche"-Fragen
+            intro = f"Die Optionen für {entity_str} sind: "
+        
+        else:
+            # Bei allgemeinen Fragen
+            intro = f"Zu {entity_str} habe ich folgende Informationen: "
+        
+        # Kombiniere die Sätze zu einer Antwort
+        if len(sentences) > 1:
+            # Verwende Übergänge zwischen den Sätzen
+            transitions = ["Außerdem", "Darüber hinaus", "Zudem", "Weiterhin", "Auch", "Interessanterweise"]
+            
+            answer = sentences[0]
+            
+            for i, sentence in enumerate(sentences[1:]):
+                if i == 0:
+                    answer += f". {sentence}"
+                else:
+                    answer += f". {random.choice(transitions)} {sentence}"
+        else:
+            answer = sentences[0]
+        
+        # Füge die Einleitung hinzu
+        formatted_answer = intro + answer
+        
+        return formatted_answer
+
     def generate_response(self, query):
         """Generiert eine Antwort basierend auf einer Abfrage."""
         if not query:
             return "Ich habe das nicht verstanden. Könntest du es bitte umformulieren?"
+        
+        # Prüfe, ob es sich um eine Frage handelt
+        is_question = '?' in query or query.lower().startswith(('wie ', 'warum ', 'wer ', 'was ', 'wo ', 'wann ', 'welche '))
+        
+        # Wenn es eine Frage ist, analysiere sie
+        question_analysis = None
+        if is_question:
+            question_analysis = self.analyze_question(query)
+            print(f"Frageanalyse: {question_analysis}")
             
         # Finde relevante Kontexte
         relevant_contexts = self.find_relevant_contexts(query, max_results=10)
@@ -1149,6 +1248,50 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             if not is_duplicate:
                 unique_sentences.append(sentence_data)
         
+        # Wenn es eine Frage ist, filtere die Sätze basierend auf dem Fragetyp und den Attributen
+        if is_question and question_analysis:
+            filtered_sentences = []
+            
+            # Extrahiere relevante Schlüsselwörter basierend auf dem Fragetyp und den Attributen
+            relevant_keywords = []
+            
+            if question_analysis['type'] == 'beschaffenheit':
+                if 'geschmack' in question_analysis['attributes']:
+                    # Geschmacksfragen
+                    relevant_keywords = ['schmeckt', 'geschmack', 'aroma', 'süß', 'sauer', 'bitter', 'salzig', 'würzig', 'scharf', 'mild', 'fruchtig', 'herb']
+                elif 'aussehen' in question_analysis['attributes']:
+                    # Aussehen
+                    relevant_keywords = ['aussieht', 'aussehen', 'farbe', 'form', 'gestalt', 'erscheinung']
+                elif 'größe' in question_analysis['attributes']:
+                    # Größe
+                    relevant_keywords = ['groß', 'größe', 'dimension', 'umfang', 'ausdehnung', 'höhe', 'breite', 'länge']
+                elif 'alter' in question_analysis['attributes']:
+                    # Alter
+                    relevant_keywords = ['alt', 'alter', 'jahre', 'jahrzehnte', 'jahrhunderte', 'entstehung', 'geburt']
+                elif 'funktion' in question_analysis['attributes']:
+                    # Funktion
+                    relevant_keywords = ['funktioniert', 'funktion', 'arbeitet', 'mechanismus', 'prozess', 'ablauf']
+                else:
+                    # Allgemeine Beschaffenheit
+                    relevant_keywords = ['eigenschaft', 'beschaffenheit', 'charakteristik', 'merkmal', 'qualität']
+            
+            # Wenn relevante Schlüsselwörter definiert wurden, filtere die Sätze
+            if relevant_keywords:
+                for sentence_data in unique_sentences:
+                    sentence_text = sentence_data['text'].lower()
+                    relevance_score = sum(1 for keyword in relevant_keywords if keyword in sentence_text)
+                    
+                    if relevance_score > 0:
+                        # Füge den Relevanz-Score hinzu
+                        sentence_data['relevance'] = relevance_score
+                        filtered_sentences.append(sentence_data)
+                
+                # Wenn gefilterte Sätze gefunden wurden, verwende sie
+                if filtered_sentences:
+                    # Sortiere nach Relevanz
+                    filtered_sentences.sort(key=lambda x: x.get('relevance', 0), reverse=True)
+                    unique_sentences = filtered_sentences
+        
         # Sortiere die Sätze nach Relevanz zur Abfrage
         query_words = set(query.lower().split())
         
@@ -1167,8 +1310,11 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             # Bevorzuge Sätze mit höherem Happiness-Wert
             happiness_bonus = sentence_data['happiness'] * 0.1
             
+            # Berücksichtige den Relevanz-Score, falls vorhanden
+            relevance_bonus = sentence_data.get('relevance', 0) * 0.3
+            
             # Berechne den Gesamtscore
-            sentence_data['score'] = base_score + source_bonus + happiness_bonus
+            sentence_data['score'] = base_score + source_bonus + happiness_bonus + relevance_bonus
         
         # Sortiere die Sätze nach Score (absteigend)
         unique_sentences.sort(key=lambda x: x['score'], reverse=True)
@@ -1214,20 +1360,24 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             # Fallback: Verwende die Sätze mit dem höchsten Score
             best_sentences = [s['text'] for s in unique_sentences[:5]]
         
-        # Kombiniere die Sätze zu einer Antwort
-        if len(best_sentences) > 1:
-            # Verwende Übergänge zwischen den Sätzen
-            transitions = ["Außerdem", "Darüber hinaus", "Zudem", "Weiterhin", "Auch", "Interessanterweise"]
-            
-            response = best_sentences[0]
-            
-            for i, sentence in enumerate(best_sentences[1:]):
-                if i == 0:
-                    response += f". {sentence}"
-                else:
-                    response += f". {random.choice(transitions)} {sentence}"
+        # Wenn es eine Frage ist, formatiere die Antwort entsprechend
+        if is_question and question_analysis:
+            response = self.format_answer_for_question(question_analysis, best_sentences)
         else:
-            response = best_sentences[0]
+            # Kombiniere die Sätze zu einer Antwort
+            if len(best_sentences) > 1:
+                # Verwende Übergänge zwischen den Sätzen
+                transitions = ["Außerdem", "Darüber hinaus", "Zudem", "Weiterhin", "Auch", "Interessanterweise"]
+                
+                response = best_sentences[0]
+                
+                for i, sentence in enumerate(best_sentences[1:]):
+                    if i == 0:
+                        response += f". {sentence}"
+                    else:
+                        response += f". {random.choice(transitions)} {sentence}"
+            else:
+                response = best_sentences[0]
         
         # Stelle sicher, dass die Antwort nicht zu lang ist
         if len(response) > 500:
@@ -1387,7 +1537,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         """Erstellt neue Verbindungen zwischen Kontexten basierend auf Ähnlichkeit."""
         if not self.contexts or not self.current_focus or self.current_focus not in self.contexts:
             return
-            
+        
         current_context = self.contexts[self.current_focus]
         
         # Extrahiere Wörter aus dem aktuellen Kontext
@@ -1522,8 +1672,8 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             
             if not search_results:
                 print(f"Keine Wikipedia-Artikel für '{search_term}' gefunden.")
-                return None
-                
+            return None
+        
             # Versuche, den ersten Treffer zu verwenden
             try:
                 # Hole eine Zusammenfassung des Artikels
@@ -1555,7 +1705,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
                 print(f"Fehler beim Abrufen des Wikipedia-Artikels: {e}")
                 
             return None
-            
+        
         except ImportError:
             print("Wikipedia-Modul nicht installiert. Verwende 'pip install wikipedia' zum Installieren.")
             return None
@@ -1574,6 +1724,102 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         # Rufe die allgemeine Lernmethode auf
         self.learn_about_topic(context_text, connect_to_focus=True)
     
+    def analyze_question(self, question):
+        """
+        Analysiert eine Frage und extrahiert den Fragetyp, die Entitäten und relevante Attribute.
+        
+        Args:
+            question: Die zu analysierende Frage
+            
+        Returns:
+            Ein Dictionary mit Fragetyp, Entitäten und Attributen
+        """
+        # Normalisiere die Frage
+        question = question.strip().lower()
+        
+        # Definiere Fragewörter und ihre zugehörigen Attribute
+        question_types = {
+            'wie': 'beschaffenheit',  # Wie ist etwas beschaffen?
+            'warum': 'grund',         # Was ist der Grund?
+            'wer': 'person',          # Welche Person?
+            'was': 'definition',      # Was ist etwas?
+            'wo': 'ort',              # An welchem Ort?
+            'wann': 'zeit',           # Zu welcher Zeit?
+            'welche': 'auswahl',      # Welche Option?
+            'welcher': 'auswahl',
+            'welches': 'auswahl'
+        }
+        
+        # Extrahiere den Fragetyp
+        question_type = None
+        for q_word, attr in question_types.items():
+            if question.startswith(q_word + ' ') or f' {q_word} ' in question:
+                question_type = attr
+                break
+        
+        # Wenn kein Fragetyp erkannt wurde, versuche es mit anderen Heuristiken
+        if not question_type:
+            if '?' in question:
+                # Allgemeine Frage
+                question_type = 'information'
+        else:
+                # Keine Frage erkannt
+                question_type = 'statement'
+        
+        # Extrahiere Entitäten (Substantive und Eigennamen)
+        # Hier verwenden wir eine einfache Heuristik: Wörter, die nicht in der Stopwortliste sind
+        # und länger als 3 Zeichen sind, könnten Entitäten sein
+        stop_words = ['der', 'die', 'das', 'ein', 'eine', 'einer', 'eines', 'einem', 'einen',
+                     'ist', 'sind', 'war', 'waren', 'wird', 'werden', 'wurde', 'wurden',
+                     'hat', 'haben', 'hatte', 'hatten', 'kann', 'können', 'könnte', 'könnten',
+                     'muss', 'müssen', 'musste', 'mussten', 'soll', 'sollen', 'sollte', 'sollten',
+                     'will', 'wollen', 'wollte', 'wollten', 'darf', 'dürfen', 'durfte', 'durften',
+                     'mag', 'mögen', 'mochte', 'mochten', 'und', 'oder', 'aber', 'denn', 'weil',
+                     'obwohl', 'obgleich', 'wenn', 'falls', 'als', 'wie', 'dass', 'ob',
+                     'für', 'mit', 'bei', 'von', 'zu', 'aus', 'in', 'an', 'auf', 'über', 'unter',
+                     'neben', 'zwischen', 'vor', 'nach', 'seit', 'während', 'wegen', 'trotz',
+                     'ich', 'du', 'er', 'sie', 'es', 'wir', 'ihr', 'sie',
+                     'mich', 'dich', 'ihn', 'uns', 'euch', 'ihnen',
+                     'mein', 'dein', 'sein', 'ihr', 'unser', 'euer', 'ihr']
+        
+        words = question.split()
+        entities = []
+        
+        for word in words:
+            # Entferne Satzzeichen
+            clean_word = word.strip('.,;:!?()"\'')
+            if len(clean_word) > 3 and clean_word not in stop_words and clean_word not in question_types:
+                entities.append(clean_word)
+        
+        # Identifiziere spezifische Attribute basierend auf dem Fragetyp und Kontext
+        attributes = []
+        
+        if question_type == 'beschaffenheit':
+            # Bei "Wie"-Fragen, suche nach Attributen wie Farbe, Geschmack, Größe, etc.
+            if 'schmeckt' in question or 'geschmack' in question:
+                attributes.append('geschmack')
+            elif 'aussieht' in question or 'aussehen' in question:
+                attributes.append('aussehen')
+            elif 'groß' in question or 'größe' in question:
+                attributes.append('größe')
+            elif 'alt' in question or 'alter' in question:
+                attributes.append('alter')
+            elif 'funktioniert' in question:
+                attributes.append('funktion')
+            else:
+                # Allgemeine Beschaffenheit
+                attributes.append('eigenschaft')
+        
+        # Ergebnis zusammenstellen
+        result = {
+            'type': question_type,
+            'entities': entities,
+            'attributes': attributes,
+            'original_question': question
+        }
+        
+        return result
+
     def learn_about_topic(self, topic, connect_to_focus=False, max_contexts=5):
         """
         Lernt über ein bestimmtes Thema aus dem Internet und erstellt mehrere zusammenhängende Kontexte.
@@ -1587,33 +1833,56 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             print("Kein Thema angegeben. Kann nicht aus dem Internet lernen.")
             return []
         
-        # Entferne Satzzeichen und normalisiere Leerzeichen
-        cleaned_topic = re.sub(r'[^\w\s]', ' ', topic)
-        cleaned_topic = re.sub(r'\s+', ' ', cleaned_topic).strip()
+        # Prüfe, ob es sich um eine Frage handelt
+        is_question = '?' in topic or topic.lower().startswith(('wie ', 'warum ', 'wer ', 'was ', 'wo ', 'wann ', 'welche '))
         
-        # Extrahiere Schlüsselwörter für die Suche
-        stop_words = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'with', 'by', 'about', 'as', 'of', 'that', 'this', 'these', 'those', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'shall', 'should', 'can', 'could', 'may', 'might', 'must', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them', 'my', 'your', 'his', 'its', 'our', 'their', 'mine', 'yours', 'hers', 'ours', 'theirs']
-        
-        # Teile den Text in Wörter
-        words = cleaned_topic.lower().split()
-        
-        # Filtere Stoppwörter
-        keywords = [word for word in words if len(word) > 3 and word not in stop_words]
-        
-        # Wenn keine Schlüsselwörter gefunden wurden, verwende den gesamten Text
-        if not keywords:
-            print(f"Keine Schlüsselwörter in '{topic}' gefunden. Verwende den gesamten Text.")
-            search_term = cleaned_topic
-        else:
-            # Erstelle eine Phrase aus den Schlüsselwörtern (bis zu 3)
-            if len(keywords) > 3:
-                # Verwende die wichtigsten Schlüsselwörter (längere Wörter haben mehr Gewicht)
-                keywords.sort(key=len, reverse=True)
-                search_keywords = keywords[:3]
-            else:
-                search_keywords = keywords
+        if is_question:
+            # Analysiere die Frage
+            question_analysis = self.analyze_question(topic)
+            print(f"Frageanalyse: {question_analysis}")
             
-            search_term = " ".join(search_keywords)
+            # Erstelle eine gezieltere Suchanfrage basierend auf der Analyse
+            search_term = topic
+            
+            # Wenn Entitäten gefunden wurden, verwende sie für die Suche
+            if question_analysis['entities']:
+                # Kombiniere die Entitäten mit den Attributen für eine präzisere Suche
+                entity_terms = ' '.join(question_analysis['entities'])
+                
+                if question_analysis['attributes']:
+                    # Füge Attribute hinzu, um die Suche zu verfeinern
+                    attribute_terms = ' '.join(question_analysis['attributes'])
+                    search_term = f"{entity_terms} {attribute_terms}"
+                else:
+                    search_term = entity_terms
+        else:
+            # Entferne Satzzeichen und normalisiere Leerzeichen
+            cleaned_topic = re.sub(r'[^\w\s]', ' ', topic)
+            cleaned_topic = re.sub(r'\s+', ' ', cleaned_topic).strip()
+            
+            # Extrahiere Schlüsselwörter für die Suche
+            stop_words = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'with', 'by', 'about', 'as', 'of', 'that', 'this', 'these', 'those', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'shall', 'should', 'can', 'could', 'may', 'might', 'must', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them', 'my', 'your', 'his', 'its', 'our', 'their', 'mine', 'yours', 'hers', 'ours', 'theirs']
+            
+            # Teile den Text in Wörter
+            words = cleaned_topic.lower().split()
+            
+            # Filtere Stoppwörter
+            keywords = [word for word in words if len(word) > 3 and word not in stop_words]
+            
+            # Wenn keine Schlüsselwörter gefunden wurden, verwende den gesamten Text
+            if not keywords:
+                print(f"Keine Schlüsselwörter in '{topic}' gefunden. Verwende den gesamten Text.")
+                search_term = cleaned_topic
+            else:
+                # Erstelle eine Phrase aus den Schlüsselwörtern (bis zu 3)
+                if len(keywords) > 3:
+                    # Verwende die wichtigsten Schlüsselwörter (längere Wörter haben mehr Gewicht)
+                    keywords.sort(key=len, reverse=True)
+                    search_keywords = keywords[:3]
+                else:
+                    search_keywords = keywords
+                
+                search_term = " ".join(search_keywords)
         
         print(f"Lerne über: '{search_term}'")
         
@@ -1627,8 +1896,34 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
                 print(f"Keine Inhalte für '{search_term}' gefunden.")
                 return created_contexts
             
-            # Teile den Inhalt in Absätze
-            paragraphs = wikipedia_content.split('\n\n')
+            # Wenn es eine Frage war, versuche die relevanten Informationen zu extrahieren
+            if is_question:
+                # Teile den Inhalt in Absätze
+                paragraphs = wikipedia_content.split('\n\n')
+                
+                # Extrahiere relevante Informationen basierend auf dem Fragetyp und den Attributen
+                if question_analysis['type'] == 'beschaffenheit' and 'geschmack' in question_analysis['attributes']:
+                    # Suche nach Absätzen, die Geschmacksinformationen enthalten könnten
+                    taste_keywords = ['schmeckt', 'geschmack', 'aroma', 'süß', 'sauer', 'bitter', 'salzig', 'würzig', 'scharf', 'mild', 'fruchtig', 'herb']
+                    
+                    # Bewerte jeden Absatz nach Relevanz für Geschmacksinformationen
+                    relevant_paragraphs = []
+                    for paragraph in paragraphs:
+                        relevance_score = sum(1 for keyword in taste_keywords if keyword.lower() in paragraph.lower())
+                        if relevance_score > 0:
+                            relevant_paragraphs.append((paragraph, relevance_score))
+                    
+                    # Sortiere nach Relevanz
+                    relevant_paragraphs.sort(key=lambda x: x[1], reverse=True)
+                    
+                    # Verwende die relevantesten Absätze
+                    filtered_paragraphs = [p for p, _ in relevant_paragraphs[:max_contexts]]
+                    
+                    # Wenn keine relevanten Absätze gefunden wurden, verwende die ersten Absätze
+                    if not filtered_paragraphs and paragraphs:
+                        filtered_paragraphs = paragraphs[:max_contexts]
+                    
+                    paragraphs = filtered_paragraphs
             
             # Begrenze die Anzahl der Absätze
             max_paragraphs = min(max_contexts, len(paragraphs))
@@ -1738,8 +2033,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
                         self.contexts[context_id] = context
                         
             print(f"Zustand geladen: {filename}")
-            return True
-            
+        return True
         except Exception as e:
             print(f"Fehler beim Laden des Zustands: {e}")
             return False
