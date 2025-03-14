@@ -1303,6 +1303,7 @@ function initFocusNetwork() {
     // Semantische Satz-Knoten definieren
     const nodes = [
       // Schlüsselkonzepte
+      { id: "ein", group: "article", label: "ein" },
       { id: "Apfel", group: "object", label: "🍎 Apfel" },
       { id: "schmeckt", group: "verb", label: "schmeckt" },
       { id: "Farbe", group: "property", label: "Farbe" },
@@ -1331,6 +1332,7 @@ function initFocusNetwork() {
 
     const links = [
       // Verbindungen zwischen Wörtern und Sätzen
+      { source: "ein", target: "Apfel", value: 2, type: "part_of" },
       {
         source: "Apfel",
         target: "schmeckt",
