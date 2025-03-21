@@ -134,15 +134,11 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Event-Listener für den Energieschieberegler
-  const energyLevelControl = document.getElementById(
-    "networkEnergyLevelControl"
-  ); // Diese ID ändern
+  // Verbinde den Energieschieberegler mit der Netzwerkvisualisierung
+  const energyLevelControl = document.getElementById("energyLevelControl");
   const networkEnergyValue = document.getElementById("networkEnergyValue");
-  const dynamicEnergySlider = document.getElementById("dynamic-energy-slider");
-  const energyValueDisplay = document.getElementById("energy-value");
 
-  if (energyLevelControl) {
+  if (energyLevelControl && networkEnergyValue) {
     console.log("Verbinde Energieschieberegler mit Netzwerkvisualisierung");
 
     // Aktualisiere den angezeigten Wert beim Laden
@@ -156,16 +152,6 @@ document.addEventListener("DOMContentLoaded", function () {
       // Aktualisiere die Netzwerkvisualisierung mit dem neuen Energiewert
       currentEnergyLevel = parseInt(value);
 
-      // Synchronisiere den dynamischen Slider
-      if (dynamicEnergySlider && !isUpdatingSlider) {
-        isUpdatingSlider = true;
-        dynamicEnergySlider.value = value;
-        if (energyValueDisplay) {
-          energyValueDisplay.textContent = value;
-        }
-        isUpdatingSlider = false;
-      }
-
       // Wenn wir ein dynamisches Netzwerk haben, aktualisieren wir es
       if (typeof updateDynamicNetwork === "function") {
         updateDynamicNetwork(currentEnergyLevel);
@@ -174,6 +160,9 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Event-Listener für den dynamischen Energieschieberegler
+  const dynamicEnergySlider = document.getElementById("dynamic-energy-slider");
+  const energyValueDisplay = document.getElementById("energy-value");
+
   if (dynamicEnergySlider) {
     console.log(
       "Event-Listener für dynamischen Energieschieberegler hinzufügen"
@@ -193,26 +182,14 @@ document.addEventListener("DOMContentLoaded", function () {
         energyValueDisplay.textContent = newEnergyLevel;
       }
 
-      // Synchronisiere den Hauptschieberegler
-      if (energyLevelControl && !isUpdatingSlider) {
-        isUpdatingSlider = true;
-        energyLevelControl.value = newEnergyLevel; // Dies aktualisiert die Position des Schiebereglers
-        if (networkEnergyValue) {
-          networkEnergyValue.textContent = `${newEnergyLevel}%`;
-        }
-        isUpdatingSlider = false;
-      }
-
       // Globale Variable aktualisieren
       currentEnergyLevel = newEnergyLevel;
 
       // Netzwerkvisualisierung aktualisieren
-      if (typeof updateDynamicNetwork === "function") {
-        updateDynamicNetwork(newEnergyLevel);
-      }
+      updateDynamicNetwork(newEnergyLevel);
     });
   }
-});
+}); // Ende des DOMContentLoaded-Event-Listeners
 
 // Architecture Diagram Animation
 function initArchitectureDiagram() {
@@ -557,25 +534,1153 @@ function initEnergyCharts() {
       honeypotIntensityDisplay.textContent = honeypotIntensity + "%";
     }
 
-    // Aktualisiere Slider-Positionen
+    // Aktualisiere Slider-Positionen mit der neuen Funktion
     const mainEnergySlider = document.getElementById("mainEnergyLevelControl");
-    if (mainEnergySlider) {
-      mainEnergySlider.value = energyLevel;
+    if (mainEnergySlider && !isUpdatingSlider) {
+      updateSliderValue(mainEnergySlider, energyLevel);
     }
 
     const networkEnergySlider = document.getElementById(
       "networkEnergyLevelControl"
     );
-    if (networkEnergySlider) {
-      networkEnergySlider.value = energyLevel;
+    if (networkEnergySlider && !isUpdatingSlider) {
+      updateSliderValue(networkEnergySlider, energyLevel);
     }
 
     // Aktualisiere auch den dynamischen Energieschieberegler in der Simulationssektion
     const dynamicEnergySlider = document.getElementById(
       "dynamic-energy-slider"
     );
+    if (dynamicEnergySlider && !isUpdatingSlider) {
+      updateSliderValue(dynamicEnergySlider, energyLevel);
+
+      // Aktualisiere auch die entsprechende Anzeige
+      const energyValue = document.getElementById("energy-value");
+      if (energyValue) {
+        energyValue.textContent = energyLevel;
+      }
+    }
+
+    // Network Energy Value aktualisieren
+    const networkEnergyValue = document.getElementById("networkEnergyValue");
+    if (networkEnergyValue) {
+      networkEnergyValue.textContent = energyLevel + "%";
+
+      // Klassen für Styling entfernen und basierend auf dem Wert neu setzen
+      networkEnergyValue.classList.remove("low", "medium", "high");
+      if (energyLevel < 40) {
+        networkEnergyValue.classList.add("low");
+      } else if (energyLevel < 70) {
+        networkEnergyValue.classList.add("medium");
+      } else {
+        networkEnergyValue.classList.add("high");
+      }
+    }
+
+    // Wellen-Amplitude basierend auf Energielevel und Suchintensität anpassen
+    if (typeof waveParams !== "undefined") {
+      waveParams.energy.amplitude = 10 + (energyLevel / 100) * 20;
+      waveParams.honeypot.amplitude = 5 + (honeypotIntensity / 100) * 25;
+    }
+
+    // Fokus-Radar aktualisieren, wenn vorhanden
+    if (
+      typeof radarCtx !== "undefined" &&
+      typeof focusRadarCanvas !== "undefined" &&
+      typeof frameCounter !== "undefined"
+    ) {
+      // Nur alle 10 Frames die Kontexte aktualisieren (Verlangsamung auf 1/10)
+      const shouldUpdatePositions = frameCounter % 10 === 0;
+
+      if (typeof drawFocusRadar === "function") {
+        drawFocusRadar(
+          radarCtx,
+          energyLevel,
+          honeypotIntensity,
+          shouldUpdatePositions
+        );
+      }
+    }
+
+    return {
+      energyLevel,
+      honeypotIntensity,
+    };
+  }
+
+  // Funktion zum Zeichnen einer Sinuswelle
+  function drawWave(ctx, params, value, canvasWidth, canvasHeight) {
+    try {
+      // Canvas löschen
+      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+      // Aktuelle Farbe basierend auf Wert bestimmen
+      let waveColor;
+      if (value < 40) {
+        waveColor = colors.low;
+      } else if (value < 70) {
+        waveColor = colors.medium;
+      } else {
+        waveColor = colors.high;
+      }
+
+      // Gradient erstellen
+      const gradient = ctx.createLinearGradient(0, 0, 0, canvasHeight);
+      gradient.addColorStop(0, waveColor);
+      gradient.addColorStop(1, `${waveColor}50`); // Halbtransparente Version
+
+      // Zeichnungspfad beginnen
+      ctx.beginPath();
+
+      // Startpunkt ist links unten
+      ctx.moveTo(0, canvasHeight);
+
+      // Sinuskurve durch den Canvas zeichnen
+      for (let x = 0; x < canvasWidth; x++) {
+        // Basisfüllhöhe basierend auf Wert (0-100%)
+        const baseHeight = canvasHeight - (value / 100) * canvasHeight;
+
+        // Sinuswelle mit etwas Rauschen für natürlicheres Aussehen
+        const noise = (Math.random() - 0.5) * params.noise;
+        const y =
+          baseHeight +
+          Math.sin(x * params.frequency + params.phase) * params.amplitude +
+          noise;
+
+        ctx.lineTo(x, y);
+      }
+
+      // Pfad vervollständigen (zum unteren Rand und zurück zum Start)
+      ctx.lineTo(canvasWidth, canvasHeight);
+      ctx.lineTo(0, canvasHeight);
+      ctx.closePath();
+
+      // Welle füllen
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      // Optional: Wellenkontur zeichnen
+      ctx.strokeStyle = waveColor;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Phase für Animation aktualisieren
+      params.phase += params.speed;
+    } catch (error) {
+      console.error("Fehler beim Zeichnen der Welle:", error);
+    }
+  }
+
+  // Funktion zum Initialisieren der Radar-Daten
+  function initializeRadarData(width, height) {
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const maxRadius = Math.min(width, height) * 0.4;
+
+    // Honeypots initialisieren
+    radarHoneypots = [];
+    const numHoneypots = 3;
+    const honeypotRadius = 10;
+
+    for (let i = 0; i < numHoneypots; i++) {
+      const angle = (i * Math.PI * 2) / numHoneypots;
+      const distanceFromCenter = maxRadius * 0.6; // Honeypots sind etwas näher am Zentrum
+
+      const x = centerX + Math.cos(angle) * distanceFromCenter;
+      const y = centerY + Math.sin(angle) * distanceFromCenter;
+
+      radarHoneypots.push({
+        x,
+        y,
+        radius: honeypotRadius,
+        pulsePhase: Math.random() * Math.PI * 2, // Zufällige Startphase für Pulsen
+      });
+    }
+
+    // Kontexte initialisieren
+    radarContexts = [];
+    const numContexts = 40;
+
+    for (let i = 0; i < numContexts; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const distance = Math.random() * maxRadius;
+
+      const x = centerX + Math.cos(angle) * distance;
+      const y = centerY + Math.sin(angle) * distance;
+
+      // Distanz zum nächsten Honeypot berechnen
+      let minDistanceToHoneypot = Infinity;
+      for (const honeypot of radarHoneypots) {
+        const dx = x - honeypot.x;
+        const dy = y - honeypot.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        minDistanceToHoneypot = Math.min(minDistanceToHoneypot, distance);
+      }
+
+      // Radius basierend auf Distanz zu Honeypots
+      const radius = 3 + Math.random() * 4;
+
+      radarContexts.push({
+        x,
+        y,
+        radius,
+        originalX: x, // Original-Position speichern
+        originalY: y,
+        distanceToHoneypot: minDistanceToHoneypot,
+        distanceFromCenter: distance,
+        movementAngle: Math.random() * Math.PI * 2, // Zufälliger Bewegungswinkel
+        movementSpeed: 0.2 + Math.random() * 0.3, // Langsame Bewegungsgeschwindigkeit
+      });
+    }
+
+    radarInitialized = true;
+  }
+
+  // Funktion zum schrittweisen Aktualisieren der Kontext-Positionen
+  function updateContextPositions(centerX, centerY, maxRadius) {
+    for (const context of radarContexts) {
+      // Nur minimale Bewegung
+      const movementScale = 0.5; // Bewegungsskalierung (niedrigere Werte = langsamere Bewegung)
+
+      // Berechne neue Position mit kleiner zufälliger Änderung
+      context.movementAngle += (Math.random() - 0.5) * 0.2; // Leichte Richtungsänderung
+
+      const dx =
+        Math.cos(context.movementAngle) * context.movementSpeed * movementScale;
+      const dy =
+        Math.sin(context.movementAngle) * context.movementSpeed * movementScale;
+
+      // Neue Position
+      let newX = context.x + dx;
+      let newY = context.y + dy;
+
+      // Prüfen, ob die neue Position innerhalb des Radarkreises liegt
+      const distFromCenter = Math.sqrt(
+        Math.pow(newX - centerX, 2) + Math.pow(newY - centerY, 2)
+      );
+
+      // Wenn zu weit vom Zentrum entfernt, Richtung umkehren
+      if (distFromCenter > maxRadius) {
+        context.movementAngle += Math.PI; // Richtung umkehren
+        newX = context.x;
+        newY = context.y;
+      }
+
+      // Position aktualisieren
+      context.x = newX;
+      context.y = newY;
+
+      // Distanz zum nächsten Honeypot neu berechnen
+      let minDistanceToHoneypot = Infinity;
+      for (const honeypot of radarHoneypots) {
+        const dx = newX - honeypot.x;
+        const dy = newY - honeypot.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        minDistanceToHoneypot = Math.min(minDistanceToHoneypot, distance);
+      }
+
+      context.distanceToHoneypot = minDistanceToHoneypot;
+      context.distanceFromCenter = distFromCenter;
+    }
+  }
+
+  // Neue Funktion: Fokus-Radar zeichnen - Visualisiert den Zusammenhang zwischen Energielevel und Kontext-Fokus
+  function drawFocusRadar(
+    ctx,
+    energyValue,
+    searchIntensity,
+    updatePositions = false
+  ) {
+    try {
+      // Größe des Canvas holen
+      const width = ctx.canvas.width;
+      const height = ctx.canvas.height;
+
+      // Canvas löschen
+      ctx.clearRect(0, 0, width, height);
+
+      // Hintergrund zeichnen
+      ctx.fillStyle = "#f8fafc";
+      ctx.fillRect(0, 0, width, height);
+
+      // Zentrum des Radars
+      const centerX = width / 2;
+      const centerY = height / 2;
+
+      // Radius für verschiedene Komponenten
+      const maxRadius = Math.min(width, height) * 0.4;
+
+      // Initialisiere Radar-Daten, wenn noch nicht geschehen
+      if (!radarInitialized) {
+        initializeRadarData(width, height);
+      }
+
+      // Aktualisiere Kontext-Positionen, falls gewünscht
+      if (updatePositions) {
+        updateContextPositions(centerX, centerY, maxRadius);
+      }
+
+      // Gitter zeichnen
+      ctx.strokeStyle = "#e2e8f0";
+      ctx.lineWidth = 1;
+
+      // Konzentrische Kreise
+      for (let r = maxRadius / 4; r <= maxRadius; r += maxRadius / 4) {
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // Radiale Linien
+      for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 6) {
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(
+          centerX + Math.cos(angle) * maxRadius,
+          centerY + Math.sin(angle) * maxRadius
+        );
+        ctx.stroke();
+      }
+
+      // Berechne den Fokusbereich basierend auf Energielevel
+      // Bei niedrigem Energielevel: Fokus auf Honeypots
+      // Bei hohem Energielevel: Fokus weitet sich aus
+
+      // Radius des Fokusbereichs für niedrige Energie (in Prozent des maxRadius)
+      const lowEnergyFocusRadius = maxRadius * 0.7;
+
+      // Zusätzlicher Radius für hohe Energie
+      const highEnergyExtraRadius = maxRadius * 0.3 * (energyValue / 100);
+
+      // Zeichne zuerst den erweiterten Fokusbereich für hohe Energie
+      if (energyValue > 40) {
+        ctx.beginPath();
+        ctx.arc(
+          centerX,
+          centerY,
+          lowEnergyFocusRadius + highEnergyExtraRadius,
+          0,
+          Math.PI * 2
+        );
+        ctx.fillStyle = `rgba(16, 185, 129, ${0.2 + (energyValue - 40) / 150})`; // Grün mit Alphakanal
+        ctx.fill();
+      }
+
+      // Zeichne den Basis-Fokusbereich für niedrige Energie
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, lowEnergyFocusRadius, 0, Math.PI * 2);
+
+      // Farbe basierend auf Energielevel
+      let focusColor;
+      if (energyValue < 40) {
+        focusColor = `rgba(239, 68, 68, ${0.3 + (40 - energyValue) / 100})`; // Intensiveres Rot bei niedrigerer Energie
+      } else {
+        focusColor = `rgba(245, 158, 11, 0.3)`; // Orange für mittlere Energie
+      }
+
+      ctx.fillStyle = focusColor;
+      ctx.fill();
+
+      // Verbindungslinien zwischen Honeypots und nahen Kontexten zeichnen
+      // Intensität hängt vom Energielevel ab
+      const connectionThreshold = maxRadius * 0.25;
+      const connectionOpacity = energyValue < 40 ? 0.7 : 0.3; // Stärkere Verbindungen bei niedrigem Energielevel
+
+      for (const context of radarContexts) {
+        for (const honeypot of radarHoneypots) {
+          const dx = context.x - honeypot.x;
+          const dy = context.y - honeypot.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < connectionThreshold) {
+            // Je näher am Honeypot, desto stärker die Verbindung
+            const strength = 1 - distance / connectionThreshold;
+
+            ctx.beginPath();
+            ctx.moveTo(honeypot.x, honeypot.y);
+            ctx.lineTo(context.x, context.y);
+            ctx.strokeStyle = `rgba(249, 115, 22, ${
+              strength * connectionOpacity
+            })`;
+            ctx.lineWidth = 1 + strength;
+            ctx.stroke();
+          }
+        }
+      }
+
+      // Zeichne die Kontexte mit unterschiedlichen Farben basierend auf Fokusbereich
+      for (const context of radarContexts) {
+        ctx.beginPath();
+        ctx.arc(context.x, context.y, context.radius, 0, Math.PI * 2);
+
+        // Ist der Kontext im Fokusbereich?
+        const distanceFromCenter = context.distanceFromCenter;
+
+        // Unterschiedliche Farben für Kontexte je nach Position
+        if (distanceFromCenter <= lowEnergyFocusRadius) {
+          // Im niedrigen Energiebereich
+          if (context.distanceToHoneypot < maxRadius * 0.2) {
+            // Nahe bei Honeypots und im niedrigen Energiebereich = hohes Interesse
+            ctx.fillStyle = "#ef4444"; // Rot
+            ctx.strokeStyle = "#b91c1c";
+          } else {
+            // Im niedrigen Energiebereich, aber nicht nah an Honeypots
+            ctx.fillStyle = "#f97316"; // Orange
+            ctx.strokeStyle = "#c2410c";
+          }
+        } else if (
+          distanceFromCenter <=
+          lowEnergyFocusRadius + highEnergyExtraRadius
+        ) {
+          // Im hohen Energiebereich (nur aktiv bei hoher Energie)
+          ctx.fillStyle = "#10b981"; // Grün
+          ctx.strokeStyle = "#047857";
+        } else {
+          // Außerhalb des Fokusbereichs = geringes Interesse
+          ctx.fillStyle = "#cbd5e1"; // Hellgrau
+          ctx.strokeStyle = "#94a3b8";
+        }
+
+        ctx.fill();
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      // Honeypots zeichnen (Energiequellen)
+      const time = Date.now() / 1000;
+
+      for (const honeypot of radarHoneypots) {
+        // Pulsierender Effekt um die Honeypots
+        const pulseSize = 5 + (searchIntensity / 20) * 15; // Größerer Puls bei höherer Suchintensität
+
+        ctx.beginPath();
+        const pulseRadius =
+          honeypot.radius +
+          pulseSize * Math.abs(Math.sin(time * (2 + searchIntensity / 40))); // Schnellerer Puls bei höherer Intensität
+
+        ctx.arc(honeypot.x, honeypot.y, pulseRadius, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(249, 115, 22, ${
+          0.7 * Math.abs(Math.sin(time * 2))
+        })`; // Pulsierender Alphakanal
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Honeypot selbst zeichnen
+        ctx.beginPath();
+        ctx.arc(honeypot.x, honeypot.y, honeypot.radius, 0, Math.PI * 2);
+        ctx.fillStyle = "#f97316"; // Orange für Honeypots
+        ctx.fill();
+        ctx.strokeStyle = "#c2410c";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Honeypot-Icons: stilisiertes Bienenwaben-Muster
+        ctx.beginPath();
+        ctx.moveTo(honeypot.x - 5, honeypot.y);
+        ctx.lineTo(honeypot.x - 2.5, honeypot.y - 4);
+        ctx.lineTo(honeypot.x + 2.5, honeypot.y - 4);
+        ctx.lineTo(honeypot.x + 5, honeypot.y);
+        ctx.lineTo(honeypot.x + 2.5, honeypot.y + 4);
+        ctx.lineTo(honeypot.x - 2.5, honeypot.y + 4);
+        ctx.closePath();
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      // Energiebalken am unteren Rand
+      const barHeight = 10;
+      const barWidth = width * 0.8;
+      const barX = (width - barWidth) / 2;
+      const barY = height - 20;
+
+      // Hintergrund
+      ctx.fillStyle = "#e2e8f0";
+      ctx.fillRect(barX, barY, barWidth, barHeight);
+
+      // Füllstand
+      let barColor;
+      if (energyValue < 40) {
+        barColor = colors.low;
+      } else if (energyValue < 70) {
+        barColor = colors.medium;
+      } else {
+        barColor = colors.high;
+      }
+
+      ctx.fillStyle = barColor;
+      ctx.fillRect(barX, barY, barWidth * (energyValue / 100), barHeight);
+
+      // Rahmen
+      ctx.strokeStyle = "#94a3b8";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(barX, barY, barWidth, barHeight);
+
+      // Beschriftung
+      ctx.fillStyle = "#334155";
+      ctx.font = "12px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText(
+        `Energielevel: ${Math.round(energyValue)}%`,
+        width / 2,
+        barY - 5
+      );
+    } catch (error) {
+      console.error("Fehler beim Zeichnen des Fokus-Radars:", error);
+    }
+  }
+
+  // Funktion zum Animieren der Wellen
+  function animateWaves() {
+    try {
+      // Frame-Zähler erhöhen
+      frameCounter++;
+
+      // Canvas-Abmessungen aktualisieren
+      const energyWidth = energyWaveCanvas.offsetWidth || 600;
+      const energyHeight = energyWaveCanvas.offsetHeight || 100;
+      const honeypotWidth = honeypotWaveCanvas.offsetWidth || 600;
+      const honeypotHeight = honeypotWaveCanvas.offsetHeight || 100;
+
+      // Canvas-Größen setzen
+      energyWaveCanvas.width = energyWidth;
+      energyWaveCanvas.height = energyHeight;
+      honeypotWaveCanvas.width = honeypotWidth;
+      honeypotWaveCanvas.height = honeypotHeight;
+
+      // Radar-Canvas-Größe aktualisieren, wenn vorhanden
+      if (focusRadarCanvas) {
+        focusRadarCanvas.width = focusRadarCanvas.offsetWidth || 500;
+        focusRadarCanvas.height = focusRadarCanvas.offsetHeight || 300;
+      }
+
+      // Energie-Welle zeichnen
+      drawWave(
+        energyCtx,
+        waveParams.energy,
+        energyValue,
+        energyWaveCanvas.width,
+        energyWaveCanvas.height
+      );
+
+      // Honeypot-Suche-Intensität berechnen
+      let searchIntensity;
+      if (energyValue < 40) {
+        searchIntensity = 80 - energyValue; // Höhere Intensität bei niedrigerer Energie
+      } else {
+        searchIntensity = 10 + (70 - energyValue) / 3; // Niedriger Basiswert bei höherer Energie
+      }
+      searchIntensity = Math.max(5, Math.min(80, searchIntensity));
+
+      // Honeypot-Welle zeichnen
+      drawWave(
+        honeypotCtx,
+        waveParams.honeypot,
+        searchIntensity,
+        honeypotWaveCanvas.width,
+        honeypotWaveCanvas.height
+      );
+
+      // Fokus-Radar aktualisieren, wenn vorhanden
+      if (radarCtx && focusRadarCanvas) {
+        // Nur alle 10 Frames die Kontexte aktualisieren (Verlangsamung auf 1/10)
+        const shouldUpdatePositions = frameCounter % 10 === 0;
+        drawFocusRadar(
+          radarCtx,
+          energyValue,
+          searchIntensity,
+          shouldUpdatePositions
+        );
+      }
+
+      // Animation fortsetzen
+      animationFrameId = requestAnimationFrame(animateWaves);
+    } catch (error) {
+      console.error("Fehler in der Wellenanimation:", error);
+    }
+  }
+
+  // Automatische Fluktuation starten
+  function startAutoFluctuate() {
+    if (autoFluctuateInterval) clearInterval(autoFluctuateInterval);
+
+    isAutoFluctuate = true;
+
+    autoFluctuateInterval = setInterval(() => {
+      // Richtung gelegentlich zufällig ändern
+      if (Math.random() < 0.3) {
+        direction *= -1;
+      }
+
+      // Energie mit kleinen zufälligen Änderungen aktualisieren
+      energyValue += direction * (Math.random() * 2);
+
+      // Innerhalb der Grenzen halten
+      if (energyValue > 90) {
+        energyValue = 90;
+        direction = -1;
+      } else if (energyValue < 30) {
+        energyValue = 30;
+        direction = 1;
+      }
+
+      // Anzeigen aktualisieren
+      updateDisplays();
+    }, 1000); // Häufigere Aktualisierung für bessere Sichtbarkeit der Änderungen
+  }
+
+  // Automatische Fluktuation stoppen
+  function stopAutoFluctuate() {
+    clearInterval(autoFluctuateInterval);
+    isAutoFluctuate = false;
+  }
+
+  // Wenn der Energie-Schieberegler vorhanden ist, Event-Listener hinzufügen
+  if (energyLevelControl) {
+    // Beim Beginn der Interaktion
+    energyLevelControl.addEventListener("mousedown", function () {
+      this.classList.add("user-adjusting");
+      // Automatische Fluktuation stoppen
+      stopAutoFluctuate();
+
+      // Checkbox deaktivieren
+      if (autoFluctuateControl) {
+        autoFluctuateControl.checked = false;
+      }
+    });
+
+    // Für Touch-Geräte
+    energyLevelControl.addEventListener("touchstart", function () {
+      this.classList.add("user-adjusting");
+      stopAutoFluctuate();
+
+      if (autoFluctuateControl) {
+        autoFluctuateControl.checked = false;
+      }
+    });
+
+    // Beim Ändern des Wertes
+    energyLevelControl.addEventListener("input", function () {
+      const newEnergyLevel = parseFloat(this.value);
+      energyValue = newEnergyLevel; // Aktuellen Energiewert aktualisieren
+      updateDisplays();
+    });
+
+    // Nach Ende der Interaktion
+    energyLevelControl.addEventListener("mouseup", function () {
+      this.classList.remove("user-adjusting");
+    });
+
+    // Für Touch-Geräte
+    energyLevelControl.addEventListener("touchend", function () {
+      this.classList.remove("user-adjusting");
+    });
+  }
+
+  // Wenn die Auto-Fluktuations-Checkbox vorhanden ist, Event-Listener hinzufügen
+  if (autoFluctuateControl) {
+    // Dieser Event-Listener wird bereits im DOMContentLoaded-Event gesetzt,
+    // daher hier nur überprüfen, ob die Checkbox aktiv ist
+    if (autoFluctuateControl.checked) {
+      startAutoFluctuate(); // Auto-Fluktuation starten
+    } else {
+      stopAutoFluctuate();
+    }
+  }
+
+  // Fenstergrößenänderung behandeln
+  window.addEventListener("resize", () => {
+    // Kurz Animation stoppen und neu starten für korrekte Canvas-Größe
+    cancelAnimationFrame(animationFrameId);
+    console.log(
+      "Fenstergrößenänderung erkannt, Canvas-Größen werden neu berechnet"
+    );
+    animateWaves();
+  });
+
+  // Initial die Anzeigen aktualisieren
+  updateDisplays();
+
+  // Animation starten
+  console.log("Starte Wellenanimation...");
+  animateWaves();
+
+  // Hilfsfunktion für die Aktualisierung aller Sliders und Anzeigen
+  function syncAllEnergySlidersAndDisplays(newEnergyLevel) {
+    if (isUpdatingSlider) return; // Wenn bereits ein Update läuft, abbrechen
+    
+    // Flag setzen, um Endlosschleifen zu vermeiden
+    isUpdatingSlider = true;
+    
+    // Globale Variable aktualisieren
+    currentEnergyLevel = newEnergyLevel;
+    
+    // 1. Hauptschieberegler aktualisieren
+    const mainEnergySlider = document.getElementById("mainEnergyLevelControl");
+    if (mainEnergySlider) {
+      updateSliderValue(mainEnergySlider, newEnergyLevel);
+    }
+    
+    // 2. Netzwerk-Schieberegler aktualisieren
+    const networkEnergySlider = document.getElementById("networkEnergyLevelControl");
+    if (networkEnergySlider) {
+      updateSliderValue(networkEnergySlider, newEnergyLevel);
+    }
+    
+    // 3. Dynamischen Schieberegler aktualisieren
+    const dynamicEnergySlider = document.getElementById("dynamic-energy-slider");
     if (dynamicEnergySlider) {
-      dynamicEnergySlider.value = energyLevel;
+      updateSliderValue(dynamicEnergySlider, newEnergyLevel);
+    }
+    
+    // 4. Alle Anzeigen aktualisieren
+    
+    // Haupt-Anzeige
+    const energyLevelDisplay = document.getElementById("energyLevelDisplay");
+    if (energyLevelDisplay) {
+      energyLevelDisplay.textContent = newEnergyLevel + "%";
+      
+      // Klassen für Styling entfernen und basierend auf dem Wert neu setzen
+      energyLevelDisplay.classList.remove("low", "medium", "high");
+      if (newEnergyLevel < 40) {
+        energyLevelDisplay.classList.add("low");
+      } else if (newEnergyLevel < 70) {
+        energyLevelDisplay.classList.add("medium");
+      } else {
+        energyLevelDisplay.classList.add("high");
+      }
+    }
+    
+    // Netzwerk-Anzeige
+    const networkEnergyValue = document.getElementById("networkEnergyValue");
+    if (networkEnergyValue) {
+      networkEnergyValue.textContent = newEnergyLevel + "%";
+      
+      // Klassen für Styling entfernen und basierend auf dem Wert neu setzen
+      networkEnergyValue.classList.remove("low", "medium", "high");
+      if (newEnergyLevel < 40) {
+        networkEnergyValue.classList.add("low");
+      } else if (newEnergyLevel < 70) {
+        networkEnergyValue.classList.add("medium");
+      } else {
+        networkEnergyValue.classList.add("high");
+      }
+    }
+    
+    // Dynamische Anzeige
+    const energyValue = document.getElementById("energy-value");
+    if (energyValue) {
+      energyValue.textContent = newEnergyLevel;
+    }
+    
+    // 5. Netzwerke aktualisieren
+    
+    // Fokus-Netzwerk aktualisieren
+    if (window.updateFocusNetwork) {
+      window.updateFocusNetwork(newEnergyLevel);
+    }
+    
+    // Dynamisches Netzwerk aktualisieren
+    if (typeof updateDynamicNetwork === "function") {
+      updateDynamicNetwork(newEnergyLevel);
+    }
+    
+    // Flag zurücksetzen
+    isUpdatingSlider = false;
+  }
+
+  // Verbinde die updateFocusNetwork-Funktion mit dem dynamischen Energieschieberegler
+  const networkEnergySlider = document.getElementById(
+    "networkEnergyLevelControl"
+  );
+  if (networkEnergySlider) {
+    networkEnergySlider.addEventListener("input", function () {
+      const newValue = parseInt(this.value);
+      syncAllEnergySlidersAndDisplays(newValue);
+    });
+  }
+  
+  // Auch den Haupt-Energieschieberegler mit der Fokus-Funktion verbinden
+  const mainEnergySlider = document.getElementById("mainEnergyLevelControl");
+  if (mainEnergySlider) {
+    mainEnergySlider.addEventListener("input", function () {
+      const newValue = parseInt(this.value);
+      syncAllEnergySlidersAndDisplays(newValue);
+    });
+  }
+
+  // Auch den dritten Energieschieberegler in der Simulationssektion verbinden
+  const dynamicEnergySlider = document.getElementById("dynamic-energy-slider");
+  if (dynamicEnergySlider) {
+    dynamicEnergySlider.addEventListener("input", function () {
+      const newValue = parseInt(this.value);
+      syncAllEnergySlidersAndDisplays(newValue);
+    });
+  }
+}); // Ende des DOMContentLoaded-Event-Listeners
+
+// Architecture Diagram Animation
+function initArchitectureDiagram() {
+  const diagram = document.querySelector(".diagram");
+  if (!diagram) return;
+
+  const nodes = diagram.querySelectorAll(".diagram-node:not(.central)");
+  const centralNode = diagram.querySelector(".diagram-node.central");
+
+  // Verbesserte Animation für den zentralen Knoten
+  if (centralNode) {
+    centralNode.innerHTML += '<div class="pulse-ring"></div>';
+
+    // Füge pulsierenden Effekt hinzu
+    const pulseRing = centralNode.querySelector(".pulse-ring");
+    pulseRing.style.cssText = `
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 50%;
+      box-shadow: 0 0 0 20px rgba(99, 102, 241, 0.1);
+      animation: pulse 2s infinite;
+    `;
+  }
+
+  // Add data connection flows between nodes
+  nodes.forEach((node) => {
+    // Get original position
+    const originalTop = parseFloat(node.style.top);
+    const originalLeft = parseFloat(node.style.left);
+
+    // Füge eine Beschriftung für die Funktion der Komponente hinzu
+    const componentFunction = node.getAttribute("data-desc");
+    const label = document.createElement("div");
+    label.className = "component-function";
+    label.textContent = componentFunction;
+    label.style.cssText = `
+      position: absolute;
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-size: 12px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 5px 10px;
+      border-radius: 4px;
+      pointer-events: none;
+      z-index: 100;
+    `;
+
+    // Zeige die Beschreibung beim Hover an
+    node.addEventListener("mouseenter", () => {
+      label.style.opacity = "1";
+    });
+
+    node.addEventListener("mouseleave", () => {
+      label.style.opacity = "0";
+    });
+
+    // Subtile Bewegung für lebendiges Aussehen - sanfter und weniger chaotisch
+    const moveInterval = setInterval(() => {
+      const offsetY = (Math.random() - 0.5) * 3; // Reduzierte Bewegung
+      const offsetX = (Math.random() - 0.5) * 3; // Reduzierte Bewegung
+
+      node.style.top = `${originalTop + offsetY}%`;
+      node.style.left = `${originalLeft + offsetX}%`;
+
+      // Sanfte Rückführung zur Originalposition
+      setTimeout(() => {
+        node.style.transition = "top 2s, left 2s";
+        node.style.top = `${originalTop}%`;
+        node.style.left = `${originalLeft}%`;
+
+        // Transition zurücksetzen für die nächste zufällige Bewegung
+        setTimeout(() => {
+          node.style.transition = "";
+        }, 2000);
+      }, 3000);
+    }, 8000 + Math.random() * 4000); // Längere Intervalle für weniger Chaos
+  });
+
+  // Erstelle verbesserte Verbindungslinien
+  createConnectionLines(diagram);
+
+  // Füge eine Erklärung der Diagrammfunktion hinzu
+  const descriptionEl = document.querySelector(".diagram-description");
+  if (descriptionEl) {
+    // Zeige die Beschreibung mit Verzögerung an
+    setTimeout(() => {
+      descriptionEl.classList.add("visible");
+    }, 1000);
+  }
+}
+
+// Create dynamic connection lines between nodes
+function createConnectionLines(diagram) {
+  const centralNode = diagram.querySelector(".diagram-node.central");
+  const nodes = diagram.querySelectorAll(".diagram-node:not(.central)");
+
+  if (!centralNode) return;
+
+  // Get diagram dimensions
+  const diagramRect = diagram.getBoundingClientRect();
+
+  // Create SVG element for lines
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("width", "100%");
+  svg.setAttribute("height", "100%");
+  svg.style.position = "absolute";
+  svg.style.top = "0";
+  svg.style.left = "0";
+  svg.style.zIndex = "2";
+  svg.style.pointerEvents = "none";
+
+  // Add SVG definition for gradient and markers
+  const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+
+  // Pfeilspitzen für die Verbindungen
+  const marker = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "marker"
+  );
+  marker.setAttribute("id", "arrowhead");
+  marker.setAttribute("markerWidth", "10");
+  marker.setAttribute("markerHeight", "7");
+  marker.setAttribute("refX", "9");
+  marker.setAttribute("refY", "3.5");
+  marker.setAttribute("orient", "auto");
+
+  const polygon = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "polygon"
+  );
+  polygon.setAttribute("points", "0 0, 10 3.5, 0 7");
+  polygon.setAttribute("fill", "#6366f1");
+
+  marker.appendChild(polygon);
+  defs.appendChild(marker);
+  svg.appendChild(defs);
+
+  // Verbindungen zwischen dem zentralen Knoten und anderen Knoten
+  nodes.forEach((node) => {
+    // Zentrale Knotenposition
+    const centralRect = centralNode.getBoundingClientRect();
+    const centralX =
+      centralRect.left + centralRect.width / 2 - diagramRect.left;
+    const centralY = centralRect.top + centralRect.height / 2 - diagramRect.top;
+
+    // Andere Knotenposition
+    const nodeRect = node.getBoundingClientRect();
+    const nodeX = nodeRect.left + nodeRect.width / 2 - diagramRect.left;
+    const nodeY = nodeRect.top + nodeRect.height / 2 - diagramRect.top;
+
+    // Verbindungslinien vom Zentrum nach außen
+    const lineOut = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "line"
+    );
+    lineOut.setAttribute("x1", centralX);
+    lineOut.setAttribute("y1", centralY);
+    lineOut.setAttribute("x2", nodeX);
+    lineOut.setAttribute("y2", nodeY);
+    lineOut.setAttribute("stroke", "rgba(99, 102, 241, 0.6)");
+    lineOut.setAttribute("stroke-width", "2");
+    lineOut.setAttribute("marker-end", "url(#arrowhead)");
+
+    // Daten-Fluss-Animation
+    const animateOut = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "animate"
+    );
+    animateOut.setAttribute("attributeName", "stroke-dasharray");
+    animateOut.setAttribute(
+      "values",
+      "0,200;30,150;60,120;90,90;120,60;150,30;200,0"
+    );
+    animateOut.setAttribute("dur", "3s");
+    animateOut.setAttribute("repeatCount", "indefinite");
+    lineOut.appendChild(animateOut);
+
+    svg.appendChild(lineOut);
+
+    // Verbindungen von anderen Knoten zum Zentrum
+    const lineIn = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "line"
+    );
+    lineIn.setAttribute("x1", nodeX);
+    lineIn.setAttribute("y1", nodeY);
+    lineIn.setAttribute("x2", centralX);
+    lineIn.setAttribute("y2", centralY);
+    lineIn.setAttribute("stroke", "rgba(79, 70, 229, 0.4)");
+    lineIn.setAttribute("stroke-width", "1.5");
+    lineIn.setAttribute("stroke-dasharray", "6,4");
+
+    // Animation der eingehenden Daten
+    const animateIn = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "animate"
+    );
+    animateIn.setAttribute("attributeName", "stroke-dashoffset");
+    animateIn.setAttribute("values", "0;-100");
+    animateIn.setAttribute("dur", "8s");
+    animateIn.setAttribute("repeatCount", "indefinite");
+    lineIn.appendChild(animateIn);
+
+    svg.appendChild(lineIn);
+  });
+
+  diagram.appendChild(svg);
+
+  // Animation für die verschiedenen Verbindungstypen
+  const style = document.createElement("style");
+  style.textContent = `
+    @keyframes pulse {
+      0% { transform: scale(0.92); opacity: 1; }
+      70% { transform: scale(1.1); opacity: 0; }
+      100% { transform: scale(0.98); opacity: 0; }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+// Energy Charts Animation mit Wellenform
+function initEnergyCharts() {
+  console.log("Initialisiere Energy Charts");
+
+  // Elemente auswählen
+  const energyWaveCanvas = document.getElementById("energyWave");
+  const honeypotWaveCanvas = document.getElementById("honeypotWave");
+  const energyLevelControl = document.getElementById("mainEnergyLevelControl");
+  const energyLevelDisplay = document.getElementById("energyLevelDisplay");
+  const autoFluctuateControl = document.getElementById("autoFluctuateControl");
+  const focusRadarCanvas = document.getElementById("focusRadar");
+
+  // Debug-Ausgabe, um zu prüfen, ob die Elemente gefunden wurden
+  console.log("Canvas-Elemente:", {
+    energyWaveCanvas,
+    honeypotWaveCanvas,
+    energyLevelDisplay,
+    focusRadarCanvas,
+  });
+
+  // Überprüfen, ob die Elemente existieren
+  if (!energyWaveCanvas || !honeypotWaveCanvas) {
+    console.error("Canvas-Elemente für Wellenanimation nicht gefunden!");
+    return;
+  }
+
+  // Canvas-Kontexte für das Zeichnen der Wellenformen
+  let energyCtx = null;
+  let honeypotCtx = null;
+  let radarCtx = null;
+
+  try {
+    energyCtx = energyWaveCanvas.getContext("2d");
+    honeypotCtx = honeypotWaveCanvas.getContext("2d");
+    if (focusRadarCanvas) {
+      radarCtx = focusRadarCanvas.getContext("2d");
+    }
+
+    if (!energyCtx || !honeypotCtx) {
+      console.error("Canvas-Kontext konnte nicht initialisiert werden");
+      return;
+    }
+
+    console.log("Canvas-Kontexte erfolgreich initialisiert");
+  } catch (error) {
+    console.error("Fehler beim Initialisieren der Canvas-Kontexte:", error);
+    return;
+  }
+
+  // Animation-Parameter
+  let direction = 1;
+  let energyValue = 75; // Der tatsächliche Energiewert des Systems
+  let autoFluctuateInterval;
+  let animationFrameId;
+  let isAutoFluctuate = true; // Standardmäßig automatisch fluktuieren
+  let frameCounter = 0; // Zähler für Frames, um Bewegungen zu verlangsamen
+
+  // Persistente Kontexte und Honeypots für das Radar
+  let radarContexts = [];
+  let radarHoneypots = [];
+  let radarInitialized = false;
+
+  // Sinus-Wellen-Parameter
+  const waveParams = {
+    energy: {
+      amplitude: 20, // Höhe der Welle
+      frequency: 0.02, // Frequenz der Welle
+      phase: 0, // Phase (wird animiert)
+      speed: 0.05, // Geschwindigkeit der Animation
+      noise: 2, // Zufallsrauschen für natürlichere Bewegung
+    },
+    honeypot: {
+      amplitude: 15,
+      frequency: 0.03,
+      phase: Math.PI, // 180° Phasenverschiebung (PI) im Vergleich zur Energiewelle
+      speed: 0.05, // Gleiche Geschwindigkeit wie Energiewelle
+      noise: 3,
+    },
+  };
+
+  // Farben für verschiedene Energie-Level
+  const colors = {
+    low: "#ef4444", // Rot für niedrige Energie
+    medium: "#f59e0b", // Orange für mittlere Energie
+    high: "#10b981", // Grün für hohe Energie
+  };
+
+  // Hilfsfunktion zum Aktualisieren der Anzeigen
+  function updateDisplays() {
+    // Hole aktuelle Werte
+    const energyLevel = currentEnergyLevel;
+
+    // Berechne Honeypot-Intensität basierend auf dem Energielevel
+    // Je niedriger die Energie, desto intensiver die Honeypot-Suche
+    const honeypotIntensity = Math.max(5, Math.round(100 - energyLevel * 1.2));
+
+    // Energielevel-Anzeige aktualisieren
+    const energyLevelDisplay = document.getElementById("energyLevelDisplay");
+    if (energyLevelDisplay) {
+      energyLevelDisplay.textContent = energyLevel + "%";
+
+      // Klassen für Styling entfernen und basierend auf dem Wert neu setzen
+      energyLevelDisplay.classList.remove("low", "medium", "high");
+      if (energyLevel < 40) {
+        energyLevelDisplay.classList.add("low");
+      } else if (energyLevel < 70) {
+        energyLevelDisplay.classList.add("medium");
+      } else {
+        energyLevelDisplay.classList.add("high");
+      }
+    }
+
+    // Honeypot-Intensitätsanzeige aktualisieren
+    const honeypotIntensityDisplay = document.getElementById(
+      "honeypotIntensityDisplay"
+    );
+    if (honeypotIntensityDisplay) {
+      honeypotIntensityDisplay.textContent = honeypotIntensity + "%";
+    }
+
+    // Aktualisiere Slider-Positionen mit der neuen Funktion
+    const mainEnergySlider = document.getElementById("mainEnergyLevelControl");
+    if (mainEnergySlider && !isUpdatingSlider) {
+      updateSliderValue(mainEnergySlider, energyLevel);
+    }
+
+    const networkEnergySlider = document.getElementById(
+      "networkEnergyLevelControl"
+    );
+    if (networkEnergySlider && !isUpdatingSlider) {
+      updateSliderValue(networkEnergySlider, energyLevel);
+    }
+
+    // Aktualisiere auch den dynamischen Energieschieberegler in der Simulationssektion
+    const dynamicEnergySlider = document.getElementById(
+      "dynamic-energy-slider"
+    );
+    if (dynamicEnergySlider && !isUpdatingSlider) {
+      updateSliderValue(dynamicEnergySlider, energyLevel);
 
       // Aktualisiere auch die entsprechende Anzeige
       const energyValue = document.getElementById("energy-value");
@@ -1234,124 +2339,17 @@ function initEnergyCharts() {
   );
   if (networkEnergySlider) {
     networkEnergySlider.addEventListener("input", function () {
-      if (isUpdatingSlider) return; // Wenn bereits ein Update läuft, abbrechen
-
-      isUpdatingSlider = true; // Flag setzen
       const newValue = parseInt(this.value);
-
-      // Globale Variable aktualisieren
-      currentEnergyLevel = newValue;
-
-      // Aktualisiere auch den Haupt-Energieschieberegler
-      const mainEnergySlider = document.getElementById(
-        "mainEnergyLevelControl"
-      );
-      if (mainEnergySlider) {
-        mainEnergySlider.value = newValue;
-
-        // Aktualisiere die Anzeige des Energiewertes für den Hauptschieberegler
-        const energyValueDisplay =
-          document.getElementById("energyLevelDisplay");
-        if (energyValueDisplay) {
-          energyValueDisplay.textContent = newValue + "%";
-        }
-      }
-
-      // Aktualisiere die Netzwerkanzeige des Energiewertes
-      const networkEnergyValue = document.getElementById("networkEnergyValue");
-      if (networkEnergyValue) {
-        networkEnergyValue.textContent = newValue + "%";
-
-        // Energieklasse aktualisieren (für farbliche Markierung)
-        networkEnergyValue.className = "";
-        if (newValue < 40) {
-          networkEnergyValue.classList.add("low");
-        } else if (newValue < 70) {
-          networkEnergyValue.classList.add("medium");
-        } else {
-          networkEnergyValue.classList.add("high");
-        }
-      }
-
-      // Aktualisiere auch den dynamischen Energieschieberegler in der Simulationssektion
-      const dynamicEnergySlider = document.getElementById(
-        "dynamic-energy-slider"
-      );
-      if (dynamicEnergySlider) {
-        dynamicEnergySlider.value = newValue;
-
-        // Aktualisiere auch die entsprechende Anzeige
-        const energyValue = document.getElementById("energy-value");
-        if (energyValue) {
-          energyValue.textContent = newValue;
-        }
-      }
-
-      // Aktualisiere die Netzwerke mit dem neuen Energielevel
-      if (window.updateFocusNetwork) {
-        window.updateFocusNetwork(newValue);
-      }
-
-      // Aktualisiere auch das dynamische Netzwerk, falls die Funktion existiert
-      if (typeof updateDynamicNetwork === "function") {
-        updateDynamicNetwork(newValue);
-      }
-
-      isUpdatingSlider = false; // Flag zurücksetzen
+      syncAllEnergySlidersAndDisplays(newValue);
     });
   }
-
+  
   // Auch den Haupt-Energieschieberegler mit der Fokus-Funktion verbinden
   const mainEnergySlider = document.getElementById("mainEnergyLevelControl");
   if (mainEnergySlider) {
     mainEnergySlider.addEventListener("input", function () {
-      if (isUpdatingSlider) return; // Wenn bereits ein Update läuft, abbrechen
-
-      isUpdatingSlider = true; // Flag setzen
       const newValue = parseInt(this.value);
-
-      // Globale Variable aktualisieren
-      currentEnergyLevel = newValue;
-
-      // Aktualisiere auch den dynamischen Energieschieberegler
-      const networkEnergySlider = document.getElementById(
-        "networkEnergyLevelControl"
-      );
-      if (networkEnergySlider) {
-        networkEnergySlider.value = newValue;
-      }
-
-      // Aktualisiere auch den dynamischen Energieschieberegler in der Simulationssektion
-      const dynamicEnergySlider = document.getElementById(
-        "dynamic-energy-slider"
-      );
-      if (dynamicEnergySlider) {
-        dynamicEnergySlider.value = newValue;
-
-        // Aktualisiere auch die entsprechende Anzeige
-        const energyValue = document.getElementById("energy-value");
-        if (energyValue) {
-          energyValue.textContent = newValue;
-        }
-      }
-
-      // Aktualisiere die Anzeige des Energiewertes für den Hauptschieberegler
-      const energyValueDisplay = document.getElementById("energyLevelDisplay");
-      if (energyValueDisplay) {
-        energyValueDisplay.textContent = newValue + "%";
-      }
-
-      // Aktualisiere die Netzwerke mit dem neuen Energielevel
-      if (window.updateFocusNetwork) {
-        window.updateFocusNetwork(newValue);
-      }
-
-      // Aktualisiere auch das dynamische Netzwerk, falls die Funktion existiert
-      if (typeof updateDynamicNetwork === "function") {
-        updateDynamicNetwork(newValue);
-      }
-
-      isUpdatingSlider = false; // Flag zurücksetzen
+      syncAllEnergySlidersAndDisplays(newValue);
     });
   }
 
@@ -1359,71 +2357,8 @@ function initEnergyCharts() {
   const dynamicEnergySlider = document.getElementById("dynamic-energy-slider");
   if (dynamicEnergySlider) {
     dynamicEnergySlider.addEventListener("input", function () {
-      if (isUpdatingSlider) return; // Wenn bereits ein Update läuft, abbrechen
-
-      isUpdatingSlider = true; // Flag setzen
       const newValue = parseInt(this.value);
-
-      // Globale Variable aktualisieren
-      currentEnergyLevel = newValue;
-
-      // Aktualisiere die Anzeige des Energiewerts
-      const energyValue = document.getElementById("energy-value");
-      if (energyValue) {
-        energyValue.textContent = newValue;
-      }
-
-      // Aktualisiere auch den Haupt-Energieschieberegler
-      const mainEnergySlider = document.getElementById(
-        "mainEnergyLevelControl"
-      );
-      if (mainEnergySlider) {
-        mainEnergySlider.value = newValue;
-
-        // Aktualisiere die Anzeige des Energiewertes für den Hauptschieberegler
-        const energyValueDisplay =
-          document.getElementById("energyLevelDisplay");
-        if (energyValueDisplay) {
-          energyValueDisplay.textContent = newValue + "%";
-        }
-      }
-
-      // Aktualisiere auch den Netzwerk-Energieschieberegler
-      const networkEnergySlider = document.getElementById(
-        "networkEnergyLevelControl"
-      );
-      if (networkEnergySlider) {
-        networkEnergySlider.value = newValue;
-
-        // Aktualisiere die Anzeige des Energiewertes für den Netzwerk-Schieberegler
-        const networkEnergyValue =
-          document.getElementById("networkEnergyValue");
-        if (networkEnergyValue) {
-          networkEnergyValue.textContent = newValue + "%";
-
-          // Energieklasse aktualisieren (für farbliche Markierung)
-          networkEnergyValue.className = "";
-          if (newValue < 40) {
-            networkEnergyValue.classList.add("low");
-          } else if (newValue < 70) {
-            networkEnergyValue.classList.add("medium");
-          } else {
-            networkEnergyValue.classList.add("high");
-          }
-        }
-      }
-
-      // Aktualisiere die Netzwerke mit dem neuen Energielevel
-      if (window.updateFocusNetwork) {
-        window.updateFocusNetwork(newValue);
-      }
-
-      // Aktualisiere auch das dynamische Netzwerk, falls die Funktion existiert
-      if (typeof updateDynamicNetwork === "function") {
-        updateDynamicNetwork(newValue);
-      }
-
-      isUpdatingSlider = false; // Flag zurücksetzen
+      syncAllEnergySlidersAndDisplays(newValue);
     });
   }
 } // Ende der initEnergyCharts-Funktion
@@ -2930,4 +3865,20 @@ function showContextInfo(node) {
     // Info-Panel sichtbar machen
     infoPanel.classList.add("visible");
   }
+}
+
+// Hilfsfunktion für die Aktualisierung eines Sliders mit visueller Aktualisierung
+function updateSliderValue(slider, value) {
+  if (!slider) return;
+  
+  // Wert setzen
+  slider.value = value;
+  
+  // Input-Event auslösen für visuelle Aktualisierung
+  var inputEvent = new Event('input', { bubbles: true });
+  slider.dispatchEvent(inputEvent);
+  
+  // Change-Event auslösen für andere Event-Handler
+  var changeEvent = new Event('change', { bubbles: true });
+  slider.dispatchEvent(changeEvent);
 }

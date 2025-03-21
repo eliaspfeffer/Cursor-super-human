@@ -134,15 +134,11 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Event-Listener für den Energieschieberegler
-  const energyLevelControl = document.getElementById(
-    "networkEnergyLevelControl"
-  ); // Diese ID ändern
+  // Verbinde den Energieschieberegler mit der Netzwerkvisualisierung
+  const energyLevelControl = document.getElementById("energyLevelControl");
   const networkEnergyValue = document.getElementById("networkEnergyValue");
-  const dynamicEnergySlider = document.getElementById("dynamic-energy-slider");
-  const energyValueDisplay = document.getElementById("energy-value");
 
-  if (energyLevelControl) {
+  if (energyLevelControl && networkEnergyValue) {
     console.log("Verbinde Energieschieberegler mit Netzwerkvisualisierung");
 
     // Aktualisiere den angezeigten Wert beim Laden
@@ -156,16 +152,6 @@ document.addEventListener("DOMContentLoaded", function () {
       // Aktualisiere die Netzwerkvisualisierung mit dem neuen Energiewert
       currentEnergyLevel = parseInt(value);
 
-      // Synchronisiere den dynamischen Slider
-      if (dynamicEnergySlider && !isUpdatingSlider) {
-        isUpdatingSlider = true;
-        dynamicEnergySlider.value = value;
-        if (energyValueDisplay) {
-          energyValueDisplay.textContent = value;
-        }
-        isUpdatingSlider = false;
-      }
-
       // Wenn wir ein dynamisches Netzwerk haben, aktualisieren wir es
       if (typeof updateDynamicNetwork === "function") {
         updateDynamicNetwork(currentEnergyLevel);
@@ -173,7 +159,18 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  // Die Verwendung des dynamischen Energieschiebereglers wurde entfernt,
+  // da der entsprechende HTML-Abschnitt gelöscht wurde
+
+  // Aktualisiere auch das Fokus-Netzwerk, wenn verfügbar
+  if (window.updateFocusNetwork) {
+    window.updateFocusNetwork(currentEnergyLevel);
+  }
+
   // Event-Listener für den dynamischen Energieschieberegler
+  const dynamicEnergySlider = document.getElementById("dynamic-energy-slider");
+  const energyValueDisplay = document.getElementById("energy-value");
+
   if (dynamicEnergySlider) {
     console.log(
       "Event-Listener für dynamischen Energieschieberegler hinzufügen"
@@ -184,32 +181,17 @@ document.addEventListener("DOMContentLoaded", function () {
       energyValueDisplay.textContent = dynamicEnergySlider.value;
     }
 
-    // Event-Listener für Slider-Bewegung
     dynamicEnergySlider.addEventListener("input", function () {
-      const newEnergyLevel = parseInt(this.value);
-
-      // Anzeige aktualisieren
+      // Synchronisiere Anzeige
       if (energyValueDisplay) {
-        energyValueDisplay.textContent = newEnergyLevel;
+        energyValueDisplay.textContent = this.value;
       }
 
-      // Synchronisiere den Hauptschieberegler
-      if (energyLevelControl && !isUpdatingSlider) {
-        isUpdatingSlider = true;
-        energyLevelControl.value = newEnergyLevel; // Dies aktualisiert die Position des Schiebereglers
-        if (networkEnergyValue) {
-          networkEnergyValue.textContent = `${newEnergyLevel}%`;
-        }
-        isUpdatingSlider = false;
-      }
-
-      // Globale Variable aktualisieren
-      currentEnergyLevel = newEnergyLevel;
+      // Setze globalen Energiewert
+      currentEnergyLevel = parseInt(this.value);
 
       // Netzwerkvisualisierung aktualisieren
-      if (typeof updateDynamicNetwork === "function") {
-        updateDynamicNetwork(newEnergyLevel);
-      }
+      updateDynamicNetwork(currentEnergyLevel);
     });
   }
 });
@@ -570,19 +552,7 @@ function initEnergyCharts() {
       networkEnergySlider.value = energyLevel;
     }
 
-    // Aktualisiere auch den dynamischen Energieschieberegler in der Simulationssektion
-    const dynamicEnergySlider = document.getElementById(
-      "dynamic-energy-slider"
-    );
-    if (dynamicEnergySlider) {
-      dynamicEnergySlider.value = energyLevel;
-
-      // Aktualisiere auch die entsprechende Anzeige
-      const energyValue = document.getElementById("energy-value");
-      if (energyValue) {
-        energyValue.textContent = energyLevel;
-      }
-    }
+    // Der dynamic-energy-slider wurde entfernt, daher keine Aktualisierung mehr nötig
 
     // Network Energy Value aktualisieren
     const networkEnergyValue = document.getElementById("networkEnergyValue");
@@ -1273,20 +1243,6 @@ function initEnergyCharts() {
         }
       }
 
-      // Aktualisiere auch den dynamischen Energieschieberegler in der Simulationssektion
-      const dynamicEnergySlider = document.getElementById(
-        "dynamic-energy-slider"
-      );
-      if (dynamicEnergySlider) {
-        dynamicEnergySlider.value = newValue;
-
-        // Aktualisiere auch die entsprechende Anzeige
-        const energyValue = document.getElementById("energy-value");
-        if (energyValue) {
-          energyValue.textContent = newValue;
-        }
-      }
-
       // Aktualisiere die Netzwerke mit dem neuen Energielevel
       if (window.updateFocusNetwork) {
         window.updateFocusNetwork(newValue);
@@ -1313,26 +1269,12 @@ function initEnergyCharts() {
       // Globale Variable aktualisieren
       currentEnergyLevel = newValue;
 
-      // Aktualisiere auch den dynamischen Energieschieberegler
+      // Aktualisiere auch den Netzwerk-Energieschieberegler
       const networkEnergySlider = document.getElementById(
         "networkEnergyLevelControl"
       );
       if (networkEnergySlider) {
         networkEnergySlider.value = newValue;
-      }
-
-      // Aktualisiere auch den dynamischen Energieschieberegler in der Simulationssektion
-      const dynamicEnergySlider = document.getElementById(
-        "dynamic-energy-slider"
-      );
-      if (dynamicEnergySlider) {
-        dynamicEnergySlider.value = newValue;
-
-        // Aktualisiere auch die entsprechende Anzeige
-        const energyValue = document.getElementById("energy-value");
-        if (energyValue) {
-          energyValue.textContent = newValue;
-        }
       }
 
       // Aktualisiere die Anzeige des Energiewertes für den Hauptschieberegler
@@ -1341,75 +1283,19 @@ function initEnergyCharts() {
         energyValueDisplay.textContent = newValue + "%";
       }
 
-      // Aktualisiere die Netzwerke mit dem neuen Energielevel
-      if (window.updateFocusNetwork) {
-        window.updateFocusNetwork(newValue);
-      }
+      // Aktualisiere die Netzwerkanzeige des Energiewertes
+      const networkEnergyValue = document.getElementById("networkEnergyValue");
+      if (networkEnergyValue) {
+        networkEnergyValue.textContent = newValue + "%";
 
-      // Aktualisiere auch das dynamische Netzwerk, falls die Funktion existiert
-      if (typeof updateDynamicNetwork === "function") {
-        updateDynamicNetwork(newValue);
-      }
-
-      isUpdatingSlider = false; // Flag zurücksetzen
-    });
-  }
-
-  // Auch den dritten Energieschieberegler in der Simulationssektion verbinden
-  const dynamicEnergySlider = document.getElementById("dynamic-energy-slider");
-  if (dynamicEnergySlider) {
-    dynamicEnergySlider.addEventListener("input", function () {
-      if (isUpdatingSlider) return; // Wenn bereits ein Update läuft, abbrechen
-
-      isUpdatingSlider = true; // Flag setzen
-      const newValue = parseInt(this.value);
-
-      // Globale Variable aktualisieren
-      currentEnergyLevel = newValue;
-
-      // Aktualisiere die Anzeige des Energiewerts
-      const energyValue = document.getElementById("energy-value");
-      if (energyValue) {
-        energyValue.textContent = newValue;
-      }
-
-      // Aktualisiere auch den Haupt-Energieschieberegler
-      const mainEnergySlider = document.getElementById(
-        "mainEnergyLevelControl"
-      );
-      if (mainEnergySlider) {
-        mainEnergySlider.value = newValue;
-
-        // Aktualisiere die Anzeige des Energiewertes für den Hauptschieberegler
-        const energyValueDisplay =
-          document.getElementById("energyLevelDisplay");
-        if (energyValueDisplay) {
-          energyValueDisplay.textContent = newValue + "%";
-        }
-      }
-
-      // Aktualisiere auch den Netzwerk-Energieschieberegler
-      const networkEnergySlider = document.getElementById(
-        "networkEnergyLevelControl"
-      );
-      if (networkEnergySlider) {
-        networkEnergySlider.value = newValue;
-
-        // Aktualisiere die Anzeige des Energiewertes für den Netzwerk-Schieberegler
-        const networkEnergyValue =
-          document.getElementById("networkEnergyValue");
-        if (networkEnergyValue) {
-          networkEnergyValue.textContent = newValue + "%";
-
-          // Energieklasse aktualisieren (für farbliche Markierung)
-          networkEnergyValue.className = "";
-          if (newValue < 40) {
-            networkEnergyValue.classList.add("low");
-          } else if (newValue < 70) {
-            networkEnergyValue.classList.add("medium");
-          } else {
-            networkEnergyValue.classList.add("high");
-          }
+        // Energieklasse aktualisieren (für farbliche Markierung)
+        networkEnergyValue.className = "";
+        if (newValue < 40) {
+          networkEnergyValue.classList.add("low");
+        } else if (newValue < 70) {
+          networkEnergyValue.classList.add("medium");
+        } else {
+          networkEnergyValue.classList.add("high");
         }
       }
 
@@ -1426,6 +1312,9 @@ function initEnergyCharts() {
       isUpdatingSlider = false; // Flag zurücksetzen
     });
   }
+
+  // Der Event-Listener für den dynamic-energy-slider wird nicht mehr benötigt,
+  // da dieser Slider entfernt wurde
 } // Ende der initEnergyCharts-Funktion
 
 // Process Steps Interaction
