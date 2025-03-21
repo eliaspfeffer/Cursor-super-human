@@ -151,6 +151,13 @@ input[type="checkbox"] {
   display: flex;
   justify-content: center;
   width: 100%;
+  position: relative;
+  z-index: 1;
+  clear: both;
+  /* margin-bottom: 20rem; */ /* Entfernen des festen margins */
+  height: auto; /* Erlaubt automatische Höhenanpassung */
+  min-height: fit-content; /* Stellt sicher, dass alle Inhalte Platz haben */
+  overflow: visible; /* Verhindert Abschneiden von Inhalten */
 }
 
 section.network-visualization .container {
@@ -164,6 +171,7 @@ section.network-visualization .container {
   margin: 0 auto;
   padding: 0 1.5rem;
   flex-wrap: nowrap;
+  height: auto;
 }
 
 .vis-container {
@@ -261,18 +269,15 @@ section.network-visualization .container {
 /* Network Stats */
 .network-stats {
   padding: 3rem 0;
-  padding-top: 3rem;
   background-color: var(--bg-light);
   clear: both;
   position: relative;
   z-index: 1;
-  margin-top: 3rem;
   display: block;
   width: 100%;
 }
 
 .network-stats h2 {
-  margin-top: 12rem;
   margin-bottom: 2rem;
   text-align: center;
 }
@@ -503,6 +508,9 @@ svg {
     flex-direction: column;
     gap: 1.5rem;
     align-items: stretch;
+    z-index: 1;
+    margin: 1.5rem;
+    margin-bottom: 5rem;
   }
 
   .node-info-panel {
