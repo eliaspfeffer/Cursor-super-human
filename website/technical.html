@@ -330,12 +330,12 @@ class Context:
                 </div>
 
                 <div class="energy-controls">
-                  <label for="energyLevelControl"
+                  <label for="mainEnergyLevelControl"
                     >Energielevel manuell steuern:</label
                   >
                   <input
                     type="range"
-                    id="energyLevelControl"
+                    id="mainEnergyLevelControl"
                     min="10"
                     max="95"
                     value="75"
@@ -390,39 +390,6 @@ class Context:
                   </p>
                 </div>
               </div>
-
-              <!-- Neue Focus-Radar Visualisierung -->
-              <div class="chart-container focus-radar-container">
-                <div class="chart-label">
-                  Fokus-Radar: Energielevel & Kontextauswahl
-                </div>
-                <div class="radar-visualization">
-                  <canvas id="focusRadar" width="500" height="300"></canvas>
-                </div>
-                <div class="chart-description">
-                  <div class="radar-legend">
-                    <div class="legend-item">
-                      <span class="legend-color honeypot-color"></span>
-                      <span>Honeypots (Energiequellen)</span>
-                    </div>
-                    <div class="legend-item">
-                      <span class="legend-color low-energy-color"></span>
-                      <span>Fokusfeld bei niedrigem Energielevel</span>
-                    </div>
-                    <div class="legend-item">
-                      <span class="legend-color high-energy-color"></span>
-                      <span>Zusätzliches Fokusfeld bei hohem Energielevel</span>
-                    </div>
-                  </div>
-                  <p>
-                    <strong>Energieabhängiger Fokus:</strong> Bei niedrigem
-                    Energielevel (rot) konzentriert sich das Bewusstsein auf
-                    Kontexte nahe der Honeypots. Bei hohem Energielevel (grün)
-                    erweitert sich der Fokus auf Kontexte, die weiter von den
-                    Energiequellen entfernt sind.
-                  </p>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -445,12 +412,14 @@ class Context:
               <div class="control-group">
                 <h3>Simulationssteuerung</h3>
                 <div class="energy-selector-container">
-                  <label for="networkEnergyLevel">Energie-Niveau:</label>
+                  <label for="networkEnergyLevelControl"
+                    >Energielevel manuell steuern:</label
+                  >
                   <input
                     type="range"
-                    id="networkEnergyLevel"
-                    min="20"
-                    max="90"
+                    id="networkEnergyLevelControl"
+                    min="10"
+                    max="95"
                     value="75"
                     class="energy-slider"
                   />

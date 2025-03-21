@@ -22,13 +22,14 @@ let dynamicNodes = null;
 let dynamicLinks = null;
 let currentFocusNode = null;
 let focusAnimationInterval = null;
-let currentEnergyLevel = 50;
+let currentEnergyLevel = 75; // Aktueller Energielevel (global zur Verfügung)
 let selectedHoneypotType = "Nahrung";
 let showAllConnections = true;
 let enableAutoFocusTransition = true;
+let isUpdatingSlider = false; // Flag, um Endlosschleifen bei Slider-Updates zu vermeiden
 
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("DOM vollständig geladen, initialisiere Visualisierungen");
+  console.log("DOM vollständig geladen und geparst");
 
   // Überprüfe, ob D3.js verfügbar ist
   if (typeof d3 === "undefined") {
@@ -130,6 +131,62 @@ document.addEventListener("DOMContentLoaded", function () {
       } else {
         stopAutoFluctuate();
       }
+    });
+  }
+
+  // Verbinde den Energieschieberegler mit der Netzwerkvisualisierung
+  const energyLevelControl = document.getElementById("energyLevelControl");
+  const networkEnergyValue = document.getElementById("networkEnergyValue");
+
+  if (energyLevelControl && networkEnergyValue) {
+    console.log("Verbinde Energieschieberegler mit Netzwerkvisualisierung");
+
+    // Aktualisiere den angezeigten Wert beim Laden
+    networkEnergyValue.textContent = `${energyLevelControl.value}%`;
+
+    // Aktualisiere den angezeigten Wert und die Visualisierung bei Änderungen
+    energyLevelControl.addEventListener("input", function () {
+      const value = this.value;
+      networkEnergyValue.textContent = `${value}%`;
+
+      // Aktualisiere die Netzwerkvisualisierung mit dem neuen Energiewert
+      currentEnergyLevel = parseInt(value);
+
+      // Wenn wir ein dynamisches Netzwerk haben, aktualisieren wir es
+      if (typeof updateDynamicNetwork === "function") {
+        updateDynamicNetwork(currentEnergyLevel);
+      }
+    });
+  }
+
+  // Event-Listener für den dynamischen Energieschieberegler
+  const dynamicEnergySlider = document.getElementById("dynamic-energy-slider");
+  const energyValueDisplay = document.getElementById("energy-value");
+
+  if (dynamicEnergySlider) {
+    console.log(
+      "Event-Listener für dynamischen Energieschieberegler hinzufügen"
+    );
+
+    // Aktualisiere bei Initialisierung
+    if (energyValueDisplay) {
+      energyValueDisplay.textContent = dynamicEnergySlider.value;
+    }
+
+    // Event-Listener für Slider-Bewegung
+    dynamicEnergySlider.addEventListener("input", function () {
+      const newEnergyLevel = parseInt(this.value);
+
+      // Anzeige aktualisieren
+      if (energyValueDisplay) {
+        energyValueDisplay.textContent = newEnergyLevel;
+      }
+
+      // Globale Variable aktualisieren
+      currentEnergyLevel = newEnergyLevel;
+
+      // Netzwerkvisualisierung aktualisieren
+      updateDynamicNetwork(newEnergyLevel);
     });
   }
 });
@@ -359,14 +416,13 @@ function createConnectionLines(diagram) {
 
 // Energy Charts Animation mit Wellenform
 function initEnergyCharts() {
-  // DOM-Elemente
+  console.log("Initialisiere Energy Charts");
+
+  // Elemente auswählen
   const energyWaveCanvas = document.getElementById("energyWave");
   const honeypotWaveCanvas = document.getElementById("honeypotWave");
+  const energyLevelControl = document.getElementById("mainEnergyLevelControl");
   const energyLevelDisplay = document.getElementById("energyLevelDisplay");
-  const honeypotIntensityDisplay = document.getElementById(
-    "honeypotIntensityDisplay"
-  );
-  const energyLevelControl = document.getElementById("energyLevelControl");
   const autoFluctuateControl = document.getElementById("autoFluctuateControl");
   const focusRadarCanvas = document.getElementById("focusRadar");
 
@@ -375,7 +431,6 @@ function initEnergyCharts() {
     energyWaveCanvas,
     honeypotWaveCanvas,
     energyLevelDisplay,
-    honeypotIntensityDisplay,
     focusRadarCanvas,
   });
 
@@ -433,8 +488,8 @@ function initEnergyCharts() {
     honeypot: {
       amplitude: 15,
       frequency: 0.03,
-      phase: 0,
-      speed: 0.03,
+      phase: Math.PI, // 180° Phasenverschiebung (PI) im Vergleich zur Energiewelle
+      speed: 0.05, // Gleiche Geschwindigkeit wie Energiewelle
       noise: 3,
     },
   };
@@ -448,64 +503,109 @@ function initEnergyCharts() {
 
   // Hilfsfunktion zum Aktualisieren der Anzeigen
   function updateDisplays() {
-    // Energielevel-Anzeige aktualisieren
-    if (energyLevelDisplay) {
-      energyLevelDisplay.textContent = `${Math.round(energyValue)}%`;
+    // Hole aktuelle Werte
+    const energyLevel = currentEnergyLevel;
 
-      // CSS-Klassen für Farbkodierung
+    // Berechne Honeypot-Intensität basierend auf dem Energielevel
+    // Je niedriger die Energie, desto intensiver die Honeypot-Suche
+    const honeypotIntensity = Math.max(5, Math.round(100 - energyLevel * 1.2));
+
+    // Energielevel-Anzeige aktualisieren
+    const energyLevelDisplay = document.getElementById("energyLevelDisplay");
+    if (energyLevelDisplay) {
+      energyLevelDisplay.textContent = energyLevel + "%";
+
+      // Klassen für Styling entfernen und basierend auf dem Wert neu setzen
       energyLevelDisplay.classList.remove("low", "medium", "high");
-      if (energyValue < 40) {
+      if (energyLevel < 40) {
         energyLevelDisplay.classList.add("low");
-      } else if (energyValue < 70) {
+      } else if (energyLevel < 70) {
         energyLevelDisplay.classList.add("medium");
       } else {
         energyLevelDisplay.classList.add("high");
       }
     }
 
-    // Honeypot-Suche basierend auf Energielevel berechnen
-    let searchIntensity;
-    if (energyValue < 40) {
-      searchIntensity = 80 - energyValue; // Höhere Intensität bei niedrigerer Energie
-    } else {
-      searchIntensity = 10 + (70 - energyValue) / 3; // Niedriger Basiswert bei höherer Energie
+    // Honeypot-Intensitätsanzeige aktualisieren
+    const honeypotIntensityDisplay = document.getElementById(
+      "honeypotIntensityDisplay"
+    );
+    if (honeypotIntensityDisplay) {
+      honeypotIntensityDisplay.textContent = honeypotIntensity + "%";
     }
 
-    // Begrenze auf sinnvolle Werte
-    searchIntensity = Math.max(5, Math.min(80, searchIntensity));
+    // Aktualisiere Slider-Positionen
+    const mainEnergySlider = document.getElementById("mainEnergyLevelControl");
+    if (mainEnergySlider) {
+      mainEnergySlider.value = energyLevel;
+    }
 
-    // Honeypot-Intensitätsanzeige aktualisieren
-    if (honeypotIntensityDisplay) {
-      honeypotIntensityDisplay.textContent = `${Math.round(searchIntensity)}%`;
+    const networkEnergySlider = document.getElementById(
+      "networkEnergyLevelControl"
+    );
+    if (networkEnergySlider) {
+      networkEnergySlider.value = energyLevel;
+    }
+
+    // Aktualisiere auch den dynamischen Energieschieberegler in der Simulationssektion
+    const dynamicEnergySlider = document.getElementById(
+      "dynamic-energy-slider"
+    );
+    if (dynamicEnergySlider) {
+      dynamicEnergySlider.value = energyLevel;
+
+      // Aktualisiere auch die entsprechende Anzeige
+      const energyValue = document.getElementById("energy-value");
+      if (energyValue) {
+        energyValue.textContent = energyLevel;
+      }
+    }
+
+    // Network Energy Value aktualisieren
+    const networkEnergyValue = document.getElementById("networkEnergyValue");
+    if (networkEnergyValue) {
+      networkEnergyValue.textContent = energyLevel + "%";
+
+      // Klassen für Styling entfernen und basierend auf dem Wert neu setzen
+      networkEnergyValue.classList.remove("low", "medium", "high");
+      if (energyLevel < 40) {
+        networkEnergyValue.classList.add("low");
+      } else if (energyLevel < 70) {
+        networkEnergyValue.classList.add("medium");
+      } else {
+        networkEnergyValue.classList.add("high");
+      }
     }
 
     // Wellen-Amplitude basierend auf Energielevel und Suchintensität anpassen
-    waveParams.energy.amplitude = 10 + (energyValue / 100) * 20;
-    waveParams.honeypot.amplitude = 5 + (searchIntensity / 100) * 25;
-
-    // Wellengeschwindigkeit basierend auf Werten anpassen
-    waveParams.energy.speed = 0.03 + (energyValue / 100) * 0.04;
-    waveParams.honeypot.speed = 0.02 + (searchIntensity / 100) * 0.06;
+    if (typeof waveParams !== "undefined") {
+      waveParams.energy.amplitude = 10 + (energyLevel / 100) * 20;
+      waveParams.honeypot.amplitude = 5 + (honeypotIntensity / 100) * 25;
+    }
 
     // Fokus-Radar aktualisieren, wenn vorhanden
-    if (radarCtx && focusRadarCanvas) {
+    if (
+      typeof radarCtx !== "undefined" &&
+      typeof focusRadarCanvas !== "undefined" &&
+      typeof frameCounter !== "undefined"
+    ) {
       // Nur alle 10 Frames die Kontexte aktualisieren (Verlangsamung auf 1/10)
       const shouldUpdatePositions = frameCounter % 10 === 0;
-      drawFocusRadar(
-        radarCtx,
-        energyValue,
-        searchIntensity,
-        shouldUpdatePositions
-      );
+
+      if (typeof drawFocusRadar === "function") {
+        drawFocusRadar(
+          radarCtx,
+          energyLevel,
+          honeypotIntensity,
+          shouldUpdatePositions
+        );
+      }
     }
 
-    // Schieberegler synchronisieren, aber nur wenn wir nicht gerade eine manuelle Änderung vornehmen
-    if (
-      energyLevelControl &&
-      !energyLevelControl.classList.contains("user-adjusting")
-    ) {
-      energyLevelControl.value = energyValue;
-    }
+    return {
+      energyLevel,
+      honeypotIntensity,
+    };
   }
 
   // Funktion zum Zeichnen einer Sinuswelle
@@ -1104,6 +1204,205 @@ function initEnergyCharts() {
   // Animation starten
   console.log("Starte Wellenanimation...");
   animateWaves();
+
+  // Verbinde die updateFocusNetwork-Funktion mit dem dynamischen Energieschieberegler
+  const networkEnergySlider = document.getElementById(
+    "networkEnergyLevelControl"
+  );
+  if (networkEnergySlider) {
+    networkEnergySlider.addEventListener("input", function () {
+      if (isUpdatingSlider) return; // Wenn bereits ein Update läuft, abbrechen
+
+      isUpdatingSlider = true; // Flag setzen
+      const newValue = parseInt(this.value);
+
+      // Globale Variable aktualisieren
+      currentEnergyLevel = newValue;
+
+      // Aktualisiere auch den Haupt-Energieschieberegler
+      const mainEnergySlider = document.getElementById(
+        "mainEnergyLevelControl"
+      );
+      if (mainEnergySlider) {
+        mainEnergySlider.value = newValue;
+
+        // Aktualisiere die Anzeige des Energiewertes für den Hauptschieberegler
+        const energyValueDisplay =
+          document.getElementById("energyLevelDisplay");
+        if (energyValueDisplay) {
+          energyValueDisplay.textContent = newValue + "%";
+        }
+      }
+
+      // Aktualisiere die Netzwerkanzeige des Energiewertes
+      const networkEnergyValue = document.getElementById("networkEnergyValue");
+      if (networkEnergyValue) {
+        networkEnergyValue.textContent = newValue + "%";
+
+        // Energieklasse aktualisieren (für farbliche Markierung)
+        networkEnergyValue.className = "";
+        if (newValue < 40) {
+          networkEnergyValue.classList.add("low");
+        } else if (newValue < 70) {
+          networkEnergyValue.classList.add("medium");
+        } else {
+          networkEnergyValue.classList.add("high");
+        }
+      }
+
+      // Aktualisiere auch den dynamischen Energieschieberegler in der Simulationssektion
+      const dynamicEnergySlider = document.getElementById(
+        "dynamic-energy-slider"
+      );
+      if (dynamicEnergySlider) {
+        dynamicEnergySlider.value = newValue;
+
+        // Aktualisiere auch die entsprechende Anzeige
+        const energyValue = document.getElementById("energy-value");
+        if (energyValue) {
+          energyValue.textContent = newValue;
+        }
+      }
+
+      // Aktualisiere die Netzwerke mit dem neuen Energielevel
+      if (window.updateFocusNetwork) {
+        window.updateFocusNetwork(newValue);
+      }
+
+      // Aktualisiere auch das dynamische Netzwerk, falls die Funktion existiert
+      if (typeof updateDynamicNetwork === "function") {
+        updateDynamicNetwork(newValue);
+      }
+
+      isUpdatingSlider = false; // Flag zurücksetzen
+    });
+  }
+
+  // Auch den Haupt-Energieschieberegler mit der Fokus-Funktion verbinden
+  const mainEnergySlider = document.getElementById("mainEnergyLevelControl");
+  if (mainEnergySlider) {
+    mainEnergySlider.addEventListener("input", function () {
+      if (isUpdatingSlider) return; // Wenn bereits ein Update läuft, abbrechen
+
+      isUpdatingSlider = true; // Flag setzen
+      const newValue = parseInt(this.value);
+
+      // Globale Variable aktualisieren
+      currentEnergyLevel = newValue;
+
+      // Aktualisiere auch den dynamischen Energieschieberegler
+      const networkEnergySlider = document.getElementById(
+        "networkEnergyLevelControl"
+      );
+      if (networkEnergySlider) {
+        networkEnergySlider.value = newValue;
+      }
+
+      // Aktualisiere auch den dynamischen Energieschieberegler in der Simulationssektion
+      const dynamicEnergySlider = document.getElementById(
+        "dynamic-energy-slider"
+      );
+      if (dynamicEnergySlider) {
+        dynamicEnergySlider.value = newValue;
+
+        // Aktualisiere auch die entsprechende Anzeige
+        const energyValue = document.getElementById("energy-value");
+        if (energyValue) {
+          energyValue.textContent = newValue;
+        }
+      }
+
+      // Aktualisiere die Anzeige des Energiewertes für den Hauptschieberegler
+      const energyValueDisplay = document.getElementById("energyLevelDisplay");
+      if (energyValueDisplay) {
+        energyValueDisplay.textContent = newValue + "%";
+      }
+
+      // Aktualisiere die Netzwerke mit dem neuen Energielevel
+      if (window.updateFocusNetwork) {
+        window.updateFocusNetwork(newValue);
+      }
+
+      // Aktualisiere auch das dynamische Netzwerk, falls die Funktion existiert
+      if (typeof updateDynamicNetwork === "function") {
+        updateDynamicNetwork(newValue);
+      }
+
+      isUpdatingSlider = false; // Flag zurücksetzen
+    });
+  }
+
+  // Auch den dritten Energieschieberegler in der Simulationssektion verbinden
+  const dynamicEnergySlider = document.getElementById("dynamic-energy-slider");
+  if (dynamicEnergySlider) {
+    dynamicEnergySlider.addEventListener("input", function () {
+      if (isUpdatingSlider) return; // Wenn bereits ein Update läuft, abbrechen
+
+      isUpdatingSlider = true; // Flag setzen
+      const newValue = parseInt(this.value);
+
+      // Globale Variable aktualisieren
+      currentEnergyLevel = newValue;
+
+      // Aktualisiere die Anzeige des Energiewerts
+      const energyValue = document.getElementById("energy-value");
+      if (energyValue) {
+        energyValue.textContent = newValue;
+      }
+
+      // Aktualisiere auch den Haupt-Energieschieberegler
+      const mainEnergySlider = document.getElementById(
+        "mainEnergyLevelControl"
+      );
+      if (mainEnergySlider) {
+        mainEnergySlider.value = newValue;
+
+        // Aktualisiere die Anzeige des Energiewertes für den Hauptschieberegler
+        const energyValueDisplay =
+          document.getElementById("energyLevelDisplay");
+        if (energyValueDisplay) {
+          energyValueDisplay.textContent = newValue + "%";
+        }
+      }
+
+      // Aktualisiere auch den Netzwerk-Energieschieberegler
+      const networkEnergySlider = document.getElementById(
+        "networkEnergyLevelControl"
+      );
+      if (networkEnergySlider) {
+        networkEnergySlider.value = newValue;
+
+        // Aktualisiere die Anzeige des Energiewertes für den Netzwerk-Schieberegler
+        const networkEnergyValue =
+          document.getElementById("networkEnergyValue");
+        if (networkEnergyValue) {
+          networkEnergyValue.textContent = newValue + "%";
+
+          // Energieklasse aktualisieren (für farbliche Markierung)
+          networkEnergyValue.className = "";
+          if (newValue < 40) {
+            networkEnergyValue.classList.add("low");
+          } else if (newValue < 70) {
+            networkEnergyValue.classList.add("medium");
+          } else {
+            networkEnergyValue.classList.add("high");
+          }
+        }
+      }
+
+      // Aktualisiere die Netzwerke mit dem neuen Energielevel
+      if (window.updateFocusNetwork) {
+        window.updateFocusNetwork(newValue);
+      }
+
+      // Aktualisiere auch das dynamische Netzwerk, falls die Funktion existiert
+      if (typeof updateDynamicNetwork === "function") {
+        updateDynamicNetwork(newValue);
+      }
+
+      isUpdatingSlider = false; // Flag zurücksetzen
+    });
+  }
 } // Ende der initEnergyCharts-Funktion
 
 // Process Steps Interaction
@@ -1574,6 +1873,148 @@ function initFocusNetwork() {
       svg: svg,
       container: container,
     };
+
+    // Neue Funktion: Aktualisiert das Fokus-Netzwerk basierend auf dem Energielevel
+    window.updateFocusNetwork = function (energyLevel) {
+      console.log("Aktualisiere Fokus-Netzwerk mit Energielevel:", energyLevel);
+
+      // Alle vorherigen Fokus-Markierungen entfernen
+      node.classed("focus", false);
+      link.classed("focus", false);
+
+      // Identifiziere die vorhandenen Satzgruppen im Netzwerk
+      // Ein Satz besteht aus mehreren verbundenen Wörtern
+      const sentences = [
+        // Satz 1: "Ein Apfel schmeckt lecker"
+        ["ein", "Apfel", "schmeckt", "lecker"],
+        // Satz 2: "Ein Apfel hat eine rote Farbe"
+        ["ein", "Apfel", "hat", "eine", "rote", "Farbe"],
+        // Satz 3: "Ich esse was"
+        ["ich", "esse", "was"],
+        // Satz 4: "Mir schmeckt ein Apfel"
+        ["mir", "schmeckt", "ein", "Apfel"],
+      ];
+
+      // Honeypot-Knoten identifizieren
+      const honeypotNode = nodes.find((n) => n.group === "honeypot");
+      if (!honeypotNode) {
+        console.error("Kein Honeypot-Knoten gefunden!");
+        return;
+      }
+
+      // Priorität für Sätze basierend auf ihrer "Entfernung" zum Honeypot
+      // Dies ist eine vereinfachte Logik, da wir keine tatsächliche Graphdistanz berechnen
+      const sentencePriorities = [
+        // Satz 1 hat mittlere Priorität (enthält "Apfel", der mit Essen verbunden ist)
+        { sentence: sentences[0], priority: 2 },
+        // Satz 2 hat niedrigere Priorität (beschreibt Eigenschaften)
+        { sentence: sentences[1], priority: 3 },
+        // Satz 3 hat höchste Priorität (direkter Bezug zum Essen)
+        { sentence: sentences[2], priority: 1 },
+        // Satz 4 hat auch mittlere Priorität (enthält "Apfel")
+        { sentence: sentences[3], priority: 2 },
+      ];
+
+      // Sortiere Sätze nach Priorität (niedrigere Zahl = näher am Honeypot/wichtiger)
+      const sortedSentences = sentencePriorities.sort(
+        (a, b) => a.priority - b.priority
+      );
+
+      // Wähle Satz basierend auf Energielevel
+      let selectedSentence;
+
+      if (energyLevel < 40) {
+        // Bei niedrigem Energielevel: Fokus auf Satz nahe am Honeypot (höchste Priorität)
+        selectedSentence = sortedSentences[0].sentence;
+        console.log(
+          "Niedriges Energielevel, Fokus auf Satz mit höchster Priorität"
+        );
+      } else if (energyLevel < 70) {
+        // Bei mittlerem Energielevel: Fokus auf Satz mit mittlerer Priorität
+        const middleIndex = Math.min(1, sortedSentences.length - 1);
+        selectedSentence = sortedSentences[middleIndex].sentence;
+        console.log(
+          "Mittleres Energielevel, Fokus auf Satz mit mittlerer Priorität"
+        );
+      } else {
+        // Bei hohem Energielevel: Fokus auf Satz weit vom Honeypot (niedrigste Priorität)
+        selectedSentence = sortedSentences[sortedSentences.length - 1].sentence;
+        console.log(
+          "Hohes Energielevel, Fokus auf Satz mit niedrigster Priorität"
+        );
+      }
+
+      // Markiere alle Knoten im ausgewählten Satz als fokussiert
+      node
+        .filter((d) => selectedSentence.includes(d.id))
+        .classed("focus", true);
+
+      // Markiere alle Verbindungen zwischen den Wörtern im Satz
+      link
+        .filter((l) => {
+          return (
+            selectedSentence.includes(l.source.id) &&
+            selectedSentence.includes(l.target.id)
+          );
+        })
+        .classed("focus", true);
+
+      // Finde einen repräsentativen Knoten für die Anzeige der Satzinformation
+      const mainNode =
+        nodes.find((n) => n.id === selectedSentence[0]) || nodes[0];
+
+      // Wenn ein Informationspanel vorhanden ist, aktualisiere es
+      const infoPanel = document.getElementById("contextInfo");
+      if (infoPanel) {
+        // Erzeuge eine menschenlesbare Satzversion durch Verkettung der Wörter
+        const readableSentence = selectedSentence
+          .map((wordId) => {
+            const node = nodes.find((n) => n.id === wordId);
+            return node ? node.label.replace(/^[^ ]+ /, "") : wordId;
+          })
+          .join(" ")
+          .replace(/\s([,.!?])/g, "$1"); // Entferne Leerzeichen vor Satzzeichen
+
+        infoPanel.innerHTML = `
+          <div class="context-details">
+            <div class="context-header">
+              <div class="context-emoji">📝</div>
+              <h4>Fokussierter Satz</h4>
+              <span class="context-type sentence">Satz</span>
+            </div>
+            <div class="context-body">
+              <p><strong>"${readableSentence}"</strong></p>
+              <p>Fokussiert aufgrund des aktuellen Energielevels von <span class="energy-value ${
+                energyLevel < 40 ? "low" : energyLevel < 70 ? "medium" : "high"
+              }">${energyLevel}%</span></p>
+              <div class="context-energy">
+                <strong>Entfernung zum Honeypot:</strong> 
+                ${
+                  sortedSentences.findIndex(
+                    (s) => s.sentence === selectedSentence
+                  ) === 0
+                    ? "Gering (hohe Priorität)"
+                    : sortedSentences.findIndex(
+                        (s) => s.sentence === selectedSentence
+                      ) ===
+                      sortedSentences.length - 1
+                    ? "Hoch (niedrige Priorität)"
+                    : "Mittel"
+                }
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    };
+
+    // Initialen Fokus setzen basierend auf aktuellem Energielevel
+    if (typeof currentEnergyLevel !== "undefined") {
+      window.updateFocusNetwork(currentEnergyLevel);
+    } else {
+      // Standardwert, falls keine globale Variable definiert ist
+      window.updateFocusNetwork(50);
+    }
 
     // Informationsfeld für Benutzerhinweise anzeigen
     const infoPanel = document.getElementById("contextInfo");
@@ -2137,8 +2578,121 @@ function initDynamicNetwork() {
       .selectAll(".dynamic-link")
       .filter((d, i) => i === 0)
       .classed("focused", true);
+
+    // Initialen Fokus basierend auf dem aktuellen Energielevel setzen
+    updateDynamicNetwork(currentEnergyLevel);
   } catch (error) {
     console.error("Fehler beim Erstellen des dynamischen Netzwerks:", error);
+  }
+}
+
+// Neue Funktion: Aktualisiert das dynamische Netzwerk basierend auf dem Energielevel
+function updateDynamicNetwork(energyLevel) {
+  console.log(
+    "Aktualisiere dynamisches Netzwerk mit Energielevel:",
+    energyLevel
+  );
+
+  // Prüfe, ob dynamisches Netzwerk initialisiert wurde
+  if (!dynamicNodes || !dynamicSvg) {
+    console.warn("Dynamisches Netzwerk ist noch nicht initialisiert!");
+    return;
+  }
+
+  // Versuche alle Knoten zu finden und sortiere sie nach Abstand zum Honeypot
+  // (wir nehmen an, dass ein Knoten vom Typ "honeypot" existiert)
+  const allNodes = dynamicNodes.data();
+
+  // Finde den Honeypot-Knoten
+  const honeypotNode = allNodes.find((node) => node.type === "honeypot");
+  if (!honeypotNode) {
+    console.error("Kein Honeypot-Knoten gefunden!");
+    return;
+  }
+
+  // Sortiere alle Knoten nach Abstand zum Honeypot (außer dem Honeypot selbst)
+  // Annahme: Je höher der Index, desto weiter entfernt vom Honeypot
+  // (Dies ist eine Vereinfachung, in einer realen Implementierung würde man
+  // wahrscheinlich Pfadlängen oder andere Metriken verwenden)
+  const sortedNodes = allNodes
+    .filter((node) => node.type !== "honeypot") // Honeypot selbst ausschließen
+    .sort((a, b) => {
+      // Sortieren nach Typ (essential näher, distant weiter weg)
+      const typeOrder = { essential: 1, related: 2, default: 3 };
+      const aOrder = typeOrder[a.type] || typeOrder.default;
+      const bOrder = typeOrder[b.type] || typeOrder.default;
+      return aOrder - bOrder;
+    });
+
+  if (sortedNodes.length === 0) {
+    console.warn("Keine Knoten zum Fokussieren gefunden!");
+    return;
+  }
+
+  // Wähle Knoten basierend auf Energielevel
+  let newFocusNode;
+
+  if (energyLevel < 40) {
+    // Bei niedrigem Energielevel: Knoten nahe am Honeypot (Anfang der Liste)
+    newFocusNode = sortedNodes[0];
+    console.log(
+      "Niedriges Energielevel, Fokus auf Knoten nahe am Honeypot:",
+      newFocusNode.label
+    );
+  } else if (energyLevel < 70) {
+    // Bei mittlerem Energielevel: Knoten in der Mitte
+    const middleIndex = Math.floor(sortedNodes.length / 2);
+    newFocusNode = sortedNodes[middleIndex];
+    console.log(
+      "Mittleres Energielevel, Fokus auf Knoten in mittlerer Entfernung:",
+      newFocusNode.label
+    );
+  } else {
+    // Bei hohem Energielevel: Knoten weit weg vom Honeypot (Ende der Liste)
+    newFocusNode = sortedNodes[sortedNodes.length - 1];
+    console.log(
+      "Hohes Energielevel, Fokus auf Knoten weit vom Honeypot:",
+      newFocusNode.label
+    );
+  }
+
+  // Aktualisiere den aktuellen Fokus-Knoten
+  currentFocusNode = newFocusNode;
+
+  // Visualisierung aktualisieren: Entferne Fokus-Markierung von allen Knoten
+  dynamicSvg
+    .selectAll(".node circle")
+    .classed("focused", false)
+    .attr("stroke-width", 1);
+
+  // Setze Fokus-Markierung auf den neuen Fokus-Knoten mit einer Umrandung
+  dynamicSvg
+    .selectAll(".node")
+    .filter((d) => d === newFocusNode)
+    .select("circle")
+    .classed("focused", true)
+    .attr("stroke", "#ff6b00")
+    .attr("stroke-width", 3);
+
+  // Anzeige des aktuellen Fokus aktualisieren
+  const focusNodeDisplay = document.getElementById("current-focus-node");
+  if (focusNodeDisplay) {
+    focusNodeDisplay.textContent = newFocusNode.label;
+  }
+
+  // Anzeige der Distanz zum Honeypot aktualisieren
+  const focusDistanceDisplay = document.getElementById("focus-distance");
+  if (focusDistanceDisplay) {
+    // Typ in Textform als Abstandsmaß verwenden
+    let distanceText = "unbekannt";
+    if (newFocusNode.type === "essential") {
+      distanceText = "gering (essentiell)";
+    } else if (newFocusNode.type === "related") {
+      distanceText = "mittel (verwandt)";
+    } else {
+      distanceText = "hoch (entfernt)";
+    }
+    focusDistanceDisplay.textContent = distanceText;
   }
 }
 

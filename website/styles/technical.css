@@ -1347,9 +1347,12 @@ canvas#focusRadar {
 
 .context-node.focus {
   fill: #a855f7;
-  stroke: #7e22ce;
-  stroke-width: 3px;
-  filter: drop-shadow(0 0 5px rgba(168, 85, 247, 0.5));
+  stroke: #ff6b00; /* Orangene Umrandung für bessere Sichtbarkeit */
+  stroke-width: 3.5px; /* Etwas breiter für bessere Sichtbarkeit */
+  filter: drop-shadow(
+    0 0 6px rgba(255, 107, 0, 0.8)
+  ); /* Hellerer Schatten um die orangene Umrandung */
+  animation: pulse-focus 1.5s infinite;
 }
 
 .context-node.food {
@@ -1375,9 +1378,25 @@ canvas#focusRadar {
 }
 
 .context-link.focus {
-  stroke: #c084fc;
-  stroke-width: 2px;
-  stroke-opacity: 0.9;
+  stroke: #a855f7;
+  stroke-width: 2.5px;
+  opacity: 0.8;
+  animation: pulse-link 1.5s infinite;
+}
+
+@keyframes pulse-link {
+  0% {
+    stroke-opacity: 0.6;
+    stroke-width: 2px;
+  }
+  50% {
+    stroke-opacity: 1;
+    stroke-width: 3px;
+  }
+  100% {
+    stroke-opacity: 0.6;
+    stroke-width: 2px;
+  }
 }
 
 .node-label {
@@ -1714,21 +1733,26 @@ canvas#focusRadar {
 
 .dynamic-node.focused {
   fill: #a855f7;
-  stroke: #7e22ce;
-  stroke-width: 3px;
-  filter: drop-shadow(0 0 4px rgba(168, 85, 247, 0.6));
+  stroke: #ff6b00; /* Orangene Umrandung für bessere Sichtbarkeit */
+  stroke-width: 3.5px; /* Etwas breiter für bessere Sichtbarkeit */
+  filter: drop-shadow(
+    0 0 6px rgba(255, 107, 0, 0.8)
+  ); /* Hellerer Schatten um die orangene Umrandung */
   animation: pulse-focus 1.5s infinite;
 }
 
 @keyframes pulse-focus {
   0% {
-    stroke-opacity: 0.8;
+    stroke-opacity: 0.7;
+    stroke-width: 3px;
   }
   50% {
     stroke-opacity: 1;
+    stroke-width: 4px;
   }
   100% {
-    stroke-opacity: 0.8;
+    stroke-opacity: 0.7;
+    stroke-width: 3px;
   }
 }
 
@@ -2384,4 +2408,23 @@ svg:active {
 .dynamic-link.highlighted {
   stroke-width: 3px;
   filter: drop-shadow(0 0 3px rgba(77, 171, 247, 0.6));
+}
+
+/* Node-Fokus im semantischen Netzwerk */
+.node.focus circle {
+  fill: #a855f7;
+  stroke: #ff6b00; /* Orangene Umrandung für bessere Sichtbarkeit */
+  stroke-width: 3.5px; /* Etwas breiter für bessere Sichtbarkeit */
+  filter: drop-shadow(
+    0 0 6px rgba(255, 107, 0, 0.8)
+  ); /* Hellerer Schatten um die orangene Umrandung */
+  animation: pulse-focus 1.5s infinite;
+}
+
+/* Link-Fokus im semantischen Netzwerk */
+.link.focus {
+  stroke: #a855f7;
+  stroke-width: 2.5px;
+  opacity: 0.8;
+  animation: pulse-link 1.5s infinite;
 }
