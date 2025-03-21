@@ -938,6 +938,20 @@
   transform: scale(1.2);
 }
 
+/* Versteckt den Thumb nur für den oberen Schieberegler */
+#mainEnergyLevelControl::-webkit-slider-thumb {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* Firefox Support */
+#mainEnergyLevelControl::-moz-range-thumb {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
 .energy-state-info {
   display: flex;
   flex-direction: column;
