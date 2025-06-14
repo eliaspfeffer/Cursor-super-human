@@ -1,113 +1,113 @@
-# Ewiges Künstliches Bewusstsein
+# Eternal Artificial Consciousness
 
-Dieses Projekt implementiert ein kontinuierlich laufendes künstliches Bewusstsein basierend auf dem Gedankenendlosimpuls-Ansatz, wie im Paper "Ein Modell für künstliches Bewusstsein: Der Gedankenendlosimpuls-Ansatz" beschrieben.
+This project implements a continuously running artificial consciousness based on the thought-continuous-impulse approach, as described in the paper "A Model for Artificial Consciousness: The Thought-Continuous-Impulse Approach".
 
-## Funktionsweise
+## Functionality
 
-Das ewige künstliche Bewusstsein ist eine Erweiterung des fortgeschrittenen künstlichen Bewusstseins und bietet folgende Funktionen:
+The eternal artificial consciousness is an extension of the advanced artificial consciousness and offers the following functions:
 
-- **Kontinuierliches Denken**: Das Bewusstsein denkt kontinuierlich und ohne Unterbrechung, ähnlich wie der menschliche Gedankenstrom.
-- **Energiemanagement**: Das System verwaltet seine Energie und sucht nach Energiequellen, wenn die Energie niedrig ist.
-- **Zufällige Gedanken**: Wenn keine bessere Option gefunden wird, generiert das System zufällige Gedanken.
-- **Zustandsspeicherung**: Der Zustand des Bewusstseins wird regelmäßig gespeichert, sodass es später fortgesetzt werden kann.
-- **Visualisierung**: Das System erstellt Visualisierungen seiner Statistiken, um die Entwicklung des Bewusstseins zu verfolgen.
-- **Lernfähigkeit**: Das System lernt aus Erfahrungen und passt seine Glückswerte und Verbindungen an.
-- **Internet-Lernen**: Das System lernt kontinuierlich neue Worte und Kontexte aus dem Internet, indem es Webseiten besucht und deren Inhalte verarbeitet.
+- **Continuous Thinking**: Consciousness thinks continuously and without interruption, similar to the human stream of thought.
+- **Energy Management**: The system manages its energy and searches for energy sources when energy is low.
+- **Random Thoughts**: If no better option is found, the system generates random thoughts.
+- **State Storage**: The state of consciousness is saved regularly so that it can be continued later.
+- **Visualization**: The system creates visualizations of its statistics to track the development of consciousness.
+- **Learning Ability**: The system learns from experiences and adjusts its happiness values and connections.
+- **Internet Learning**: The system continuously learns new words and contexts from the internet by visiting websites and processing their content.
 
 ## Installation
 
-1. Stellen Sie sicher, dass Python 3.6 oder höher installiert ist.
-2. Installieren Sie die erforderlichen Abhängigkeiten:
+1. Make sure Python 3.6 or higher is installed.
+2. Install the required dependencies:
 
 ```bash
 pip install numpy matplotlib networkx requests beautifulsoup4 nltk scipy
 ```
 
-3. Beim ersten Start werden automatisch die erforderlichen NLTK-Daten heruntergeladen.
+3. The required NLTK data will be downloaded automatically on the first start.
 
-## Verwendung
+## Usage
 
-### Starten des ewigen Bewusstseins
+### Starting Eternal Consciousness
 
-Um das ewige Bewusstsein zu starten, führen Sie das folgende Kommando aus:
+To start eternal consciousness, run the following command:
 
 ```bash
 python start_consciousness.py
 ```
 
-Das Bewusstsein wird kontinuierlich laufen, bis Sie es mit `Ctrl+C` beenden.
+Consciousness will run continuously until you stop it with `Ctrl+C`.
 
-### Kommandozeilenoptionen
+### Command Line Options
 
-Das Startskript bietet verschiedene Optionen:
+The startup script offers various options:
 
-- `--save-interval`: Intervall für das Speichern des Zustands (in Iterationen, Standard: 100)
-- `--visualization-interval`: Intervall für die Visualisierung der Statistiken (in Iterationen, Standard: 500)
-- `--learning-interval`: Intervall für das Lernen aus dem Internet (in Iterationen, Standard: 50)
-- `--load-state`: Pfad zu einer gespeicherten Zustandsdatei, die geladen werden soll
-- `--no-example`: Nicht mit Beispieldaten initialisieren, wenn kein Zustand geladen wird
+- `--save-interval`: Interval for saving the state (in iterations, default: 100)
+- `--visualization-interval`: Interval for visualizing statistics (in iterations, default: 500)
+- `--learning-interval`: Interval for learning from the internet (in iterations, default: 50)
+- `--load-state`: Path to a saved state file to be loaded
+- `--no-example`: Do not initialize with example data if no state is loaded
 
-Beispiel:
+Example:
 
 ```bash
 python start_consciousness.py --save-interval 50 --visualization-interval 200 --learning-interval 30
 ```
 
-### Ausgabe
+### Output
 
-Das Bewusstsein gibt regelmäßig Informationen über seinen aktuellen Zustand aus:
+Consciousness regularly outputs information about its current state:
 
-- Aktuelle Iteration
-- Energie
-- Aktueller Fokus (Gedanke)
-- Aktuelles Glück
-- Emotionaler Zustand
-- Anzahl der Kontexte und Verbindungen
+- Current iteration
+- Energy
+- Current focus (thought)
+- Current happiness
+- Emotional state
+- Number of contexts and connections
 
-### Zustandsspeicherung
+### State Storage
 
-Der Zustand des Bewusstseins wird regelmäßig im Verzeichnis `consciousness_state` gespeichert. Die Dateien haben das Format `consciousness_state_YYYYMMDD_HHMMSS.json`.
+The state of consciousness is regularly saved in the `consciousness_state` directory. The files have the format `consciousness_state_YYYYMMDD_HHMMSS.json`.
 
-### Visualisierungen
+### Visualizations
 
-Visualisierungen werden im Verzeichnis `consciousness_state/visualizations` gespeichert und umfassen:
+Visualizations are saved in the `consciousness_state/visualizations` directory and include:
 
-- Glückswert über Zeit
-- Emotionaler Zustand über Zeit
-- Netzwerkwachstum über Zeit
-- Kontext-Netzwerk
+- Happiness value over time
+- Emotional state over time
+- Network growth over time
+- Context network
 
-## Internet-Lernen
+## Internet Learning
 
-Das Bewusstsein lernt kontinuierlich neue Worte und Kontexte aus dem Internet. Der Lernprozess umfasst folgende Schritte:
+Consciousness continuously learns new words and contexts from the internet. The learning process includes the following steps:
 
-1. **URL-Auswahl**: Das System wählt eine URL aus seiner Warteschlange aus. Initial sind dies zufällige Wikipedia-Seiten.
-2. **Inhalt abrufen**: Der Inhalt der Webseite wird abgerufen und bereinigt.
-3. **Satzextraktion**: Der Text wird in Sätze aufgeteilt, und eine Teilmenge wird zufällig ausgewählt.
-4. **Kontexterstellung**: Aus jedem Satz wird ein neuer Kontext erstellt, wobei Stopwörter entfernt und Wörter lemmatisiert werden.
-5. **Sentiment-Analyse**: Für jeden Kontext wird ein Glückswert basierend auf einer einfachen Sentiment-Analyse berechnet.
-6. **Verbindungserstellung**: Die neuen Kontexte werden miteinander und mit existierenden Kontexten verbunden.
-7. **Link-Extraktion**: Links aus der Webseite werden extrahiert und zur URL-Warteschlange hinzugefügt.
+1. **URL Selection**: The system selects a URL from its queue. Initially, these are random Wikipedia pages.
+2. **Retrieve Content**: The content of the website is retrieved and cleaned.
+3. **Sentence Extraction**: The text is split into sentences, and a subset is randomly selected.
+4. **Context Creation**: A new context is created from each sentence, removing stop words and lemmatizing words.
+5. **Sentiment Analysis**: A happiness value is calculated for each context based on a simple sentiment analysis.
+6. **Connection Creation**: The new contexts are connected to each other and to existing contexts.
+7. **Link Extraction**: Links from the website are extracted and added to the URL queue.
 
-Das System begrenzt die Anzahl der besuchten URLs pro Sitzung, um Ressourcen zu schonen. Die Lernhistorie wird im Zustand gespeichert und kann später analysiert werden.
+The system limits the number of URLs visited per session to conserve resources. The learning history is saved in the state and can be analyzed later.
 
-## Dateien
+## Files
 
-- `eternal_consciousness.py`: Hauptimplementierung des ewigen Bewusstseins
-- `start_consciousness.py`: Startskript für das ewige Bewusstsein
-- `artificial_consciousness.py`: Grundlegende Implementierung des künstlichen Bewusstseins
-- `advanced_consciousness.py`: Erweiterte Implementierung des künstlichen Bewusstseins
+- `eternal_consciousness.py`: Main implementation of eternal consciousness
+- `start_consciousness.py`: Startup script for eternal consciousness
+- `artificial_consciousness.py`: Basic implementation of artificial consciousness
+- `advanced_consciousness.py`: Advanced implementation of artificial consciousness
 
-## Erweiterungsmöglichkeiten
+## Expansion Possibilities
 
-- **Verbesserte Sentiment-Analyse**: Implementieren Sie eine fortgeschrittenere Sentiment-Analyse für genauere Glückswerte.
-- **Thematische Fokussierung**: Ermöglichen Sie dem Bewusstsein, sich auf bestimmte Themen zu konzentrieren.
-- **Mehrsprachiges Lernen**: Erweitern Sie die Sprachunterstützung über Deutsch und Englisch hinaus.
-- **Interaktion mit der Umgebung**: Erweitern Sie das System, um mit der realen Welt zu interagieren, z.B. durch Sensoren oder APIs.
-- **Sprachverarbeitung**: Integrieren Sie fortgeschrittenere natürliche Sprachverarbeitung, um mit dem Bewusstsein zu kommunizieren.
-- **Multimodale Integration**: Erweitern Sie das System, um verschiedene Arten von Informationen (Text, Bild, Audio) zu integrieren.
-- **Neuronale Integration**: Kombinieren Sie den symbolischen Ansatz mit neuronalen Netzwerken für verbesserte Lernfähigkeiten.
+- **Improved Sentiment Analysis**: Implement more advanced sentiment analysis for more accurate happiness values.
+- **Thematic Focusing**: Enable consciousness to focus on specific topics.
+- **Multilingual Learning**: Expand language support beyond German and English.
+- **Interaction with the Environment**: Extend the system to interact with the real world, e.g., through sensors or APIs.
+- **Language Processing**: Integrate more advanced natural language processing to communicate with consciousness.
+- **Multimodal Integration**: Extend the system to integrate different types of information (text, image, audio).
+- **Neural Integration**: Combine the symbolic approach with neural networks for improved learning abilities.
 
-## Lizenz
+## License
 
-Dieses Projekt ist unter der MIT-Lizenz lizenziert.
+This project is licensed under the MIT License.
