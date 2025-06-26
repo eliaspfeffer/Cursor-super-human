@@ -126,14 +126,15 @@ section {
 }
 
 .btn-secondary {
-  background-color: transparent;
-  color: var(--primary-color);
-  border: 2px solid var(--primary-color);
+  background-color: #E0E0E0; /* Bright light grey */
+  color: #333333; /* Dark grey text for contrast */
+  border: 2px solid #C0C0C0; /* Slightly darker grey border */
 }
 
 .btn-secondary:hover {
-  background-color: var(--primary-color);
-  color: white;
+  background-color: #C0C0C0; /* Darker grey on hover */
+  color: #111111; /* Even darker text on hover */
+  border-color: #A0A0A0;
   transform: translateY(-2px);
 }
 
