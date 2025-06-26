@@ -14,52 +14,52 @@ document.addEventListener("DOMContentLoaded", function () {
   window.selectedNode = null;
   window.colorScheme = "category";
 
-  // Attribute-Typen definieren
+  // Define attribute types
   window.attributeTypes = [
-    "Geschmack",
-    "Aussehen",
-    "Größe",
-    "Funktion",
-    "Alter",
-    "Herkunft",
-    "Material",
+    "Taste",     // Geschmack
+    "Appearance",// Aussehen
+    "Size",      // Größe
+    "Function",  // Funktion
+    "Age",       // Alter
+    "Origin",    // Herkunft
+    "Material",  // Material
   ];
 
-  // Farbskala
+  // Color scale
   window.categoryColors = d3.scaleOrdinal(d3.schemeCategory10);
 
-  // Verzögerung zum Sicherstellen, dass das DOM vollständig geladen ist
+  // Delay to ensure DOM is fully loaded
   setTimeout(() => {
-    // Überprüfen, ob das Overlay existiert
+    // Check if overlay exists
     const loadingOverlay = document.querySelector(".loading-overlay");
     if (loadingOverlay) {
       loadingOverlay.style.display = "none";
     }
 
-    // Netzwerk initialisieren, wenn das Container-Element vorhanden ist
+    // Initialize network if container element is present
     const networkContainer = document.getElementById("network");
     if (networkContainer) {
       try {
         initNetworkVisualization();
-        console.log("Netzwerk-Visualisierung erfolgreich initialisiert");
+        console.log("Network visualization initialized successfully");
       } catch (error) {
         console.error(
-          "Fehler bei der Initialisierung der Netzwerk-Visualisierung:",
+          "Error during network visualization initialization:",
           error
         );
-        // Fehlermeldung anzeigen
+        // Display error message
         networkContainer.innerHTML = `
           <div class="error-message">
-            <p><i class="fas fa-exclamation-triangle"></i> Fehler beim Laden der Visualisierung</p>
-            <small>Bitte aktualisieren Sie die Seite oder kontaktieren Sie den Administrator.</small>
+            <p><i class="fas fa-exclamation-triangle"></i> Error loading visualization</p>
+            <small>Please refresh the page or contact the administrator.</small>
           </div>
         `;
       }
     } else {
-      console.warn("Netzwerk-Container nicht gefunden");
+      console.warn("Network container not found");
     }
 
-    // Event-Listener einrichten
+    // Set up event listeners
     setupEventListeners();
   }, 1000);
 });
@@ -225,56 +225,56 @@ function highlightNodesSequentially() {
     if (index >= nodesArray.length) {
       setTimeout(() => {
         nodeElements.attr("stroke-width", 2).attr("stroke", "#fff");
-        // "Klicke mich"-Hinweis anzeigen
+  // Display "Click me" hint
         logProcessingStep(
-          "Tipp: Klicken Sie auf einen Knoten, um Details zu sehen.",
+          "Tip: Click on a node to see details.",
           "info"
         );
       }, 500);
     }
-  }, 200); // Alle 200ms zum nächsten Knoten wechseln
+  }, 200); // Switch to the next node every 200ms
 }
 
-// Beispieldaten erstellen
+// Create sample data
 function createSampleData() {
-  // Knoten erstellen
+  // Create nodes
   const sampleNodes = [
     {
-      id: "Apfel",
+      id: "Apple", // Apfel
       group: "food",
-      attributes: { Geschmack: "süß", Aussehen: "rot", Größe: "mittel" },
+      attributes: { Taste: "sweet", Appearance: "red", Size: "medium" }, // Geschmack: süß, Aussehen: rot, Größe: mittel
       size: 20,
     },
     {
-      id: "Banane",
+      id: "Banana", // Banane
       group: "food",
-      attributes: { Geschmack: "süß", Aussehen: "gelb", Größe: "mittel" },
+      attributes: { Taste: "sweet", Appearance: "yellow", Size: "medium" }, // Geschmack: süß, Aussehen: gelb, Größe: mittel
       size: 20,
     },
-    { id: "süß", group: "attribute", attributes: {}, size: 15 },
-    { id: "rot", group: "attribute", attributes: {}, size: 15 },
-    { id: "gelb", group: "attribute", attributes: {}, size: 15 },
-    { id: "mittel", group: "attribute", attributes: {}, size: 10 },
-    { id: "Geschmack", group: "category", attributes: {}, size: 18 },
-    { id: "Aussehen", group: "category", attributes: {}, size: 18 },
-    { id: "Größe", group: "category", attributes: {}, size: 15 },
+    { id: "sweet", group: "attribute", attributes: {}, size: 15 }, // süß
+    { id: "red", group: "attribute", attributes: {}, size: 15 },   // rot
+    { id: "yellow", group: "attribute", attributes: {}, size: 15 },// gelb
+    { id: "medium", group: "attribute", attributes: {}, size: 10 },// mittel
+    { id: "Taste_cat", group: "category", attributes: {}, size: 18 }, // Geschmack (als Kategorie)
+    { id: "Appearance_cat", group: "category", attributes: {}, size: 18 }, // Aussehen (als Kategorie)
+    { id: "Size_cat", group: "category", attributes: {}, size: 15 },    // Größe (als Kategorie)
   ];
 
-  // Verbindungen erstellen
+  // Create links
   const sampleLinks = [
-    { source: "Apfel", target: "süß", weight: 3 },
-    { source: "Apfel", target: "rot", weight: 3 },
-    { source: "Apfel", target: "mittel", weight: 2 },
-    { source: "Banane", target: "süß", weight: 3 },
-    { source: "Banane", target: "gelb", weight: 3 },
-    { source: "Banane", target: "mittel", weight: 2 },
-    { source: "süß", target: "Geschmack", weight: 5 },
-    { source: "rot", target: "Aussehen", weight: 5 },
-    { source: "gelb", target: "Aussehen", weight: 5 },
-    { source: "mittel", target: "Größe", weight: 5 },
+    { source: "Apple", target: "sweet", weight: 3 },
+    { source: "Apple", target: "red", weight: 3 },
+    { source: "Apple", target: "medium", weight: 2 },
+    { source: "Banana", target: "sweet", weight: 3 },
+    { source: "Banana", target: "yellow", weight: 3 },
+    { source: "Banana", target: "medium", weight: 2 },
+    { source: "sweet", target: "Taste_cat", weight: 5 },
+    { source: "red", target: "Appearance_cat", weight: 5 },
+    { source: "yellow", target: "Appearance_cat", weight: 5 },
+    { source: "medium", target: "Size_cat", weight: 5 },
   ];
 
-  // Zu globalen Arrays hinzufügen
+  // Add to global arrays
   nodes = sampleNodes;
   links = sampleLinks;
 }
@@ -435,8 +435,8 @@ function updateNodeInfo(node) {
   let infoHTML = `
         <div class="node-details">
             <h4>${node.id}</h4>
-            <p><strong>Gruppe:</strong> ${node.group}</p>
-            <p><strong>Verbindungen:</strong> ${
+            <p><strong>Group:</strong> ${node.group}</p>
+            <p><strong>Connections:</strong> ${ // Verbindungen
               getNodeConnections(node).length
             }</p>
             ${getAttributesHTML(node)}
@@ -453,7 +453,7 @@ function getAttributesHTML(node) {
     return "";
   }
 
-  let html = '<div class="attribute-list"><h5>Attribute:</h5><ul>';
+  let html = '<div class="attribute-list"><h5>Attributes:</h5><ul>'; // Attribute
 
   for (const [key, value] of Object.entries(node.attributes)) {
     html += `<li><strong>${key}:</strong> ${value}</li>`;
@@ -471,12 +471,12 @@ function getConnectionsHTML(node) {
     return "";
   }
 
-  let html = '<div class="connections-list"><h5>Verbindungen:</h5><ul>';
+  let html = '<div class="connections-list"><h5>Connections:</h5><ul>'; // Verbindungen
 
   connections.forEach((link) => {
     const isSource = link.source.id === node.id;
     const connectedNode = isSource ? link.target : link.source;
-    html += `<li><strong>${connectedNode.id}</strong> (Gewichtung: ${link.weight})</li>`;
+    html += `<li><strong>${connectedNode.id}</strong> (Weight: ${link.weight})</li>`; // Gewichtung
   });
 
   html += "</ul></div>";
@@ -554,7 +554,7 @@ function addRandomNode() {
 
   // Log to processing steps
   logProcessingStep(
-    `Knoten "${nodeId}" (${randomGroup}) hinzugefügt mit ${numConnections} Verbindungen.`,
+    `Node "${nodeId}" (${randomGroup}) added with ${numConnections} connections.`, // Knoten ... hinzugefügt mit ... Verbindungen
     "success"
   );
 }
@@ -568,16 +568,16 @@ function addUserContext() {
   const category = categorySelect.value;
 
   if (!contextText) {
-    logProcessingStep("Bitte geben Sie einen Kontext ein.", "error");
+    logProcessingStep("Please enter a context.", "error"); // Bitte geben Sie einen Kontext ein.
     return;
   }
 
   // Process the input text
-  logProcessingStep(`Verarbeite Eingabe: "${contextText}"`, "info");
+  logProcessingStep(`Processing input: "${contextText}"`, "info"); // Verarbeite Eingabe
 
   // Simple NLP: Split into words and analyze
   const words = contextText.split(/\s+/);
-  logProcessingStep(`${words.length} Wörter identifiziert.`, "info");
+  logProcessingStep(`${words.length} words identified.`, "info"); // ... Wörter identifiziert.
 
   // Extract main entity and attributes
   const mainEntity = words[0]; // Simplified approach
@@ -596,9 +596,9 @@ function addUserContext() {
       createdAt: Date.now(),
     };
     nodes.push(entityNode);
-    logProcessingStep(`Neue Entität erstellt: "${mainEntity}"`, "success");
+    logProcessingStep(`New entity created: "${mainEntity}"`, "success"); // Neue Entität erstellt
   } else {
-    logProcessingStep(`Bestehende Entität gefunden: "${mainEntity}"`, "info");
+    logProcessingStep(`Existing entity found: "${mainEntity}"`, "info"); // Bestehende Entität gefunden
   }
 
   // Process words after the first one for potential attributes
@@ -607,9 +607,10 @@ function addUserContext() {
   for (let i = 1; i < words.length; i++) {
     const word = words[i];
 
-    // Skip common words
+    // Skip common English words (and some German ones that might have been missed if input is mixed)
     if (
-      ["ist", "und", "oder", "der", "die", "das", "ein", "eine"].includes(
+      ["is", "and", "or", "the", "a", "an", "to", "of",
+       "ist", "und", "oder", "der", "die", "das", "ein", "eine"].includes(
         word.toLowerCase()
       )
     ) {
@@ -631,9 +632,9 @@ function addUserContext() {
         createdAt: Date.now(),
       };
       nodes.push(attributeNode);
-      logProcessingStep(`Neues Attribut erstellt: "${word}"`, "success");
+      logProcessingStep(`New attribute created: "${word}"`, "success"); // Neues Attribut erstellt
     } else {
-      logProcessingStep(`Bestehendes Attribut gefunden: "${word}"`, "info");
+      logProcessingStep(`Existing attribute found: "${word}"`, "info"); // Bestehendes Attribut gefunden
     }
 
     // Create a link between entity and attribute
@@ -647,7 +648,7 @@ function addUserContext() {
       // Strengthen existing connection
       existingLink.weight += 1;
       logProcessingStep(
-        `Bestehende Verbindung gestärkt: ${entityNode.id} - ${attributeNode.id}`,
+        `Existing connection strengthened: ${entityNode.id} - ${attributeNode.id}`, // Bestehende Verbindung gestärkt
         "info"
       );
     } else {
@@ -658,7 +659,7 @@ function addUserContext() {
         weight: 2,
       });
       logProcessingStep(
-        `Neue Verbindung erstellt: ${entityNode.id} - ${attributeNode.id}`,
+        `New connection created: ${entityNode.id} - ${attributeNode.id}`, // Neue Verbindung erstellt
         "success"
       );
     }
@@ -674,7 +675,7 @@ function addUserContext() {
   contextInput.value = "";
 
   logProcessingStep(
-    `Kontext erfolgreich verarbeitet: "${mainEntity}" mit ${attributesFound.length} Attributen.`,
+    `Context processed successfully: "${mainEntity}" with ${attributesFound.length} attributes.`, // Kontext erfolgreich verarbeitet ... mit ... Attributen.
     "success"
   );
 }
@@ -694,10 +695,10 @@ function resetNetwork() {
 
   // Clear node info panel
   document.getElementById("nodeInfo").innerHTML =
-    '<p class="empty-state">Wählen Sie einen Knoten aus, um Details anzuzeigen</p>';
+    '<p class="empty-state">Select a node to view details</p>'; // Wählen Sie einen Knoten aus, um Details anzuzeigen
 
   // Log to processing steps
-  logProcessingStep("Netzwerk zurückgesetzt.", "info");
+  logProcessingStep("Network reset.", "info"); // Netzwerk zurückgesetzt.
 }
 
 // Update charge force
