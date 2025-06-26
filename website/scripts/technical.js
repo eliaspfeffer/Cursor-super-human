@@ -1,20 +1,20 @@
 // Technical Page Specific JavaScript
 
-// Globale Variablen
+// Global variables
 let networkData = null;
 let networkSvg = null;
 let nodeElements = null;
 let linkElements = null;
-let selectedHoneypot = "Essen";
+let selectedHoneypot = "Food"; // Translated from "Essen"
 let showAllNodes = false;
 let highlightFocus = true;
 
-// Globale Variablen für die Wort-Visualisierung
+// Global variables for word visualization
 let wordsVisible = {};
 let expandedNode = null;
 let wordsSimulation = null;
 
-// Globale Variablen für die dynamische Netzwerkvisualisierung
+// Global variables for dynamic network visualization
 let dynamicNetworkData = null;
 let dynamicSimulation = null;
 let dynamicSvg = null;
@@ -22,107 +22,107 @@ let dynamicNodes = null;
 let dynamicLinks = null;
 let currentFocusNode = null;
 let focusAnimationInterval = null;
-let currentEnergyLevel = 75; // Aktueller Energielevel (global zur Verfügung)
-let selectedHoneypotType = "Nahrung";
+let currentEnergyLevel = 75; // Current energy level (globally available)
+let selectedHoneypotType = "Food"; // Translated from "Nahrung"
 let showAllConnections = true;
 let enableAutoFocusTransition = true;
-let isUpdatingSlider = false; // Flag, um Endlosschleifen bei Slider-Updates zu vermeiden
+let isUpdatingSlider = false; // Flag to prevent infinite loops during slider updates
 
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("DOM vollständig geladen und geparst");
+  console.log("DOM fully loaded and parsed");
 
-  // Überprüfe, ob D3.js verfügbar ist
+  // Check if D3.js is available
   if (typeof d3 === "undefined") {
     console.error(
-      "FEHLER: D3.js ist nicht verfügbar! Visualisierungen können nicht initialisiert werden."
+      "ERROR: D3.js is not available! Visualizations cannot be initialized."
     );
     return;
   } else {
-    console.log("D3.js Version:", d3.version, "gefunden");
+    console.log("D3.js Version:", d3.version, "found");
   }
 
-  // Debug-Funktion, um zu überprüfen, ob alle Container existieren
+  // Debug function to check if all containers exist
   function debugContainers() {
-    console.log("Debugging Container...");
+    console.log("Debugging containers...");
 
     const containers = [
-      { id: "focusNetwork", name: "Fokus-Netzwerk" },
-      { id: "dynamic-network", name: "Dynamisches Netzwerk" },
-      { id: "energyWave", name: "Energie-Welle" },
-      { id: "honeypotWave", name: "Honeypot-Welle" },
-      { id: "focusRadar", name: "Fokus-Radar" },
+      { id: "focusNetwork", name: "Focus Network" },
+      { id: "dynamic-network", name: "Dynamic Network" },
+      { id: "energyWave", name: "Energy Wave" },
+      { id: "honeypotWave", name: "Honeypot Wave" },
+      { id: "focusRadar", name: "Focus Radar" },
     ];
 
     containers.forEach((container) => {
       const element = document.getElementById(container.id);
       if (element) {
-        console.log(`${container.name} (${container.id}) gefunden:`, {
+        console.log(`${container.name} (${container.id}) found:`, {
           width: element.clientWidth,
           height: element.clientHeight,
           display: window.getComputedStyle(element).display,
           visibility: window.getComputedStyle(element).visibility,
         });
       } else {
-        console.error(`${container.name} (${container.id}) NICHT gefunden!`);
+        console.error(`${container.name} (${container.id}) NOT found!`);
       }
     });
   }
 
-  // Debug-Ausgabe
+  // Debug output
   debugContainers();
 
-  // Diese Funktion ist ein Platzhalter und wird später implementiert
+  // This function is a placeholder and will be implemented later
   function initArchitectureDiagrams() {
     console.log(
-      "Architekturdiagramme werden nicht initialisiert (noch nicht implementiert)"
+      "Architecture diagrams are not initialized (not yet implemented)"
     );
   }
 
-  // Diese Funktion ist ein Platzhalter für die Fokus-Radar-Initialisierung
+  // This function is a placeholder for Focus Radar initialization
   function initFocusRadar() {
     console.log(
-      "Fokus-Radar wird nicht initialisiert (noch nicht implementiert)"
+      "Focus Radar is not initialized (not yet implemented)"
     );
-    // Der Radar-Canvas ist vorhanden, aber noch nicht implementiert
+    // The radar canvas exists but is not yet implemented
     const focusRadarCanvas = document.getElementById("focusRadar");
     if (focusRadarCanvas) {
       console.log(
-        "Fokus-Radar-Canvas gefunden, aber Initialisierung übersprungen"
+        "Focus Radar canvas found, but initialization skipped"
       );
     }
   }
 
-  // Initialisierung der Architekturdiagramme
+  // Initialization of architecture diagrams
   initArchitectureDiagrams();
 
-  // Initialisierung der Energiecharts
+  // Initialization of energy charts
   initEnergyCharts();
 
-  // Initialisierung der Prozessschritte
+  // Initialization of process steps
   initProcessSteps();
 
-  // Initialisierung des Fokus-Radars
+  // Initialization of Focus Radar
   initFocusRadar();
 
-  // Prüfe, ob die Container für die Visualisierungen existieren
+  // Check if containers for visualizations exist
   const focusNetworkContainer = document.getElementById("focusNetwork");
   if (focusNetworkContainer) {
     console.log(
-      "Fokus-Netzwerk-Container gefunden, initialisiere Fokus-Netzwerk"
+      "Focus Network container found, initializing Focus Network"
     );
     initFocusNetwork();
   }
 
-  // Initialisiere die dynamische Netzwerkvisualisierung, falls der Container existiert
+  // Initialize dynamic network visualization if the container exists
   const dynamicNetworkContainer = document.getElementById("dynamic-network");
   if (dynamicNetworkContainer) {
     console.log(
-      "Dynamisches Netzwerk-Container gefunden, initialisiere dynamisches Netzwerk"
+      "Dynamic Network container found, initializing Dynamic Network"
     );
     initDynamicNetwork();
   }
 
-  // Autofluctuation für die Energiewellen starten/stoppen
+  // Start/stop auto-fluctuation for energy waves
   const autoFluctuateControl = document.getElementById("autoFluctuate");
   if (autoFluctuateControl) {
     autoFluctuateControl.addEventListener("change", function () {
@@ -145,18 +145,18 @@ document.addEventListener("DOMContentLoaded", function () {
   if (energyLevelControl) {
     console.log("Verbinde Energieschieberegler mit Netzwerkvisualisierung");
 
-    // Aktualisiere den angezeigten Wert beim Laden
+    // Update the displayed value on load
     networkEnergyValue.textContent = `${energyLevelControl.value}%`;
 
-    // Aktualisiere den angezeigten Wert und die Visualisierung bei Änderungen
+    // Update the displayed value and visualization on changes
     energyLevelControl.addEventListener("input", function () {
       const value = this.value;
       networkEnergyValue.textContent = `${value}%`;
 
-      // Aktualisiere die Netzwerkvisualisierung mit dem neuen Energiewert
+      // Update the network visualization with the new energy value
       currentEnergyLevel = parseInt(value);
 
-      // Synchronisiere den dynamischen Slider
+      // Synchronize the dynamic slider
       if (dynamicEnergySlider && !isUpdatingSlider) {
         isUpdatingSlider = true;
         dynamicEnergySlider.value = value;
@@ -166,47 +166,47 @@ document.addEventListener("DOMContentLoaded", function () {
         isUpdatingSlider = false;
       }
 
-      // Wenn wir ein dynamisches Netzwerk haben, aktualisieren wir es
+      // If we have a dynamic network, update it
       if (typeof updateDynamicNetwork === "function") {
         updateDynamicNetwork(currentEnergyLevel);
       }
     });
   }
 
-  // Event-Listener für den dynamischen Energieschieberegler
+  // Event listener for the dynamic energy slider
   if (dynamicEnergySlider) {
     console.log(
-      "Event-Listener für dynamischen Energieschieberegler hinzufügen"
+      "Adding event listener for dynamic energy slider"
     );
 
-    // Aktualisiere bei Initialisierung
+    // Update on initialization
     if (energyValueDisplay) {
       energyValueDisplay.textContent = dynamicEnergySlider.value;
     }
 
-    // Event-Listener für Slider-Bewegung
+    // Event listener for slider movement
     dynamicEnergySlider.addEventListener("input", function () {
       const newEnergyLevel = parseInt(this.value);
 
-      // Anzeige aktualisieren
+      // Update display
       if (energyValueDisplay) {
         energyValueDisplay.textContent = newEnergyLevel;
       }
 
-      // Synchronisiere den Hauptschieberegler
+      // Synchronize the main slider
       if (energyLevelControl && !isUpdatingSlider) {
         isUpdatingSlider = true;
-        energyLevelControl.value = newEnergyLevel; // Dies aktualisiert die Position des Schiebereglers
+        energyLevelControl.value = newEnergyLevel; // This updates the slider's position
         if (networkEnergyValue) {
           networkEnergyValue.textContent = `${newEnergyLevel}%`;
         }
         isUpdatingSlider = false;
       }
 
-      // Globale Variable aktualisieren
+      // Update global variable
       currentEnergyLevel = newEnergyLevel;
 
-      // Netzwerkvisualisierung aktualisieren
+      // Update network visualization
       if (typeof updateDynamicNetwork === "function") {
         updateDynamicNetwork(newEnergyLevel);
       }
@@ -437,11 +437,11 @@ function createConnectionLines(diagram) {
   document.head.appendChild(style);
 }
 
-// Energy Charts Animation mit Wellenform
+// Energy Charts Animation with Waveform
 function initEnergyCharts() {
-  console.log("Initialisiere Energy Charts");
+  console.log("Initializing Energy Charts");
 
-  // Elemente auswählen
+  // Select elements
   const energyWaveCanvas = document.getElementById("energyWave");
   const honeypotWaveCanvas = document.getElementById("honeypotWave");
   const energyLevelControl = document.getElementById("mainEnergyLevelControl");
@@ -449,21 +449,21 @@ function initEnergyCharts() {
   const autoFluctuateControl = document.getElementById("autoFluctuateControl");
   const focusRadarCanvas = document.getElementById("focusRadar");
 
-  // Debug-Ausgabe, um zu prüfen, ob die Elemente gefunden wurden
-  console.log("Canvas-Elemente:", {
+  // Debug output to check if elements were found
+  console.log("Canvas elements:", {
     energyWaveCanvas,
     honeypotWaveCanvas,
     energyLevelDisplay,
     focusRadarCanvas,
   });
 
-  // Überprüfen, ob die Elemente existieren
+  // Check if elements exist
   if (!energyWaveCanvas || !honeypotWaveCanvas) {
-    console.error("Canvas-Elemente für Wellenanimation nicht gefunden!");
+    console.error("Canvas elements for wave animation not found!");
     return;
   }
 
-  // Canvas-Kontexte für das Zeichnen der Wellenformen
+  // Canvas contexts for drawing waveforms
   let energyCtx = null;
   let honeypotCtx = null;
   let radarCtx = null;
@@ -476,17 +476,17 @@ function initEnergyCharts() {
     }
 
     if (!energyCtx || !honeypotCtx) {
-      console.error("Canvas-Kontext konnte nicht initialisiert werden");
+      console.error("Canvas context could not be initialized");
       return;
     }
 
-    console.log("Canvas-Kontexte erfolgreich initialisiert");
+    console.log("Canvas contexts initialized successfully");
   } catch (error) {
-    console.error("Fehler beim Initialisieren der Canvas-Kontexte:", error);
+    console.error("Error initializing canvas contexts:", error);
     return;
   }
 
-  // Animation-Parameter
+  // Animation parameters
   let direction = 1;
   let energyValue = 75; // Der tatsächliche Energiewert des Systems
   let autoFluctuateInterval;
@@ -1044,40 +1044,40 @@ function initEnergyCharts() {
       ctx.font = "12px Arial";
       ctx.textAlign = "center";
       ctx.fillText(
-        `Energielevel: ${Math.round(energyValue)}%`,
+        `Energy Level: ${Math.round(energyValue)}%`,
         width / 2,
         barY - 5
       );
     } catch (error) {
-      console.error("Fehler beim Zeichnen des Fokus-Radars:", error);
+      console.error("Error drawing Focus Radar:", error);
     }
   }
 
-  // Funktion zum Animieren der Wellen
+  // Function to animate waves
   function animateWaves() {
     try {
-      // Frame-Zähler erhöhen
+      // Increment frame counter
       frameCounter++;
 
-      // Canvas-Abmessungen aktualisieren
+      // Update canvas dimensions
       const energyWidth = energyWaveCanvas.offsetWidth || 600;
       const energyHeight = energyWaveCanvas.offsetHeight || 100;
       const honeypotWidth = honeypotWaveCanvas.offsetWidth || 600;
       const honeypotHeight = honeypotWaveCanvas.offsetHeight || 100;
 
-      // Canvas-Größen setzen
+      // Set canvas sizes
       energyWaveCanvas.width = energyWidth;
       energyWaveCanvas.height = energyHeight;
       honeypotWaveCanvas.width = honeypotWidth;
       honeypotWaveCanvas.height = honeypotHeight;
 
-      // Radar-Canvas-Größe aktualisieren, wenn vorhanden
+      // Update radar canvas size if present
       if (focusRadarCanvas) {
         focusRadarCanvas.width = focusRadarCanvas.offsetWidth || 500;
         focusRadarCanvas.height = focusRadarCanvas.offsetHeight || 300;
       }
 
-      // Energie-Welle zeichnen
+      // Draw energy wave
       drawWave(
         energyCtx,
         waveParams.energy,
@@ -1086,16 +1086,16 @@ function initEnergyCharts() {
         energyWaveCanvas.height
       );
 
-      // Honeypot-Suche-Intensität berechnen
+      // Calculate honeypot search intensity
       let searchIntensity;
       if (energyValue < 40) {
-        searchIntensity = 80 - energyValue; // Höhere Intensität bei niedrigerer Energie
+        searchIntensity = 80 - energyValue; // Higher intensity at lower energy
       } else {
-        searchIntensity = 10 + (70 - energyValue) / 3; // Niedriger Basiswert bei höherer Energie
+        searchIntensity = 10 + (70 - energyValue) / 3; // Lower base value at higher energy
       }
       searchIntensity = Math.max(5, Math.min(80, searchIntensity));
 
-      // Honeypot-Welle zeichnen
+      // Draw honeypot wave
       drawWave(
         honeypotCtx,
         waveParams.honeypot,
@@ -1104,9 +1104,9 @@ function initEnergyCharts() {
         honeypotWaveCanvas.height
       );
 
-      // Fokus-Radar aktualisieren, wenn vorhanden
+      // Update Focus Radar if present
       if (radarCtx && focusRadarCanvas) {
-        // Nur alle 10 Frames die Kontexte aktualisieren (Verlangsamung auf 1/10)
+        // Only update contexts every 10 frames (slow down to 1/10th)
         const shouldUpdatePositions = frameCounter % 10 === 0;
         drawFocusRadar(
           radarCtx,
@@ -1116,29 +1116,29 @@ function initEnergyCharts() {
         );
       }
 
-      // Animation fortsetzen
+      // Continue animation
       animationFrameId = requestAnimationFrame(animateWaves);
     } catch (error) {
-      console.error("Fehler in der Wellenanimation:", error);
+      console.error("Error in wave animation:", error);
     }
   }
 
-  // Automatische Fluktuation starten
+  // Start automatic fluctuation
   function startAutoFluctuate() {
     if (autoFluctuateInterval) clearInterval(autoFluctuateInterval);
 
     isAutoFluctuate = true;
 
     autoFluctuateInterval = setInterval(() => {
-      // Richtung gelegentlich zufällig ändern
+      // Occasionally change direction randomly
       if (Math.random() < 0.3) {
         direction *= -1;
       }
 
-      // Energie mit kleinen zufälligen Änderungen aktualisieren
+      // Update energy with small random changes
       energyValue += direction * (Math.random() * 2);
 
-      // Innerhalb der Grenzen halten
+      // Keep within bounds
       if (energyValue > 90) {
         energyValue = 90;
         direction = -1;
@@ -1147,32 +1147,32 @@ function initEnergyCharts() {
         direction = 1;
       }
 
-      // Anzeigen aktualisieren
+      // Update displays
       updateDisplays();
-    }, 1000); // Häufigere Aktualisierung für bessere Sichtbarkeit der Änderungen
+    }, 1000); // More frequent updates for better visibility of changes
   }
 
-  // Automatische Fluktuation stoppen
+  // Stop automatic fluctuation
   function stopAutoFluctuate() {
     clearInterval(autoFluctuateInterval);
     isAutoFluctuate = false;
   }
 
-  // Wenn der Energie-Schieberegler vorhanden ist, Event-Listener hinzufügen
+  // If energy slider is present, add event listeners
   if (energyLevelControl) {
-    // Beim Beginn der Interaktion
+    // On interaction start
     energyLevelControl.addEventListener("mousedown", function () {
       this.classList.add("user-adjusting");
-      // Automatische Fluktuation stoppen
+      // Stop automatic fluctuation
       stopAutoFluctuate();
 
-      // Checkbox deaktivieren
+      // Disable checkbox
       if (autoFluctuateControl) {
         autoFluctuateControl.checked = false;
       }
     });
 
-    // Für Touch-Geräte
+    // For touch devices
     energyLevelControl.addEventListener("touchstart", function () {
       this.classList.add("user-adjusting");
       stopAutoFluctuate();
@@ -1182,53 +1182,53 @@ function initEnergyCharts() {
       }
     });
 
-    // Beim Ändern des Wertes
+    // On value change
     energyLevelControl.addEventListener("input", function () {
       const newEnergyLevel = parseFloat(this.value);
-      energyValue = newEnergyLevel; // Aktuellen Energiewert aktualisieren
+      energyValue = newEnergyLevel; // Update current energy value
       updateDisplays();
     });
 
-    // Nach Ende der Interaktion
+    // After interaction ends
     energyLevelControl.addEventListener("mouseup", function () {
       this.classList.remove("user-adjusting");
     });
 
-    // Für Touch-Geräte
+    // For touch devices
     energyLevelControl.addEventListener("touchend", function () {
       this.classList.remove("user-adjusting");
     });
   }
 
-  // Wenn die Auto-Fluktuations-Checkbox vorhanden ist, Event-Listener hinzufügen
+  // If auto-fluctuation checkbox is present, add event listener
   if (autoFluctuateControl) {
-    // Dieser Event-Listener wird bereits im DOMContentLoaded-Event gesetzt,
-    // daher hier nur überprüfen, ob die Checkbox aktiv ist
+    // This event listener is already set in DOMContentLoaded,
+    // so here just check if checkbox is active
     if (autoFluctuateControl.checked) {
-      startAutoFluctuate(); // Auto-Fluktuation starten
+      startAutoFluctuate(); // Start auto-fluctuation
     } else {
       stopAutoFluctuate();
     }
   }
 
-  // Fenstergrößenänderung behandeln
+  // Handle window resize
   window.addEventListener("resize", () => {
-    // Kurz Animation stoppen und neu starten für korrekte Canvas-Größe
+    // Briefly stop and restart animation for correct canvas size
     cancelAnimationFrame(animationFrameId);
     console.log(
-      "Fenstergrößenänderung erkannt, Canvas-Größen werden neu berechnet"
+      "Window resize detected, canvas sizes will be recalculated"
     );
     animateWaves();
   });
 
-  // Initial die Anzeigen aktualisieren
+  // Initially update displays
   updateDisplays();
 
-  // Animation starten
-  console.log("Starte Wellenanimation...");
+  // Start animation
+  console.log("Starting wave animation...");
   animateWaves();
 
-  // Verbinde die updateFocusNetwork-Funktion mit dem dynamischen Energieschieberegler
+  // Connect the updateFocusNetwork function to the dynamic energy slider
   const networkEnergySlider = document.getElementById(
     "networkEnergyLevelControl"
   );
@@ -1546,54 +1546,54 @@ function animateSection(section) {
   });
 }
 
-// Funktion zur Initialisierung des Fokus-Netzwerks
+// Function to initialize the Focus Network
 function initFocusNetwork() {
-  console.log("Initialisiere Fokus-Netzwerk mit semantischen Sätzen");
+  console.log("Initializing Focus Network with semantic sentences");
 
-  // Gültigen Container prüfen
+  // Check for valid container
   const container = document.getElementById("focusNetwork");
   if (!container) {
-    console.error("Container #focusNetwork nicht gefunden!");
-    // Fallback-Content hinzufügen, falls die Visualisierung nicht geladen werden kann
+    console.error("Container #focusNetwork not found!");
+    // Add fallback content if visualization cannot be loaded
     container.innerHTML = `
       <div class="fallback-content">
         <div class="fallback-icon"><i class="fas fa-project-diagram"></i></div>
-        <h3>Netzwerk-Visualisierung</h3>
-        <p>Die Visualisierung konnte nicht geladen werden. Bitte aktualisieren Sie die Seite.</p>
+        <h3>Network Visualization</h3>
+        <p>The visualization could not be loaded. Please refresh the page.</p>
       </div>
     `;
     return;
   }
 
-  // D3.js-Verfügbarkeit prüfen
+  // Check D3.js availability
   if (!window.d3) {
-    console.error("D3.js ist nicht verfügbar!");
+    console.error("D3.js is not available!");
     container.innerHTML = `
       <div class="fallback-content">
         <div class="fallback-icon"><i class="fas fa-exclamation-triangle"></i></div>
-        <h3>D3.js fehlt</h3>
-        <p>Die erforderliche D3.js-Bibliothek wurde nicht geladen.</p>
+        <h3>D3.js Missing</h3>
+        <p>The required D3.js library was not loaded.</p>
       </div>
     `;
     return;
   } else {
-    console.log("D3.js-Version:", d3.version);
+    console.log("D3.js Version:", d3.version);
   }
 
-  console.log("Container gefunden:", container);
+  console.log("Container found:", container);
 
-  // Größe auf sinnvollen Wert setzen
+  // Set size to a reasonable value
   const width = Math.max(container.clientWidth, 300);
   const height = Math.max(container.clientHeight, 300);
 
-  console.log("Container-Größe:", width, "x", height);
+  console.log("Container size:", width, "x", height);
 
-  // Bestehende SVG-Elemente entfernen, falls vorhanden
+  // Remove existing SVG elements, if any
   d3.select(container).selectAll("svg").remove();
-  console.log("Bestehende SVG-Elemente entfernt");
+  console.log("Existing SVG elements removed");
 
   try {
-    // SVG-Element erstellen
+    // Create SVG element
     const svg = d3
       .select(container)
       .append("svg")
@@ -1602,10 +1602,10 @@ function initFocusNetwork() {
       .attr("viewBox", [0, 0, width, height])
       .attr("style", "max-width: 100%; height: auto;");
 
-    // Haupt-Gruppe für Zooming und Panning
+    // Main group for zooming and panning
     const g = svg.append("g");
 
-    // Zoom-Verhalten hinzufügen
+    // Add zoom behavior
     const zoom = d3
       .zoom()
       .scaleExtent([0.1, 4])
@@ -1613,37 +1613,37 @@ function initFocusNetwork() {
         g.attr("transform", event.transform);
       });
 
-    // Zoom-Verhalten auf SVG anwenden
+    // Apply zoom behavior to SVG
     svg.call(zoom);
 
-    // Standardmäßig in die Mitte zoomen
+    // Zoom to center by default
     svg.call(
       zoom.transform,
       d3.zoomIdentity.translate(width / 4, height / 4).scale(0.8)
     );
 
-    // Semantische Satz-Knoten definieren
+    // Define semantic sentence nodes
     const nodes = [
-      // Schlüsselkonzepte
-      { id: "ein", group: "article", label: "ein" },
-      { id: "Apfel", group: "object", label: "🍎 Apfel" },
-      { id: "schmeckt", group: "verb", label: "schmeckt" },
-      { id: "Farbe", group: "property", label: "Farbe" },
-      { id: "rote", group: "property", label: "rote" },
-      { id: "hat", group: "verb", label: "hat" },
-      { id: "ich", group: "pronoun", label: "ich" },
-      { id: "mir", group: "pronoun", label: "mir" },
-      { id: "was", group: "pronoun", label: "was" },
-      { id: "esse", group: "action", label: "esse" },
-      { id: "lecker", group: "property", label: "lecker" },
-      { id: "eine", group: "article", label: "eine" },
+      // Key concepts (Translated labels)
+      { id: "a_art", group: "article", label: "a" }, // "ein"
+      { id: "Apple", group: "object", label: "🍎 Apple" }, // "Apfel"
+      { id: "tastes", group: "verb", label: "tastes" }, // "schmeckt"
+      { id: "Color", group: "property", label: "Color" }, // "Farbe"
+      { id: "red_adj", group: "property", label: "red" }, // "rote"
+      { id: "has", group: "verb", label: "has" }, // "hat"
+      { id: "I_pron", group: "pronoun", label: "I" }, // "ich"
+      { id: "me_pron", group: "pronoun", label: "me" }, // "mir"
+      { id: "what_pron", group: "pronoun", label: "what" }, // "was"
+      { id: "eat_act", group: "action", label: "eat" }, // "esse"
+      { id: "delicious_adj", group: "property", label: "delicious" }, // "lecker"
+      { id: "an_art", group: "article", label: "an" }, // "eine" - using "an" as "a" is already used. Or consider "one" if it means number.
 
-      // Kategorie und Honeypot
-      { id: "Essen", group: "category", label: "🍽️ Essen" },
-      { id: "Honeypot", group: "honeypot", label: "🍯 Grundbedürfnis" },
+      // Category and Honeypot (Translated labels)
+      { id: "Food_cat", group: "category", label: "🍽️ Food" }, // "Essen"
+      { id: "BasicNeed_hp", group: "honeypot", label: "🍯 Basic Need" }, // "Grundbedürfnis"
     ];
 
-    // Objekt zur Verfolgung der Knotengrößen
+    // Object to track node sizes
     const nodeRadii = {};
     nodes.forEach((node) => {
       if (node.group === "honeypot") nodeRadii[node.id] = 30;
@@ -1653,92 +1653,92 @@ function initFocusNetwork() {
     });
 
     const links = [
-      // Verbindungen zwischen Wörtern und Sätzen
-      { source: "ein", target: "Apfel", value: 2, type: "part_of" },
+      // Connections between words and sentences (using new translated IDs)
+      { source: "a_art", target: "Apple", value: 2, type: "part_of" },
       {
-        source: "Apfel",
-        target: "schmeckt",
+        source: "Apple",
+        target: "tastes",
         value: 2,
         type: "part_of",
       },
       {
-        source: "schmeckt",
-        target: "lecker",
-        value: 2,
-        type: "part_of",
-      },
-
-      {
-        source: "Apfel",
-        target: "hat",
-        value: 2,
-        type: "part_of",
-      },
-      {
-        source: "hat",
-        target: "eine",
-        value: 2,
-        type: "part_of",
-      },
-      {
-        source: "eine",
-        target: "rote",
-        value: 2,
-        type: "part_of",
-      },
-      {
-        source: "rote",
-        target: "Farbe",
+        source: "tastes",
+        target: "delicious_adj",
         value: 2,
         type: "part_of",
       },
 
       {
-        source: "mir",
-        target: "schmeckt",
+        source: "Apple",
+        target: "has",
         value: 2,
         type: "part_of",
       },
       {
-        source: "schmeckt",
-        target: "Apfel",
+        source: "has",
+        target: "an_art", // Assuming "eine" translates to "an" or "a" depending on context
+        value: 2,
+        type: "part_of",
+      },
+      {
+        source: "an_art",
+        target: "red_adj",
+        value: 2,
+        type: "part_of",
+      },
+      {
+        source: "red_adj",
+        target: "Color",
         value: 2,
         type: "part_of",
       },
 
       {
-        source: "ich",
-        target: "esse",
+        source: "me_pron",
+        target: "tastes",
         value: 2,
         type: "part_of",
       },
       {
-        source: "esse",
-        target: "was",
-        value: 2,
-        type: "part_of",
-      },
-      {
-        source: "was",
-        target: "mir",
-        value: 2,
-        type: "part_of",
-      },
-      {
-        source: "mir",
-        target: "schmeckt",
+        source: "tastes",
+        target: "Apple", // "schmeckt Apfel" -> "tastes Apple"
         value: 2,
         type: "part_of",
       },
 
-      // Verbindungen zu Essen und Honeypot
-      { source: "esse", target: "Essen", value: 3, type: "category" },
+      {
+        source: "I_pron",
+        target: "eat_act",
+        value: 2,
+        type: "part_of",
+      },
+      {
+        source: "eat_act",
+        target: "what_pron",
+        value: 2,
+        type: "part_of",
+      },
+      {
+        source: "what_pron",
+        target: "me_pron",
+        value: 2,
+        type: "part_of",
+      },
+      // This connection "mir schmeckt" is already covered by "me_pron" -> "tastes"
+      // {
+      //   source: "me_pron",
+      //   target: "tastes",
+      //   value: 2,
+      //   type: "part_of",
+      // },
 
-      //{ source: "Apfel", target: "Essen", value: 2, type: "category" },
-      { source: "Essen", target: "Honeypot", value: 4, type: "honeypot" },
+      // Connections to Food and Honeypot
+      { source: "eat_act", target: "Food_cat", value: 3, type: "category" },
+      // { source: "Apple", target: "Food_cat", value: 2, type: "category" }, // Example, if Apple is food
+      { source: "Food_cat", target: "BasicNeed_hp", value: 4, type: "honeypot" },
     ];
 
-    // Kraftsimulation erstellen
+    // Create force simulation
     const simulation = d3
       .forceSimulation(nodes)
       .force(
@@ -1867,10 +1867,10 @@ function initFocusNetwork() {
       .style("font-size", "12px")
       .style("fill", "#666")
       .text(
-        "Maus: Ziehen zum Verschieben, Mausrad zum Zoomen, Shift+Mausrad für Knotengröße"
+        "Mouse: Drag to pan, Wheel to zoom, Shift+Wheel for node size"
       );
 
-    // Simulation starten und bei jedem Tick aktualisieren
+    // Start simulation and update on each tick
     simulation.on("tick", () => {
       link
         .attr("x1", (d) => d.source.x)
@@ -1879,14 +1879,14 @@ function initFocusNetwork() {
         .attr("y2", (d) => d.target.y);
 
       node.attr("transform", (d) => {
-        // Beschränke die Position auf den sichtbaren Bereich
+        // Restrict position to visible area
         d.x = Math.max(20, Math.min(width - 20, d.x));
         d.y = Math.max(20, Math.min(height - 20, d.y));
         return `translate(${d.x}, ${d.y})`;
       });
     });
 
-    // Speichere Referenzen für spätere Verwendung
+    // Store references for later use
     networkData = {
       simulation: simulation,
       nodes: nodes,
@@ -1897,82 +1897,78 @@ function initFocusNetwork() {
       container: container,
     };
 
-    // Neue Funktion: Aktualisiert das Fokus-Netzwerk basierend auf dem Energielevel
+    // New function: Updates the focus network based on energy level
     window.updateFocusNetwork = function (energyLevel) {
-      console.log("Aktualisiere Fokus-Netzwerk mit Energielevel:", energyLevel);
+      console.log("Updating Focus Network with energy level:", energyLevel);
 
-      // Alle vorherigen Fokus-Markierungen entfernen
+      // Remove all previous focus markings
       node.classed("focus", false);
       link.classed("focus", false);
 
-      // Identifiziere die vorhandenen Satzgruppen im Netzwerk
-      // Ein Satz besteht aus mehreren verbundenen Wörtern
+      // Identify existing sentence groups in the network
+      // A sentence consists of several connected words (using new translated IDs)
       const sentences = [
-        // Satz 1: "Ein Apfel schmeckt lecker"
-        ["ein", "Apfel", "schmeckt", "lecker"],
-        // Satz 2: "Ein Apfel hat eine rote Farbe"
-        ["ein", "Apfel", "hat", "eine", "rote", "Farbe"],
-        // Satz 3: "Ich esse was"
-        ["ich", "esse", "was"],
-        // Satz 4: "Mir schmeckt ein Apfel"
-        ["mir", "schmeckt", "ein", "Apfel"],
+        // Sentence 1: "a Apple tastes delicious"
+        ["a_art", "Apple", "tastes", "delicious_adj"],
+        // Sentence 2: "a Apple has an red Color" (or "a Apple has a red color")
+        ["a_art", "Apple", "has", "an_art", "red_adj", "Color"],
+        // Sentence 3: "I eat what"
+        ["I_pron", "eat_act", "what_pron"],
+        // Sentence 4: "me tastes a Apple" (grammatically a bit off, but reflects original structure)
+        ["me_pron", "tastes", "a_art", "Apple"],
       ];
 
-      // Honeypot-Knoten identifizieren
+      // Identify honeypot node
       const honeypotNode = nodes.find((n) => n.group === "honeypot");
       if (!honeypotNode) {
-        console.error("Kein Honeypot-Knoten gefunden!");
+        console.error("No honeypot node found!");
         return;
       }
 
-      // Priorität für Sätze basierend auf ihrer "Entfernung" zum Honeypot
-      // Dies ist eine vereinfachte Logik, da wir keine tatsächliche Graphdistanz berechnen
+      // Priority for sentences based on their "distance" to the honeypot
+      // This is a simplified logic, as we don't calculate actual graph distance
       const sentencePriorities = [
-        // Satz 1 hat mittlere Priorität (enthält "Apfel", der mit Essen verbunden ist)
-        { sentence: sentences[0], priority: 2 },
-        // Satz 2 hat niedrigere Priorität (beschreibt Eigenschaften)
-        { sentence: sentences[1], priority: 3 },
-        // Satz 3 hat höchste Priorität (direkter Bezug zum Essen)
-        { sentence: sentences[2], priority: 1 },
-        // Satz 4 hat auch mittlere Priorität (enthält "Apfel")
-        { sentence: sentences[3], priority: 2 },
+        { sentence: sentences[0], priority: 2 }, // Contains "Apple", linked to Food
+        { sentence: sentences[1], priority: 3 }, // Describes properties
+        { sentence: sentences[2], priority: 1 }, // Direct relation to eating
+        { sentence: sentences[3], priority: 2 }, // Contains "Apple"
       ];
 
-      // Sortiere Sätze nach Priorität (niedrigere Zahl = näher am Honeypot/wichtiger)
+      // Sort sentences by priority (lower number = closer to honeypot/more important)
       const sortedSentences = sentencePriorities.sort(
         (a, b) => a.priority - b.priority
       );
 
-      // Wähle Satz basierend auf Energielevel
+      // Select sentence based on energy level
       let selectedSentence;
 
       if (energyLevel < 40) {
-        // Bei niedrigem Energielevel: Fokus auf Satz nahe am Honeypot (höchste Priorität)
+        // At low energy level: focus on sentence near honeypot (highest priority)
         selectedSentence = sortedSentences[0].sentence;
         console.log(
-          "Niedriges Energielevel, Fokus auf Satz mit höchster Priorität"
+          "Low energy level, focus on sentence with highest priority"
         );
       } else if (energyLevel < 70) {
-        // Bei mittlerem Energielevel: Fokus auf Satz mit mittlerer Priorität
+        // At medium energy level: focus on sentence with medium priority
         const middleIndex = Math.min(1, sortedSentences.length - 1);
         selectedSentence = sortedSentences[middleIndex].sentence;
         console.log(
-          "Mittleres Energielevel, Fokus auf Satz mit mittlerer Priorität"
+          "Medium energy level, focus on sentence with medium priority"
         );
       } else {
-        // Bei hohem Energielevel: Fokus auf Satz weit vom Honeypot (niedrigste Priorität)
+        // At high energy level: focus on sentence far from honeypot (lowest priority)
         selectedSentence = sortedSentences[sortedSentences.length - 1].sentence;
         console.log(
-          "Hohes Energielevel, Fokus auf Satz mit niedrigster Priorität"
+          "High energy level, focus on sentence with lowest priority"
         );
       }
 
-      // Markiere alle Knoten im ausgewählten Satz als fokussiert
+      // Mark all nodes in the selected sentence as focused
       node
         .filter((d) => selectedSentence.includes(d.id))
         .classed("focus", true);
 
-      // Markiere alle Verbindungen zwischen den Wörtern im Satz
+      // Mark all connections between words in the sentence
       link
         .filter((l) => {
           return (
@@ -1982,47 +1978,48 @@ function initFocusNetwork() {
         })
         .classed("focus", true);
 
-      // Finde einen repräsentativen Knoten für die Anzeige der Satzinformation
+      // Find a representative node for displaying sentence information
       const mainNode =
         nodes.find((n) => n.id === selectedSentence[0]) || nodes[0];
 
-      // Wenn ein Informationspanel vorhanden ist, aktualisiere es
+      // If an information panel exists, update it
       const infoPanel = document.getElementById("contextInfo");
       if (infoPanel) {
-        // Erzeuge eine menschenlesbare Satzversion durch Verkettung der Wörter
+        // Create a human-readable sentence version by concatenating words
         const readableSentence = selectedSentence
           .map((wordId) => {
             const node = nodes.find((n) => n.id === wordId);
-            return node ? node.label.replace(/^[^ ]+ /, "") : wordId;
+            // Remove emoji/icon prefix for readable sentence
+            return node ? (node.label.includes(" ") ? node.label.split(" ")[1] : node.label) : wordId;
           })
           .join(" ")
-          .replace(/\s([,.!?])/g, "$1"); // Entferne Leerzeichen vor Satzzeichen
+          .replace(/\s([,.!?])/g, "$1"); // Remove spaces before punctuation
 
         infoPanel.innerHTML = `
           <div class="context-details">
             <div class="context-header">
               <div class="context-emoji">📝</div>
-              <h4>Fokussierter Satz</h4>
-              <span class="context-type sentence">Satz</span>
+              <h4>Focused Sentence</h4>
+              <span class="context-type sentence">Sentence</span>
             </div>
             <div class="context-body">
               <p><strong>"${readableSentence}"</strong></p>
-              <p>Fokussiert aufgrund des aktuellen Energielevels von <span class="energy-value ${
+              <p>Focused due to current energy level of <span class="energy-value ${
                 energyLevel < 40 ? "low" : energyLevel < 70 ? "medium" : "high"
               }">${energyLevel}%</span></p>
               <div class="context-energy">
-                <strong>Entfernung zum Honeypot:</strong> 
+                <strong>Distance to Honeypot:</strong>
                 ${
                   sortedSentences.findIndex(
                     (s) => s.sentence === selectedSentence
                   ) === 0
-                    ? "Gering (hohe Priorität)"
+                    ? "Low (high priority)"
                     : sortedSentences.findIndex(
                         (s) => s.sentence === selectedSentence
                       ) ===
                       sortedSentences.length - 1
-                    ? "Hoch (niedrige Priorität)"
-                    : "Mittel"
+                    ? "High (low priority)"
+                    : "Medium"
                 }
               </div>
             </div>
@@ -2031,43 +2028,43 @@ function initFocusNetwork() {
       }
     };
 
-    // Initialen Fokus setzen basierend auf aktuellem Energielevel
+    // Set initial focus based on current energy level
     if (typeof currentEnergyLevel !== "undefined") {
       window.updateFocusNetwork(currentEnergyLevel);
     } else {
-      // Standardwert, falls keine globale Variable definiert ist
+      // Default value if global variable is not defined
       window.updateFocusNetwork(50);
     }
 
-    // Informationsfeld für Benutzerhinweise anzeigen
+    // Display user help information in the info panel
     const infoPanel = document.getElementById("contextInfo");
     if (infoPanel) {
       infoPanel.innerHTML = `
         <div class="network-help">
-          <h3>Interaktives Netzwerk</h3>
-          <p>• Ziehen Sie mit der Maus zum Verschieben des gesamten Netzwerks</p>
-          <p>• Mausrad zum Zoomen des Netzwerks</p>
-          <p>• Knoten durch Ziehen bewegen</p>
-          <p>• Knoten anklicken für Details</p>
-          <p>• Shift + Mausrad zum Ändern der Knotengröße</p>
+          <h3>Interactive Network</h3>
+          <p>• Drag with the mouse to pan the entire network</p>
+          <p>• Mouse wheel to zoom the network</p>
+          <p>• Drag nodes to move them</p>
+          <p>• Click nodes for details</p>
+          <p>• Shift + Mouse wheel to change node size</p>
         </div>
       `;
     }
 
-    console.log("Fokus-Netzwerk erfolgreich initialisiert");
+    console.log("Focus Network initialized successfully");
   } catch (error) {
-    console.error("Fehler bei der Initialisierung des Fokus-Netzwerks:", error);
+    console.error("Error initializing Focus Network:", error);
     container.innerHTML = `
       <div class="fallback-content">
         <div class="fallback-icon"><i class="fas fa-bug"></i></div>
-        <h3>Visualisierung fehlgeschlagen</h3>
-        <p>Fehler: ${error.message}</p>
+        <h3>Visualization Failed</h3>
+        <p>Error: ${error.message}</p>
       </div>
     `;
   }
 }
 
-// Drag-Funktionen für interaktive Knoten
+// Drag functions for interactive nodes
 function dragstarted(event, d) {
   // Verhindern, dass das Zoom-Verhalten aktiviert wird während des Ziehens
   if (event.sourceEvent.stopPropagation) event.sourceEvent.stopPropagation();
@@ -2112,124 +2109,114 @@ function handleNodeClick(event, d) {
   showContextInfo(d);
 }
 
-// Hilfsfunktion zur Bestimmung des Verbindungstyp-Namens
+// Helper function to determine connection type name
 function getConnectionTypeName(type) {
   switch (type) {
     case "part_of":
-      return "Teil von";
+      return "Part of";
     case "semantic":
-      return "Semantische Verbindung";
+      return "Semantic Connection";
     case "category":
-      return "Kategorisierung";
+      return "Categorization";
     case "honeypot":
-      return "Grundbedürfnis";
+      return "Basic Need";
     case "color":
-      return "Farbeigenschaft";
+      return "Color Property";
     case "taste":
-      return "Geschmackseigenschaft";
+      return "Taste Property";
     case "property":
-      return "Eigenschaft";
+      return "Property";
     default:
       return type;
   }
 }
 
-// Funktion zum Generieren der Netzwerkdaten
+// Function to generate network data (using translated node IDs and labels)
 function generateNetworkData() {
   console.log("Generating network data...");
 
-  // Definiere die Knoten
+  // Define nodes
   const nodes = [
-    // Honeypot und Kategorie
-    { id: "Honeypot", group: "honeypot", label: "🍯 Grundbedürfnis" },
-    { id: "Essen", group: "category", label: "🍽️ Essen" },
+    // Honeypot and Category
+    { id: "BasicNeed_hp", group: "honeypot", label: "🍯 Basic Need" },
+    { id: "Food_cat", group: "category", label: "🍽️ Food" },
 
-    // Wörter aus "Ich esse was mir schmeckt"
-    { id: "ich", group: "pronoun", label: "ich" },
-    { id: "esse", group: "verb", label: "esse" },
-    { id: "was", group: "pronoun", label: "was" },
-    { id: "mir", group: "pronoun", label: "mir" },
-    { id: "schmeckt", group: "verb", label: "schmeckt" },
+    // Words from "I eat what tastes good to me"
+    { id: "I_pron", group: "pronoun", label: "I" },
+    { id: "eat_act", group: "verb", label: "eat" },
+    { id: "what_pron", group: "pronoun", label: "what" },
+    { id: "me_pron", group: "pronoun", label: "me" },
+    { id: "tastes", group: "verb", label: "tastes" },
 
-    // Wörter aus "Ein Apfel schmeckt lecker"
-    { id: "ein", group: "article", label: "ein" },
-    { id: "Apfel", group: "object", label: "🍎 Apfel" },
-    { id: "lecker", group: "property", label: "lecker" },
+    // Words from "An apple tastes delicious"
+    { id: "a_art", group: "article", label: "a" }, // Changed from "an_art" to "a_art" for consistency if "ein" is "a"
+    { id: "Apple", group: "object", label: "🍎 Apple" },
+    { id: "delicious_adj", group: "property", label: "delicious" },
 
-    // Wörter aus "Ein Apfel hat eine rote Farbe"
-    { id: "hat", group: "verb", label: "hat" },
-    { id: "eine", group: "article", label: "eine" },
-    { id: "rote", group: "property", label: "rote" },
-    { id: "Farbe", group: "object", label: "🎨 Farbe" },
+    // Words from "An apple has a red color"
+    { id: "has", group: "verb", label: "has" },
+    { id: "an_art", group: "article", label: "a" }, // Assuming "eine" as "a" here too for "a red color"
+    { id: "red_adj", group: "property", label: "red" },
+    { id: "Color", group: "object", label: "🎨 Color" }, // Changed from property to object as "Farbe" was
   ];
 
-  // Definiere die Verbindungen
+  // Define links
   const links = [
-    // Verbindungen zum Honeypot
-    { source: "Honeypot", target: "Essen", value: 3, type: "honeypot" },
+    // Connections to Honeypot
+    { source: "BasicNeed_hp", target: "Food_cat", value: 3, type: "honeypot" },
 
-    // Sequenz 1: "Ich esse was mir schmeckt"
-    { source: "ich", target: "esse", value: 1, type: "part_of" },
-    { source: "esse", target: "was", value: 1, type: "part_of" },
-    { source: "was", target: "mir", value: 1, type: "part_of" },
-    { source: "mir", target: "schmeckt", value: 1, type: "part_of" },
+    // Sequence 1: "I eat what tastes (good to) me"
+    { source: "I_pron", target: "eat_act", value: 1, type: "part_of" },
+    { source: "eat_act", target: "what_pron", value: 1, type: "part_of" },
+    { source: "what_pron", target: "me_pron", value: 1, type: "part_of" }, // "what to me"
+    { source: "me_pron", target: "tastes", value: 1, type: "part_of" }, // "me tastes" (original structure)
 
-    // Sequenz 2: "Ein Apfel schmeckt lecker"
-    { source: "ein", target: "Apfel", value: 1, type: "part_of" },
-    { source: "Apfel", target: "schmeckt", value: 1, type: "part_of" },
-    { source: "schmeckt", target: "lecker", value: 1, type: "part_of" },
+    // Sequence 2: "An apple tastes delicious"
+    { source: "a_art", target: "Apple", value: 1, type: "part_of" },
+    { source: "Apple", target: "tastes", value: 1, type: "part_of" },
+    { source: "tastes", target: "delicious_adj", value: 1, type: "part_of" },
 
-    // Sequenz 3: "Ein Apfel hat eine rote Farbe"
-    { source: "ein", target: "Apfel", value: 1, type: "part_of" },
-    { source: "Apfel", target: "hat", value: 1, type: "part_of" },
-    { source: "hat", target: "eine", value: 1, type: "part_of" },
-    { source: "eine", target: "rote", value: 1, type: "part_of" },
-    { source: "rote", target: "Farbe", value: 1, type: "part_of" },
+    // Sequence 3: "An apple has a red color"
+    // { source: "a_art", target: "Apple", value: 1, type: "part_of" }, // Already defined
+    { source: "Apple", target: "has", value: 1, type: "part_of" },
+    { source: "has", target: "an_art", value: 1, type: "part_of" }, // "has a"
+    { source: "an_art", target: "red_adj", value: 1, type: "part_of" }, // "a red"
+    { source: "red_adj", target: "Color", value: 1, type: "part_of" }, // "red color"
 
-    // Verbindungen zur Kategorie
-    { source: "Apfel", target: "Essen", value: 2, type: "category" },
+    // Connections to Category
+    { source: "Apple", target: "Food_cat", value: 2, type: "category" },
+    { source: "eat_act", target: "Food_cat", value: 2, type: "category"} // Added: eat -> Food
   ];
 
-  // Setze die Positionen der Knoten
+  // Set node positions
   nodes.forEach((node, i) => {
-    // Honeypot oben
-    if (node.id === "Honeypot") {
-      node.x = 400;
-      node.y = 50;
-    }
-    // Kategorie darunter
-    else if (node.id === "Essen") {
-      node.x = 400;
-      node.y = 150;
-    }
-    // Wörter aus "Ich esse was mir schmeckt"
-    else if (["ich", "esse", "was", "mir", "schmeckt"].includes(node.id)) {
-      node.x =
-        200 + ["ich", "esse", "was", "mir", "schmeckt"].indexOf(node.id) * 100;
+    if (node.id === "BasicNeed_hp") { node.x = 400; node.y = 50; }
+    else if (node.id === "Food_cat") { node.x = 400; node.y = 150; }
+    else if (["I_pron", "eat_act", "what_pron", "me_pron", "tastes"].includes(node.id)) {
+      node.x = 150 + ["I_pron", "eat_act", "what_pron", "me_pron", "tastes"].indexOf(node.id) * 100;
       node.y = 250;
     }
-    // Wörter aus "Ein Apfel schmeckt lecker"
-    else if (["ein", "Apfel", "lecker"].includes(node.id)) {
-      node.x = 300 + ["ein", "Apfel", "lecker"].indexOf(node.id) * 100;
+    else if (["a_art", "Apple", "delicious_adj"].includes(node.id)) {
+      node.x = 250 + ["a_art", "Apple", "delicious_adj"].indexOf(node.id) * 120;
       node.y = 350;
     }
-    // Wörter aus "Ein Apfel hat eine rote Farbe"
-    else if (["hat", "eine", "rote", "Farbe"].includes(node.id)) {
-      node.x = 250 + ["hat", "eine", "rote", "Farbe"].indexOf(node.id) * 100;
+    else if (["has", "an_art", "red_adj", "Color"].includes(node.id)) {
+      node.x = 200 + ["has", "an_art", "red_adj", "Color"].indexOf(node.id) * 100;
       node.y = 450;
     }
   });
 
+
   return { nodes, links };
 }
 
-// Funktion zum Aktualisieren des Netzwerks
+// Function to update the network
 function updateNetwork() {
-  // Gültigen Container prüfen
+  // Check for valid container
   const container = document.getElementById("focusNetwork");
   if (!container) return;
 
-  // Bestehende SVG-Elemente überprüfen, falls nicht vorhanden, neu erstellen
+  // Check existing SVG elements, create if not present
   if (!networkSvg) {
     const width = container.clientWidth;
     const height = container.clientHeight || 500;
@@ -2242,7 +2229,7 @@ function updateNetwork() {
       .attr("viewBox", [0, 0, width, height])
       .attr("style", "max-width: 100%; height: auto;");
 
-    // Definiere Marker für Pfeilspitzen
+    // Define markers for arrowheads
     networkSvg
       .append("defs")
       .selectAll("marker")
@@ -2260,14 +2247,14 @@ function updateNetwork() {
       .attr("fill", "#999")
       .attr("d", "M0,-5L10,0L0,5");
 
-    // Gruppen für Links und Nodes
+    // Groups for links and nodes
     networkSvg.append("g").attr("class", "links");
     networkSvg.append("g").attr("class", "nodes");
 
-    // Erstelle Simulationsdaten
+    // Create simulation data
     networkData = generateNetworkData();
 
-    // Links erstellen
+    // Create links
     linkElements = networkSvg
       .select(".links")
       .selectAll("line")
@@ -2279,7 +2266,7 @@ function updateNetwork() {
       .attr("stroke-width", 1.5)
       .attr("stroke-opacity", 0.6);
 
-    // Node-Gruppen erstellen
+    // Create node groups
     const nodeGroups = networkSvg
       .select(".nodes")
       .selectAll("g")
@@ -2295,46 +2282,46 @@ function updateNetwork() {
           .on("end", dragended)
       );
 
-    // Kreise für die Nodes
+    // Circles for nodes
     nodeGroups
       .append("circle")
       .attr("r", (d) => {
-        if (d.group === "fruit") return 30;
+        if (d.group === "fruit" || d.group === "object") return 30; // Adjusted for "Apple"
         if (d.group === "property") return 25;
         if (d.group === "color") return 20;
         if (d.group === "taste") return 20;
         return 15;
       })
       .attr("fill", (d) => {
-        if (d.group === "fruit") return "#3b82f6"; // Blau für Früchte
-        if (d.group === "property") return "#22c55e"; // Grün für Eigenschaften
-        if (d.group === "color") return "#f97316"; // Orange für Farben
-        if (d.group === "taste") return "#f97316"; // Orange für Geschmack
-        return "#a855f7"; // Lila für andere
+        if (d.group === "fruit" || d.group === "object") return "#3b82f6"; // Blue for fruits/objects
+        if (d.group === "property") return "#22c55e"; // Green for properties
+        if (d.group === "color") return "#f97316"; // Orange for colors
+        if (d.group === "taste") return "#f97316"; // Orange for taste
+        return "#a855f7"; // Purple for others
       })
       .attr("stroke", "#fff")
       .attr("stroke-width", 1.5)
       .on("click", handleNodeClick);
 
-    // Labels für die Nodes
+    // Labels for nodes
     nodeGroups
       .append("text")
       .text((d) => d.label)
       .attr("x", 0)
       .attr("y", (d) => {
-        if (d.group === "fruit") return 3;
+        if (d.group === "fruit" || d.group === "object") return 3;
         return 3;
       })
       .attr("text-anchor", "middle")
       .attr("dominant-baseline", "middle")
       .attr("font-size", (d) => {
-        if (d.group === "fruit") return "12px";
+        if (d.group === "fruit" || d.group === "object") return "12px";
         return "10px";
       })
       .attr("fill", "#fff")
       .attr("pointer-events", "none");
 
-    // Erstelle die Simulation
+    // Create simulation
     simulation = d3
       .forceSimulation(networkData.nodes)
       .force(
@@ -2349,7 +2336,7 @@ function updateNetwork() {
       .force("collide", d3.forceCollide().radius(40).strength(0.2))
       .on("tick", ticked);
 
-    // Positioniere die Nodes anfänglich an den definierten Positionen
+    // Initially position nodes at defined positions
     networkData.nodes.forEach((node) => {
       if (node.x && node.y) {
         node.fx = node.x;
@@ -2357,7 +2344,7 @@ function updateNetwork() {
       }
     });
 
-    // Nach kurzer Zeit die feste Position lösen, damit die Knoten sich bewegen können
+    // After a short delay, release fixed positions so nodes can move
     setTimeout(() => {
       networkData.nodes.forEach((node) => {
         node.fx = null;
@@ -2366,7 +2353,7 @@ function updateNetwork() {
       simulation.alpha(0.3).restart();
     }, 2000);
 
-    // Tick-Funktion für die Simulation
+    // Tick function for simulation
     function ticked() {
       linkElements
         .attr("x1", (d) => d.source.x)
@@ -2379,53 +2366,53 @@ function updateNetwork() {
         .attr("transform", (d) => `translate(${d.x}, ${d.y})`);
     }
 
-    // Zeige den Hilfstext an
+    // Display help text
     const expandHint = document.createElement("div");
     expandHint.className = "expand-hint";
     expandHint.innerHTML =
-      "<i class='fas fa-info-circle'></i> Klicken Sie auf einen Knoten, um Details anzuzeigen";
+      "<i class='fas fa-info-circle'></i> Click on a node to view details";
     container.appendChild(expandHint);
 
     nodeElements = nodeGroups;
   }
 }
 
-// Funktion zur Initialisierung der dynamischen Netzwerkvisualisierung
+// Function to initialize dynamic network visualization
 function initDynamicNetwork() {
   console.log(
-    "Initialisiere dynamisches Netzwerk mit vereinfachter Implementierung"
+    "Initializing dynamic network with simplified implementation"
   );
 
-  // Gültigen Container prüfen
+  // Check for valid container
   const container = document.getElementById("dynamic-network");
   if (!container) {
-    console.error("Container #dynamic-network nicht gefunden!");
+    console.error("Container #dynamic-network not found!");
     return;
   }
 
-  console.log("Container gefunden:", container);
+  console.log("Container found:", container);
   console.log(
-    "Container-Größe:",
+    "Container size:",
     container.clientWidth,
     "x",
     container.clientHeight
   );
 
-  // Größe auf sinnvollen Wert setzen, falls zu klein
+  // Set size to a reasonable value if too small
   const width = container.clientWidth || 600;
   const height = container.clientHeight || 400;
 
   if (width < 100 || height < 100) {
-    console.warn("Container-Größe ist zu klein:", width, "x", height);
-    console.warn("Verwende Standard-Größe: 600 x 400");
+    console.warn("Container size is too small:", width, "x", height);
+    console.warn("Using default size: 600 x 400");
   }
 
   try {
-    // Bestehende SVG-Elemente entfernen, falls vorhanden
+    // Remove existing SVG elements, if any
     d3.select(container).selectAll("svg").remove();
-    console.log("Bestehende SVG-Elemente entfernt");
+    console.log("Existing SVG elements removed");
 
-    // SVG-Element erstellen
+    // Create SVG element
     const svg = d3
       .select(container)
       .append("svg")
@@ -2434,10 +2421,10 @@ function initDynamicNetwork() {
       .attr("viewBox", [0, 0, width, height])
       .attr("style", "max-width: 100%; height: 100%;");
 
-    // Haupt-Gruppe für Zooming und Panning
+    // Main group for zooming and panning
     const g = svg.append("g");
 
-    // Zoom-Verhalten hinzufügen
+    // Add zoom behavior
     const zoom = d3
       .zoom()
       .scaleExtent([0.1, 4])
@@ -2445,23 +2432,23 @@ function initDynamicNetwork() {
         g.attr("transform", event.transform);
       });
 
-    // Zoom-Verhalten auf SVG anwenden
+    // Apply zoom behavior to SVG
     svg.call(zoom);
 
-    // Standardmäßig in die Mitte zoomen
+    // Zoom to center by default
     svg.call(
       zoom.transform,
       d3.zoomIdentity.translate(width / 4, height / 4).scale(0.8)
     );
 
-    console.log("SVG-Element erstellt:", svg.node());
+    console.log("SVG element created:", svg.node());
 
-    // Einfache Testdaten - nur ein paar Honeypots und Kontexte
+    // Simple test data - just a few honeypots and contexts
     const nodes = [
       {
         id: "honeypot1",
         type: "honeypot",
-        label: "Essen",
+        label: "Food", // Translated from "Essen"
         x: width / 2,
         y: height / 2,
       },
@@ -2475,34 +2462,34 @@ function initDynamicNetwork() {
       {
         id: "context2",
         type: "essential",
-        label: "Nahrung",
+        label: "Nourishment", // Translated from "Nahrung"
         x: width / 2 + 120,
         y: height / 2 - 80,
       },
       {
         id: "context3",
         type: "related",
-        label: "Kochen",
+        label: "Cooking", // Translated from "Kochen"
         x: width / 2 - 80,
         y: height / 2 + 100,
       },
       {
         id: "context4",
         type: "related",
-        label: "Gesundheit",
+        label: "Health", // Translated from "Gesundheit"
         x: width / 2 + 80,
         y: height / 2 + 100,
       },
       {
         id: "context5",
         type: "distant",
-        label: "Kultur",
+        label: "Culture", // Translated from "Kultur"
         x: width / 2 - 200,
         y: height / 2 + 20,
       },
     ];
 
-    // Objekt zur Verfolgung der Knotengrößen
+    // Object to track node sizes
     const nodeRadii = {};
     nodes.forEach((node) => {
       if (node.type === "honeypot") nodeRadii[node.id] = 25;
@@ -2519,7 +2506,7 @@ function initDynamicNetwork() {
       { source: "context3", target: "context5", type: "distant" },
     ];
 
-    // Kraft-Simulation erstellen für interaktive Bewegung
+    // Create force simulation for interactive movement
     const simulation = d3
       .forceSimulation(nodes)
       .force(
@@ -2540,7 +2527,7 @@ function initDynamicNetwork() {
         d3.forceCollide().radius((d) => nodeRadii[d.id] || 12)
       );
 
-    // Verbindungen erstellen
+    // Create links
     const link = g
       .append("g")
       .selectAll("line")
@@ -2548,7 +2535,7 @@ function initDynamicNetwork() {
       .join("line")
       .attr("class", (d) => `dynamic-link ${d.type}`);
 
-    // Knoten erstellen
+    // Create nodes
     const node = g
       .append("g")
       .selectAll("g")
@@ -2563,7 +2550,7 @@ function initDynamicNetwork() {
           .on("end", dragEndDynamic)
       );
 
-    // Kreise für die Knoten
+    // Circles for nodes
     node
       .append("circle")
       .attr("class", (d) => `dynamic-node ${d.type}`)
@@ -2577,7 +2564,7 @@ function initDynamicNetwork() {
           : 12
       );
 
-    // Labels für die Knoten
+    // Labels for nodes
     node
       .append("text")
       .attr("text-anchor", "middle")
@@ -2588,59 +2575,58 @@ function initDynamicNetwork() {
       .attr("fill", "#333")
       .attr("pointer-events", "none");
 
-    console.log("Dynamisches Netzwerk erstellt");
+    console.log("Dynamic network created");
 
-    // Markiere einen Knoten als fokussiert
+    // Mark a node as focused
     svg
       .selectAll(".dynamic-node")
       .filter((d, i) => i === 1)
       .classed("focused", true);
 
-    // Markiere entsprechende Verbindungen als fokussiert
+    // Mark corresponding links as focused
     svg
       .selectAll(".dynamic-link")
       .filter((d, i) => i === 0)
       .classed("focused", true);
 
-    // Initialen Fokus basierend auf dem aktuellen Energielevel setzen
+    // Set initial focus based on current energy level
     updateDynamicNetwork(currentEnergyLevel);
   } catch (error) {
-    console.error("Fehler beim Erstellen des dynamischen Netzwerks:", error);
+    console.error("Error creating dynamic network:", error);
   }
 }
 
-// Neue Funktion: Aktualisiert das dynamische Netzwerk basierend auf dem Energielevel
+// New function: Updates the dynamic network based on energy level
 function updateDynamicNetwork(energyLevel) {
   console.log(
-    "Aktualisiere dynamisches Netzwerk mit Energielevel:",
+    "Updating dynamic network with energy level:",
     energyLevel
   );
 
-  // Prüfe, ob dynamisches Netzwerk initialisiert wurde
+  // Check if dynamic network is initialized
   if (!dynamicNodes || !dynamicSvg) {
-    console.warn("Dynamisches Netzwerk ist noch nicht initialisiert!");
+    console.warn("Dynamic network is not yet initialized!");
     return;
   }
 
-  // Versuche alle Knoten zu finden und sortiere sie nach Abstand zum Honeypot
-  // (wir nehmen an, dass ein Knoten vom Typ "honeypot" existiert)
+  // Try to find all nodes and sort them by distance to honeypot
+  // (assuming a node of type "honeypot" exists)
   const allNodes = dynamicNodes.data();
 
-  // Finde den Honeypot-Knoten
+  // Find the honeypot node
   const honeypotNode = allNodes.find((node) => node.type === "honeypot");
   if (!honeypotNode) {
-    console.error("Kein Honeypot-Knoten gefunden!");
+    console.error("No honeypot node found!");
     return;
   }
 
-  // Sortiere alle Knoten nach Abstand zum Honeypot (außer dem Honeypot selbst)
-  // Annahme: Je höher der Index, desto weiter entfernt vom Honeypot
-  // (Dies ist eine Vereinfachung, in einer realen Implementierung würde man
-  // wahrscheinlich Pfadlängen oder andere Metriken verwenden)
+  // Sort all nodes by distance to honeypot (excluding honeypot itself)
+  // Assumption: Higher index means further from honeypot
+  // (This is a simplification; a real implementation would likely use path lengths or other metrics)
   const sortedNodes = allNodes
-    .filter((node) => node.type !== "honeypot") // Honeypot selbst ausschließen
+    .filter((node) => node.type !== "honeypot") // Exclude honeypot itself
     .sort((a, b) => {
-      // Sortieren nach Typ (essential näher, distant weiter weg)
+      // Sort by type (essential closer, distant further away)
       const typeOrder = { essential: 1, related: 2, default: 3 };
       const aOrder = typeOrder[a.type] || typeOrder.default;
       const bOrder = typeOrder[b.type] || typeOrder.default;
@@ -2648,47 +2634,47 @@ function updateDynamicNetwork(energyLevel) {
     });
 
   if (sortedNodes.length === 0) {
-    console.warn("Keine Knoten zum Fokussieren gefunden!");
+    console.warn("No nodes found to focus!");
     return;
   }
 
-  // Wähle Knoten basierend auf Energielevel
+  // Select node based on energy level
   let newFocusNode;
 
   if (energyLevel < 40) {
-    // Bei niedrigem Energielevel: Knoten nahe am Honeypot (Anfang der Liste)
+    // At low energy level: node near honeypot (start of list)
     newFocusNode = sortedNodes[0];
     console.log(
-      "Niedriges Energielevel, Fokus auf Knoten nahe am Honeypot:",
+      "Low energy level, focus on node near honeypot:",
       newFocusNode.label
     );
   } else if (energyLevel < 70) {
-    // Bei mittlerem Energielevel: Knoten in der Mitte
+    // At medium energy level: node in the middle
     const middleIndex = Math.floor(sortedNodes.length / 2);
     newFocusNode = sortedNodes[middleIndex];
     console.log(
-      "Mittleres Energielevel, Fokus auf Knoten in mittlerer Entfernung:",
+      "Medium energy level, focus on node at medium distance:",
       newFocusNode.label
     );
   } else {
-    // Bei hohem Energielevel: Knoten weit weg vom Honeypot (Ende der Liste)
+    // At high energy level: node far from honeypot (end of list)
     newFocusNode = sortedNodes[sortedNodes.length - 1];
     console.log(
-      "Hohes Energielevel, Fokus auf Knoten weit vom Honeypot:",
+      "High energy level, focus on node far from honeypot:",
       newFocusNode.label
     );
   }
 
-  // Aktualisiere den aktuellen Fokus-Knoten
+  // Update current focus node
   currentFocusNode = newFocusNode;
 
-  // Visualisierung aktualisieren: Entferne Fokus-Markierung von allen Knoten
+  // Update visualization: Remove focus marking from all nodes
   dynamicSvg
     .selectAll(".node circle")
     .classed("focused", false)
     .attr("stroke-width", 1);
 
-  // Setze Fokus-Markierung auf den neuen Fokus-Knoten mit einer Umrandung
+  // Set focus marking on the new focus node with a border
   dynamicSvg
     .selectAll(".node")
     .filter((d) => d === newFocusNode)
@@ -2697,51 +2683,51 @@ function updateDynamicNetwork(energyLevel) {
     .attr("stroke", "#ff6b00")
     .attr("stroke-width", 3);
 
-  // Anzeige des aktuellen Fokus aktualisieren
+  // Update current focus display
   const focusNodeDisplay = document.getElementById("current-focus-node");
   if (focusNodeDisplay) {
     focusNodeDisplay.textContent = newFocusNode.label;
   }
 
-  // Anzeige der Distanz zum Honeypot aktualisieren
+  // Update honeypot distance display
   const focusDistanceDisplay = document.getElementById("focus-distance");
   if (focusDistanceDisplay) {
-    // Typ in Textform als Abstandsmaß verwenden
-    let distanceText = "unbekannt";
+    // Use type as text for distance measure
+    let distanceText = "unknown";
     if (newFocusNode.type === "essential") {
-      distanceText = "gering (essentiell)";
+      distanceText = "low (essential)";
     } else if (newFocusNode.type === "related") {
-      distanceText = "mittel (verwandt)";
+      distanceText = "medium (related)";
     } else {
-      distanceText = "hoch (entfernt)";
+      distanceText = "high (distant)";
     }
     focusDistanceDisplay.textContent = distanceText;
   }
 }
 
-// Diese Funktion wird aufgerufen, wenn die Seite vollständig geladen ist
+// This function is called when the page is fully loaded
 window.onload = function () {
-  console.log("Window.onload Event ausgelöst");
+  console.log("Window.onload event triggered");
 
-  // Direkter Aufruf der Visualisierungsfunktionen als Fallback
+  // Direct call to visualization functions as fallback
   if (document.getElementById("focusNetwork")) {
-    console.log("Direkter Aufruf von initFocusNetwork");
+    console.log("Direct call to initFocusNetwork");
     initFocusNetwork();
   }
 
   if (document.getElementById("dynamic-network")) {
-    console.log("Direkter Aufruf von initDynamicNetwork");
+    console.log("Direct call to initDynamicNetwork");
     initDynamicNetwork();
   }
 };
 
-// Hilfsfunktion zum Generieren einer Kontextbeschreibung
+// Helper function to generate a context description
 function generateContextDescription(node) {
   if (!node)
     return {
       emoji: "❓",
-      description: "Kein Knoten ausgewählt",
-      connectionType: "Unbekannt",
+      description: "No node selected",
+      connectionType: "Unknown",
     };
 
   let emoji = "";
@@ -2751,63 +2737,63 @@ function generateContextDescription(node) {
   switch (node.group) {
     case "fruit":
       emoji = "🍎";
-      description = `${node.label} ist eine Frucht mit spezifischen Eigenschaften wie Farbe und Geschmack.`;
-      connectionType = "Frucht";
+      description = `${node.label} is a fruit with specific properties like color and taste.`;
+      connectionType = "Fruit";
       break;
     case "color":
       emoji = "🎨";
-      description = `${node.label} ist eine Farbe, die bestimmten Objekten zugeordnet werden kann.`;
-      connectionType = "Farbe";
+      description = `${node.label} is a color that can be assigned to specific objects.`;
+      connectionType = "Color";
       break;
     case "taste":
       emoji = "👅";
-      description = `${node.label} ist ein Geschmack, der von bestimmten Früchten oder Lebensmitteln wahrgenommen wird.`;
-      connectionType = "Geschmack";
+      description = `${node.label} is a taste perceived from certain fruits or foods.`;
+      connectionType = "Taste";
       break;
     case "sentence":
       emoji = "📝";
-      description = `"${node.label}" ist ein vollständiger Satz, der einen Gedanken oder eine Beziehung zwischen Konzepten ausdrückt.`;
-      connectionType = "Satz";
+      description = `"${node.label}" is a complete sentence expressing a thought or relationship between concepts.`;
+      connectionType = "Sentence";
       break;
     case "object":
-      emoji = "🍎";
-      description = `${node.label} ist ein konkretes Objekt in unserem Sprachmodell, das Eigenschaften haben und in Beziehungen zu anderen Konzepten stehen kann.`;
-      connectionType = "Objekt";
+      emoji = "🍎"; // Using apple emoji for generic object for now
+      description = `${node.label} is a concrete object in our language model that can have properties and relationships with other concepts.`;
+      connectionType = "Object";
       break;
     case "verb":
       emoji = "🏃";
-      description = `${node.label} ist ein Verb, das eine Handlung oder einen Zustand beschreibt und Subjekte mit Objekten verbindet.`;
+      description = `${node.label} is a verb describing an action or state, connecting subjects with objects.`;
       connectionType = "Verb";
       break;
     case "pronoun":
       emoji = "👤";
-      description = `${node.label} ist ein Pronomen, das auf eine Person oder Entität verweist, ohne sie direkt zu benennen.`;
-      connectionType = "Pronomen";
+      description = `${node.label} is a pronoun referring to a person or entity without naming it directly.`;
+      connectionType = "Pronoun";
       break;
     case "property":
       emoji = "🏷️";
-      description = `${node.label} ist eine Eigenschaft, die Objekte oder Konzepte näher beschreibt.`;
-      connectionType = "Eigenschaft";
+      description = `${node.label} is a property that describes objects or concepts in more detail.`;
+      connectionType = "Property";
       break;
     case "action":
       emoji = "🔧";
-      description = `${node.label} repräsentiert eine konkrete Handlung, die ein Subjekt ausführen kann.`;
-      connectionType = "Handlung";
+      description = `${node.label} represents a concrete action that a subject can perform.`;
+      connectionType = "Action";
       break;
     case "category":
       emoji = "🍽️";
-      description = `${node.label} ist eine Kategorie, die verschiedene Konzepte zusammenfasst. Es repräsentiert ein grundlegendes Bedürfnis des Bewusstseins und ist mit einem Honeypot verbunden.`;
-      connectionType = "Kategorie";
+      description = `${node.label} is a category that groups various concepts. It represents a basic need of the consciousness and is linked to a honeypot.`;
+      connectionType = "Category";
       break;
     case "honeypot":
       emoji = "🍯";
-      description = `${node.label} repräsentiert ein elementares Grundbedürfnis des künstlichen Bewusstseins. Honeypots sind zentrale Energiequellen, zu denen das Bewusstsein bei niedrigem Energiestand zurückkehrt.`;
+      description = `${node.label} represents an elementary basic need of the artificial consciousness. Honeypots are central energy sources to which the consciousness returns when energy is low.`;
       connectionType = "Honeypot";
       break;
     default:
       emoji = "❓";
-      description = `${node.label} ist ein unbekannter Kontexttyp.`;
-      connectionType = "Unbekannt";
+      description = `${node.label} is an unknown context type.`;
+      connectionType = "Unknown";
   }
 
   return {
@@ -2817,9 +2803,9 @@ function generateContextDescription(node) {
   };
 }
 
-// Funktion zum Hervorheben von Verbindungen eines Knotens
+// Function to highlight connections of a node
 function highlightConnections(node) {
-  // Links hervorheben, die mit diesem Knoten verbunden sind
+  // Highlight links connected to this node
   const connectedLinks = networkData.links.filter(
     (link) =>
       (typeof link.source === "object"
@@ -2835,7 +2821,7 @@ function highlightConnections(node) {
     .filter((link) => connectedLinks.includes(link))
     .classed("highlighted", true);
 
-  // Verbundene Knoten ebenfalls visuell hervorheben
+  // Also visually highlight connected nodes
   const connectedNodeIds = new Set();
 
   connectedLinks.forEach((link) => {
@@ -2857,17 +2843,17 @@ function highlightConnections(node) {
   );
 }
 
-// Funktion zum Anzeigen von Kontext-Informationen
+// Function to display context information
 function showContextInfo(node) {
-  // Info-Panel anzeigen
+  // Show info panel
   const infoPanel = document.querySelector(".node-info-panel");
   const contextInfo = document.getElementById("contextInfo");
 
   if (infoPanel && contextInfo) {
-    // Kontextbeschreibung generieren
+    // Generate context description
     const contextData = generateContextDescription(node);
 
-    // Finde verbundene Knoten
+    // Find connected nodes
     const connectedNodes = [];
     if (networkData) {
       networkData.links.forEach((link) => {
@@ -2897,7 +2883,7 @@ function showContextInfo(node) {
       });
     }
 
-    // Generiere Liste der verbundenen Knoten mit ihren Typen
+    // Generate list of connected nodes with their types
     const connectedNodesList = connectedNodes
       .map((conn) => {
         const typeName = getConnectionTypeName(conn.type);
@@ -2905,7 +2891,7 @@ function showContextInfo(node) {
       })
       .join("");
 
-    // HTML für die Kontextinformation erstellen
+    // Create HTML for context information
     contextInfo.innerHTML = `
       <div class="context-details">
         <div class="context-header">
@@ -2918,16 +2904,16 @@ function showContextInfo(node) {
         <div class="context-body">
           <p>${contextData.description}</p>
           <div class="connected-contexts">
-            <strong>Verbundene Konzepte:</strong>
+            <strong>Connected Concepts:</strong>
             <ul>
-              ${connectedNodesList || "<li>Keine verbundenen Konzepte</li>"}
+              ${connectedNodesList || "<li>No connected concepts</li>"}
             </ul>
           </div>
         </div>
       </div>
     `;
 
-    // Info-Panel sichtbar machen
+    // Make info panel visible
     infoPanel.classList.add("visible");
   }
 }
