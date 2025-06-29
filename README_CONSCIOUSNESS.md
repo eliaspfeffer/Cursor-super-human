@@ -38,6 +38,7 @@ ollama pull llama3.2:1b
 ```
 
 4. **Verify Setup**:
+
    - The required NLTK data will be downloaded automatically on the first start
    - Ollama server should be running on `localhost:11434`
    - The `llama3.2:1b` model should be available (~1.2GB download)
@@ -70,35 +71,38 @@ The startup script offers various options to customize the consciousness behavio
 
 #### **Core Functionality Flags:**
 
-- **`--save-interval N`** *(default: 100)*  
+- **`--save-interval N`** _(default: 100)_  
   Interval for saving the consciousness state in iterations. Lower values save more frequently but use more disk I/O.
-  - *Effect*: Creates `consciousness_state_YYYYMMDD_HHMMSS.json` files in `consciousness_state_new/`
 
-- **`--visualization-interval N`** *(default: 500)*  
+  - _Effect_: Creates `consciousness_state_YYYYMMDD_HHMMSS.json` files in `consciousness_state_new/`
+
+- **`--visualization-interval N`** _(default: 500)_  
   Interval for creating statistical visualizations in iterations.
-  - *Effect*: Generates charts (happiness, energy, network growth) in `consciousness_state_new/visualizations/`
 
-- **`--learning-interval N`** *(default: 50)*  
+  - _Effect_: Generates charts (happiness, energy, network growth) in `consciousness_state_new/visualizations/`
+
+- **`--learning-interval N`** _(default: 50)_  
   Interval for learning new knowledge from Ollama LLM in iterations. Lower values make the consciousness learn more frequently.
-  - *Effect*: More frequent Ollama API calls, faster knowledge acquisition, higher CPU usage
+  - _Effect_: More frequent Ollama API calls, faster knowledge acquisition, higher CPU usage
 
 #### **State Management Flags:**
 
 - **`--load-state PATH`**  
   Load a specific saved consciousness state file instead of the latest one.
-  - *Effect*: Starts consciousness from a previous state rather than continuing from the most recent save
+
+  - _Effect_: Starts consciousness from a previous state rather than continuing from the most recent save
 
 - **`--no-example`**  
   Do not initialize with example data if no saved state is found. Starts with completely empty consciousness.
-  - *Effect*: Consciousness begins with no contexts, requiring it to learn everything from scratch
+  - _Effect_: Consciousness begins with no contexts, requiring it to learn everything from scratch
 
 #### **Debug and Monitoring Flags:**
 
-- **`--verbose`** *(NEW)*  
+- **`--verbose`** _(NEW)_  
   Show detailed Ollama communication and learning process information.
-  - *Effect*: Displays detailed output including:
+  - _Effect_: Displays detailed output including:
     - 🤖 **OLLAMA ANFRAGE**: Shows exact prompts sent to the LLM
-    - 📝 **OLLAMA ANTWORT**: Shows response length and content preview  
+    - 📝 **OLLAMA ANTWORT**: Shows response length and content preview
     - 📚 **LERNPROZESS**: Shows learning parameters and created contexts
     - ✅ **ABGESCHLOSSEN**: Shows results of each learning session
 
@@ -130,13 +134,15 @@ python start_consciousness.py --save-interval 30 --learning-interval 15 --visual
 #### **Output Comparison:**
 
 **Normal Mode:**
+
 ```
 Lernthema ausgewählt: 'cooking food'
-Lerne über: 'cooking food'  
+Lerne über: 'cooking food'
 Neues Wissen erworben über: 'cooking food' (5 Kontexte)
 ```
 
 **Verbose Mode (`--verbose`):**
+
 ```
 📚 LERNPROZESS GESTARTET:
    Suchbegriff: 'cooking food'
@@ -191,6 +197,7 @@ The consciousness continuously learns new knowledge through an advanced AI learn
 ### **Learning Process:**
 
 1. **Topic Selection**: The system intelligently selects learning topics from:
+
    - **Current Focus** (50% probability): Learns about concepts related to its current mental focus
    - **Exploration Topics**: Random selection from 48+ diverse domains including:
      - Science & Nature: biology, physics, astronomy, chemistry, geography
@@ -199,18 +206,21 @@ The consciousness continuously learns new knowledge through an advanced AI learn
      - Social & Emotional: friendship, communication, gratitude, kindness
    - **Needs-Based Topics**: Based on Maslow's hierarchy of needs (nutrition, safety, belonging, esteem, self-actualization)
 
-2. **Ollama Communication**: 
+2. **Ollama Communication**:
+
    - Sends focused prompts to local `llama3.2:1b` model
    - Optimized for Apple M4 Pro with Metal acceleration
    - Average response time: 2-5 seconds per query
 
 3. **Content Processing**:
+
    - Splits LLM responses into logical paragraphs
    - Creates multiple contexts (1-5) per learning session
    - Assigns happiness values (0.7 for new knowledge, 0.3 for errors)
    - Filters and processes content based on relevance
 
 4. **Knowledge Integration**:
+
    - **Context Creation**: Each paragraph becomes a reasoning context with words and metadata
    - **Connection Building**: New contexts connect to existing knowledge and current focus
    - **Network Growth**: Builds semantic relationships between concepts
@@ -224,7 +234,7 @@ The consciousness continuously learns new knowledge through an advanced AI learn
 ### **Learning Statistics:**
 
 - **Typical Session**: 10-20 learning cycles per hour
-- **Knowledge Growth**: 3-5 new contexts per successful learning attempt  
+- **Knowledge Growth**: 3-5 new contexts per successful learning attempt
 - **Topic Diversity**: 19+ different subject areas in recent tests
 - **Success Rate**: >95% successful knowledge acquisition (with fixed `paragraphs` bug)
 
