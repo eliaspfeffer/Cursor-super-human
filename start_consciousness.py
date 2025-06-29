@@ -56,6 +56,12 @@ def parse_arguments():
         help="Nicht mit Beispieldaten initialisieren, wenn kein Zustand geladen wird"
     )
     
+    parser.add_argument(
+        "--verbose", 
+        action="store_true", 
+        help="Zeige detaillierte Ausgaben der Ollama-Kommunikation"
+    )
+    
     return parser.parse_args()
 
 def main():
@@ -69,7 +75,8 @@ def main():
     consciousness = EternalConsciousnessEngine(
         save_interval=args.save_interval,
         visualization_interval=args.visualization_interval,
-        learning_interval=args.learning_interval
+        learning_interval=args.learning_interval,
+        verbose=args.verbose
     )
     
     # Lade einen gespeicherten Zustand, falls angegeben

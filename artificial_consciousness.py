@@ -67,6 +67,255 @@ class ReasoningContext(Context):
         self.consistency_cache = {}
         self.connections = {}  # Dict von Context zu ConnectionInfo
 
+    def calculate_truth_value(self, all_contexts: Dict[str, 'ReasoningContext']) -> float:
+        """Berechnet den Wahrhaftigkeitswert basierend auf Konsistenz und Verbindungen."""
+        # Grundwert basierend auf Quelle
+        if self.source_type == 'wikipedia':
+            base_truth = 0.7  # Wikipedia starts with higher base truth
+            # Erhöhe für Artikel mit vielen Referenzen
+            if len(self.references) > 5:
+                base_truth += 0.1
+        else:
+            base_truth = 0.5  # Chat input starts neutral
+
+        # Konsistenzprüfung
+        consistency_score = 0.0
+        contradiction_penalty = 0.0
+        
+        # Prüfe Konsistenz mit verbundenen Kontexten
+        connected_contexts = [all_contexts[label] for label in self.connections 
+                            if label in all_contexts]
+        
+        if connected_contexts:
+            for other in connected_contexts:
+                # Berechne Übereinstimmung der Wörter
+                common_words = set(w.content for w in self.words) & set(w.content for w in other.words)
+                if common_words:
+                    # Wenn gemeinsame Wörter gefunden wurden, prüfe auf Widersprüche
+                    if other in self.contradictions:
+                        contradiction_penalty += 0.1
+                    else:
+                        consistency_score += len(common_words) / len(self.words)
+
+            consistency_score /= len(connected_contexts)
+        
+        # Verbindungsdichte-Bonus
+        connection_density = len(self.connections) / max(1, len(all_contexts))
+        density_bonus = min(0.2, connection_density)
+        
+        # Mehrsprachiger Bonus (wenn der gleiche Inhalt in verschiedenen Sprachen existiert)
+        multilingual_bonus = 0.0
+        if self.source_type == 'wikipedia':
+            # Implementierung vereinfacht - würde normalerweise Sprachversionen prüfen
+            multilingual_bonus = 0.1 if len(self.references) > 3 else 0.0
+        
+        # Kombiniere alle Faktoren
+        final_truth = base_truth + \
+                     (consistency_score * 0.3) - \
+                     contradiction_penalty + \
+                     density_bonus + \
+                     multilingual_bonus
+        
+        # Begrenzen auf [0.0, 1.0]
+        self.truth_value = max(0.0, min(1.0, final_truth))
+        return self.truth_value
+
+    def add_reference(self, reference_context: 'ReasoningContext'):
+        """Fügt einen unterstützenden Referenzkontext hinzu."""
+        if reference_context not in self.references:
+            self.references.append(reference_context)
+    
+    def add_contradiction(self, contradicting_context: 'ReasoningContext'):
+        """Fügt einen widersprechenden Kontext hinzu."""
+        if contradicting_context not in self.contradictions:
+            self.contradictions.append(contradicting_context)
+            # Wenn ein Widerspruch gefunden wird, aktualisiere den Wahrhaftigkeitswert
+            self.truth_value *= 0.8  # Reduziere den Wahrhaftigkeitswert
+    
+    def calculate_consistency(self, other_context: 'ReasoningContext') -> float:
+        """Berechnet die semantische Konsistenz zwischen zwei Kontexten."""
+        # Cache-Check
+        cache_key = (self.label, other_context.label)
+        if cache_key in self.consistency_cache:
+            return self.consistency_cache[cache_key]
+        
+        # Wenn eine direkte Verbindung existiert, nutze deren Stärke
+        if other_context in self.connections:
+            consistency = self.connections[other_context].strength
+        else:
+            # Berechne Wort-basierte Konsistenz
+            words1 = set(w.content for w in self.words)
+            words2 = set(w.content for w in other_context.words)
+            
+            # Jaccard-Index für Wortüberlappung
+            intersection = len(words1 & words2)
+            union = len(words1 | words2)
+            consistency = intersection / union if union > 0 else 0.0
+        
+        # Cache das Ergebnis
+        self.consistency_cache[cache_key] = consistency
+        return consistency
+    
+    def calculate_path_score(self, path: List['ReasoningContext']) -> float:
+        """Berechnet den Score für einen Reasoning-Pfad."""
+        if len(path) < 2:
+            return 0.0
+        
+        # Komponenten des Scores nach dem AGI-Paper
+        consistency_score = 0.0  # Semantische Konsistenz
+        truth_score = 1.0       # Kombinierte Wahrhaftigkeit
+        relation_score = 0.0    # Stärke der Relationen
+        length_penalty = 1.0    # Bestrafung für lange Pfade
+        
+        # Berechne Konsistenz zwischen aufeinanderfolgenden Kontexten
+        for i in range(len(path) - 1):
+            consistency_score += path[i].calculate_consistency(path[i + 1])
+            truth_score *= path[i].truth_value  # Multiplikative Kombination
+            
+            # Addiere Relationsstärke, falls vorhanden
+            if path[i+1] in path[i].connections:
+                relation_score += path[i].connections[path[i+1]].strength
+        
+        # Normalisiere Scores
+        consistency_score /= (len(path) - 1)
+        relation_score /= (len(path) - 1)
+        
+        # Längenbestrafung (mehr Schritte = höhere Bestrafung)
+        length_penalty = 1.0 / (1.0 + math.log(len(path)))
+        
+        # Kombiniere alle Komponenten
+        final_score = (
+            consistency_score * 0.4 +  # Semantische Konsistenz
+            truth_score * 0.3 +        # Wahrhaftigkeit
+            relation_score * 0.2 +     # Relationsstärke
+            length_penalty * 0.1       # Längenbestrafung
+        )
+        
+        return final_score
+    
+    def find_best_reasoning_path(self, target_context: 'ReasoningContext', max_depth: int = 5) -> Tuple[List['ReasoningContext'], float]:
+        """Findet den besten Reasoning-Pfad zwischen diesem und dem Zielkontext mit optimierter Suche."""
+        if self == target_context:
+            return [self], 1.0
+
+        # Initialisiere bidirektionale Suche
+        forward_frontier = [(0, [self])]  # Von Start zum Ziel
+        backward_frontier = [(0, [target_context])]  # Von Ziel zum Start
+        forward_visited = {self.label: 0}  # Label -> Pfadlänge
+        backward_visited = {target_context.label: 0}
+        best_path = None
+        best_score = float('-inf')
+        
+        # Cache für Nachbarschaftsfilterung
+        neighbor_cache = {}
+        
+        def filter_neighbors(context: ReasoningContext, direction: str) -> List[Tuple[ReasoningContext, float]]:
+            """Filtert und sortiert Nachbarn nach Relevanz."""
+            cache_key = (context.label, direction)
+            if cache_key in neighbor_cache:
+                return neighbor_cache[cache_key]
+            
+            neighbors = []
+            for next_context in context.connections:
+                if not isinstance(next_context, ReasoningContext):
+                    continue
+                
+                # Berechne einen schnellen Relevanz-Score
+                connection_info = context.connections[next_context]
+                relevance = connection_info.strength
+                
+                # Berücksichtige Richtung der Suche
+                if direction == 'forward':
+                    heuristic = next_context.calculate_consistency(target_context)
+                else:
+                    heuristic = next_context.calculate_consistency(self)
+                
+                combined_score = relevance * 0.7 + heuristic * 0.3
+                neighbors.append((next_context, combined_score))
+            
+            # Sortiere nach Score und behalte nur die Top-K
+            neighbors.sort(key=lambda x: x[1], reverse=True)
+            top_k = neighbors[:min(10, len(neighbors))]  # Maximale Verzweigung begrenzen
+            
+            neighbor_cache[cache_key] = top_k
+            return top_k
+        
+        def try_connect_paths(forward_path: List[ReasoningContext], backward_path: List[ReasoningContext]) -> Tuple[List[ReasoningContext], float]:
+            """Versucht, zwei Teilpfade zu verbinden."""
+            # Prüfe direkte Verbindung zwischen Endpunkten
+            forward_end = forward_path[-1]
+            backward_start = backward_path[0]
+            
+            if backward_start in forward_end.connections:
+                # Verbinde die Pfade
+                complete_path = forward_path + backward_path[1:]
+                return complete_path, self.calculate_path_score(complete_path)
+            
+            return None, float('-inf')
+        
+        while forward_frontier and backward_frontier:
+            # Expandiere vorwärts
+            if forward_frontier:
+                current_score, current_path = heapq.heappop(forward_frontier)
+                current_node = current_path[-1]
+                current_depth = forward_visited[current_node.label]
+                
+                if current_depth < max_depth:
+                    # Expandiere gefilterte Nachbarn
+                    for next_node, relevance in filter_neighbors(current_node, 'forward'):
+                        if next_node.label in forward_visited:
+                            continue
+                        
+                        new_path = current_path + [next_node]
+                        path_score = self.calculate_path_score(new_path)
+                        forward_visited[next_node.label] = current_depth + 1
+                        
+                        # Versuche Verbindung mit rückwärts-Pfaden
+                        if next_node.label in backward_visited:
+                            for _, back_path in backward_frontier:
+                                if back_path[0].label == next_node.label:
+                                    connected_path, connected_score = try_connect_paths(new_path, back_path)
+                                    if connected_path and connected_score > best_score:
+                                        best_path = connected_path
+                                        best_score = connected_score
+                        
+                        heapq.heappush(forward_frontier, (-path_score, new_path))
+            
+            # Expandiere rückwärts
+            if backward_frontier:
+                current_score, current_path = heapq.heappop(backward_frontier)
+                current_node = current_path[0]
+                current_depth = backward_visited[current_node.label]
+                
+                if current_depth < max_depth:
+                    # Expandiere gefilterte Nachbarn
+                    for next_node, relevance in filter_neighbors(current_node, 'backward'):
+                        if next_node.label in backward_visited:
+                            continue
+                        
+                        new_path = [next_node] + current_path
+                        path_score = self.calculate_path_score(new_path)
+                        backward_visited[next_node.label] = current_depth + 1
+                        
+                        # Versuche Verbindung mit vorwärts-Pfaden
+                        if next_node.label in forward_visited:
+                            for _, forward_path in forward_frontier:
+                                if forward_path[-1].label == next_node.label:
+                                    connected_path, connected_score = try_connect_paths(forward_path, new_path)
+                                    if connected_path and connected_score > best_score:
+                                        best_path = connected_path
+                                        best_score = connected_score
+                        
+                        heapq.heappush(backward_frontier, (-path_score, new_path))
+            
+            # Früher Abbruch, wenn ein guter Pfad gefunden wurde
+            if best_score > 0.8:  # Schwellenwert für "guten" Pfad
+                break
+        
+        if best_path:
+            return best_path, best_score
+        return [], 0.0
+
 
 class ConnectionInfo:
     """Repräsentiert eine Verbindung zwischen zwei Kontexten."""
@@ -435,254 +684,7 @@ class ConsciousnessEngine:
         top_words = sorted(filtered_words.items(), key=lambda x: x[1], reverse=True)[:5]
         self.current_topic = [word for word, _ in top_words]
 
-    def calculate_truth_value(self, all_contexts: Dict[str, 'ReasoningContext']) -> float:
-        """Berechnet den Wahrhaftigkeitswert basierend auf Konsistenz und Verbindungen."""
-        # Grundwert basierend auf Quelle
-        if self.source_type == 'wikipedia':
-            base_truth = 0.7  # Wikipedia starts with higher base truth
-            # Erhöhe für Artikel mit vielen Referenzen
-            if len(self.references) > 5:
-                base_truth += 0.1
-        else:
-            base_truth = 0.5  # Chat input starts neutral
 
-        # Konsistenzprüfung
-        consistency_score = 0.0
-        contradiction_penalty = 0.0
-        
-        # Prüfe Konsistenz mit verbundenen Kontexten
-        connected_contexts = [all_contexts[label] for label in self.connections 
-                            if label in all_contexts]
-        
-        if connected_contexts:
-            for other in connected_contexts:
-                # Berechne Übereinstimmung der Wörter
-                common_words = set(w.content for w in self.words) & set(w.content for w in other.words)
-                if common_words:
-                    # Wenn gemeinsame Wörter gefunden wurden, prüfe auf Widersprüche
-                    if other in self.contradictions:
-                        contradiction_penalty += 0.1
-                    else:
-                        consistency_score += len(common_words) / len(self.words)
-
-            consistency_score /= len(connected_contexts)
-        
-        # Verbindungsdichte-Bonus
-        connection_density = len(self.connections) / max(1, len(all_contexts))
-        density_bonus = min(0.2, connection_density)
-        
-        # Mehrsprachiger Bonus (wenn der gleiche Inhalt in verschiedenen Sprachen existiert)
-        multilingual_bonus = 0.0
-        if self.source_type == 'wikipedia':
-            # Implementierung vereinfacht - würde normalerweise Sprachversionen prüfen
-            multilingual_bonus = 0.1 if len(self.references) > 3 else 0.0
-        
-        # Kombiniere alle Faktoren
-        final_truth = base_truth + \
-                     (consistency_score * 0.3) - \
-                     contradiction_penalty + \
-                     density_bonus + \
-                     multilingual_bonus
-        
-        # Begrenzen auf [0.0, 1.0]
-        self.truth_value = max(0.0, min(1.0, final_truth))
-        return self.truth_value
-
-    def add_reference(self, reference_context: 'ReasoningContext'):
-        """Fügt einen unterstützenden Referenzkontext hinzu."""
-        if reference_context not in self.references:
-            self.references.append(reference_context)
-    
-    def add_contradiction(self, contradicting_context: 'ReasoningContext'):
-        """Fügt einen widersprechenden Kontext hinzu."""
-        if contradicting_context not in self.contradictions:
-            self.contradictions.append(contradicting_context)
-            # Wenn ein Widerspruch gefunden wird, aktualisiere den Wahrhaftigkeitswert
-            self.truth_value *= 0.8  # Reduziere den Wahrhaftigkeitswert
-    
-    def calculate_consistency(self, other_context: 'ReasoningContext') -> float:
-        """Berechnet die semantische Konsistenz zwischen zwei Kontexten."""
-        # Cache-Check
-        cache_key = (self.label, other_context.label)
-        if cache_key in self.consistency_cache:
-            return self.consistency_cache[cache_key]
-        
-        # Wenn eine direkte Verbindung existiert, nutze deren Stärke
-        if other_context in self.connections:
-            consistency = self.connections[other_context].strength
-        else:
-            # Berechne Wort-basierte Konsistenz
-            words1 = set(w.content for w in self.words)
-            words2 = set(w.content for w in other_context.words)
-            
-            # Jaccard-Index für Wortüberlappung
-            intersection = len(words1 & words2)
-            union = len(words1 | words2)
-            consistency = intersection / union if union > 0 else 0.0
-        
-        # Cache das Ergebnis
-        self.consistency_cache[cache_key] = consistency
-        return consistency
-    
-    def calculate_path_score(self, path: List['ReasoningContext']) -> float:
-        """Berechnet den Score für einen Reasoning-Pfad."""
-        if len(path) < 2:
-            return 0.0
-        
-        # Komponenten des Scores nach dem AGI-Paper
-        consistency_score = 0.0  # Semantische Konsistenz
-        truth_score = 1.0       # Kombinierte Wahrhaftigkeit
-        relation_score = 0.0    # Stärke der Relationen
-        length_penalty = 1.0    # Bestrafung für lange Pfade
-        
-        # Berechne Konsistenz zwischen aufeinanderfolgenden Kontexten
-        for i in range(len(path) - 1):
-            consistency_score += path[i].calculate_consistency(path[i + 1])
-            truth_score *= path[i].truth_value  # Multiplikative Kombination
-            
-            # Addiere Relationsstärke, falls vorhanden
-            if path[i+1].label in path[i].relations:
-                relation_score += path[i].relations[path[i+1].label]
-        
-        # Normalisiere Scores
-        consistency_score /= (len(path) - 1)
-        relation_score /= (len(path) - 1)
-        
-        # Längenbestrafung (mehr Schritte = höhere Bestrafung)
-        length_penalty = 1.0 / (1.0 + math.log(len(path)))
-        
-        # Kombiniere alle Komponenten
-        final_score = (
-            consistency_score * 0.4 +  # Semantische Konsistenz
-            truth_score * 0.3 +        # Wahrhaftigkeit
-            relation_score * 0.2 +     # Relationsstärke
-            length_penalty * 0.1       # Längenbestrafung
-        )
-        
-        return final_score
-    
-    def find_best_reasoning_path(self, target_context: 'ReasoningContext', max_depth: int = 5) -> Tuple[List['ReasoningContext'], float]:
-        """Findet den besten Reasoning-Pfad zwischen diesem und dem Zielkontext mit optimierter Suche."""
-        if self == target_context:
-            return [self], 1.0
-
-        # Initialisiere bidirektionale Suche
-        forward_frontier = [(0, [self])]  # Von Start zum Ziel
-        backward_frontier = [(0, [target_context])]  # Von Ziel zum Start
-        forward_visited = {self.label: 0}  # Label -> Pfadlänge
-        backward_visited = {target_context.label: 0}
-        best_path = None
-        best_score = float('-inf')
-        
-        # Cache für Nachbarschaftsfilterung
-        neighbor_cache = {}
-        
-        def filter_neighbors(context: ReasoningContext, direction: str) -> List[Tuple[ReasoningContext, float]]:
-            """Filtert und sortiert Nachbarn nach Relevanz."""
-            cache_key = (context.label, direction)
-            if cache_key in neighbor_cache:
-                return neighbor_cache[cache_key]
-            
-            neighbors = []
-            for next_context in context.connections:
-                if not isinstance(next_context, ReasoningContext):
-                    continue
-                
-                # Berechne einen schnellen Relevanz-Score
-                connection_info = context.connections[next_context]
-                relevance = connection_info.strength
-                
-                # Berücksichtige Richtung der Suche
-                if direction == 'forward':
-                    heuristic = next_context.calculate_consistency(target_context)
-                else:
-                    heuristic = next_context.calculate_consistency(self)
-                
-                combined_score = relevance * 0.7 + heuristic * 0.3
-                neighbors.append((next_context, combined_score))
-            
-            # Sortiere nach Score und behalte nur die Top-K
-            neighbors.sort(key=lambda x: x[1], reverse=True)
-            top_k = neighbors[:min(10, len(neighbors))]  # Maximale Verzweigung begrenzen
-            
-            neighbor_cache[cache_key] = top_k
-            return top_k
-        
-        def try_connect_paths(forward_path: List[ReasoningContext], backward_path: List[ReasoningContext]) -> Tuple[List[ReasoningContext], float]:
-            """Versucht, zwei Teilpfade zu verbinden."""
-            # Prüfe direkte Verbindung zwischen Endpunkten
-            forward_end = forward_path[-1]
-            backward_start = backward_path[0]
-            
-            if backward_start in forward_end.connections:
-                # Verbinde die Pfade
-                complete_path = forward_path + backward_path[1:]
-                return complete_path, self.calculate_path_score(complete_path)
-            
-            return None, float('-inf')
-        
-        while forward_frontier and backward_frontier:
-            # Expandiere vorwärts
-            if forward_frontier:
-                current_score, current_path = heapq.heappop(forward_frontier)
-                current_node = current_path[-1]
-                current_depth = forward_visited[current_node.label]
-                
-                if current_depth < max_depth:
-                    # Expandiere gefilterte Nachbarn
-                    for next_node, relevance in filter_neighbors(current_node, 'forward'):
-                        if next_node.label in forward_visited:
-                            continue
-                        
-                        new_path = current_path + [next_node]
-                        path_score = self.calculate_path_score(new_path)
-                        forward_visited[next_node.label] = current_depth + 1
-                        
-                        # Versuche Verbindung mit rückwärts-Pfaden
-                        if next_node.label in backward_visited:
-                            for _, back_path in backward_frontier:
-                                if back_path[0].label == next_node.label:
-                                    connected_path, connected_score = try_connect_paths(new_path, back_path)
-                                    if connected_path and connected_score > best_score:
-                                        best_path = connected_path
-                                        best_score = connected_score
-                        
-                        heapq.heappush(forward_frontier, (-path_score, new_path))
-            
-            # Expandiere rückwärts
-            if backward_frontier:
-                current_score, current_path = heapq.heappop(backward_frontier)
-                current_node = current_path[0]
-                current_depth = backward_visited[current_node.label]
-                
-                if current_depth < max_depth:
-                    # Expandiere gefilterte Nachbarn
-                    for next_node, relevance in filter_neighbors(current_node, 'backward'):
-                        if next_node.label in backward_visited:
-                            continue
-                        
-                        new_path = [next_node] + current_path
-                        path_score = self.calculate_path_score(new_path)
-                        backward_visited[next_node.label] = current_depth + 1
-                        
-                        # Versuche Verbindung mit vorwärts-Pfaden
-                        if next_node.label in forward_visited:
-                            for _, forward_path in forward_frontier:
-                                if forward_path[-1].label == next_node.label:
-                                    connected_path, connected_score = try_connect_paths(forward_path, new_path)
-                                    if connected_path and connected_score > best_score:
-                                        best_path = connected_path
-                                        best_score = connected_score
-                        
-                        heapq.heappush(backward_frontier, (-path_score, new_path))
-            
-            # Früher Abbruch, wenn ein guter Pfad gefunden wurde
-            if best_score > 0.8:  # Schwellenwert für "guten" Pfad
-                break
-        
-        if best_path:
-            return best_path, best_score
-        return [], 0.0
 
 
 # Beispiel für die Verwendung

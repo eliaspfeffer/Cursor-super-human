@@ -35,7 +35,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
     Eine Version des künstlichen Bewusstseins, die kontinuierlich läuft und niemals aufhört zu "leben".
     """
     
-    def __init__(self, save_interval: int = 100, visualization_interval: int = 500, learning_interval: int = 50):
+    def __init__(self, save_interval: int = 100, visualization_interval: int = 500, learning_interval: int = 50, verbose: bool = False):
         """Initialisiert das ewige Bewusstsein."""
         super().__init__()
         
@@ -47,6 +47,9 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         
         # Lernintervall (in Iterationen)
         self.learning_interval = learning_interval
+        
+        # Verbose-Modus für detaillierte Ausgaben
+        self.verbose = verbose
         
         # Verzeichnis für gespeicherte Zustände
         self.save_dir = "consciousness_state_new"
@@ -429,12 +432,12 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             
             return True
         else:
-        return False
+            return False
     
     def create_context(self, text, label=None, happiness=0.0, source_type=None):
         """Erstellt einen neuen Kontext aus Text."""
         # Importiere ReasoningContext aus artificial_consciousness
-        from artificial_consciousness import ReasoningContext
+        from artificial_consciousness import ReasoningContext, Word
         
         words = [Word(word) for word in text.split()]
         context = ReasoningContext(words=words, label=label, happiness=happiness)
@@ -443,7 +446,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         # Speichere die Quelle, falls angegeben
         if hasattr(context, 'source_type') and source_type:
             context.source_type = source_type
-        return context_id
+        return context
     
     def generate_random_thought(self):
         """Generiert einen zufälligen Gedanken, wenn keine bessere Option gefunden wird."""
@@ -534,7 +537,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             "energy_gain_rate": self.energy_gain_rate,
             "min_energy_threshold": self.min_energy_threshold,
             "max_energy": self.max_energy,
-            "current_focus": self.current_focus,
+            "current_focus": self.current_focus.label if self.current_focus and hasattr(self.current_focus, 'label') else None,
             "needs_pyramid": self.needs_pyramid,
             "emotional_state": {
                 "emotions": self.emotional_state.emotions
@@ -556,7 +559,16 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             
             # Speichere die Verbindungen, falls vorhanden
             if hasattr(context, 'connections'):
-                context_dict["connections"] = context.connections
+                # Konvertiere connections zu einem serialisierbaren Format
+                connections = {}
+                for connected_context, connection_info in context.connections.items():
+                    if hasattr(connected_context, 'label') and connected_context.label:
+                        connections[connected_context.label] = {
+                            'strength': connection_info.strength,
+                            'type': connection_info.type,
+                            'interaction_count': connection_info.interaction_count
+                        }
+                context_dict["connections"] = connections
                 
             # Speichere die Habituation, falls vorhanden
             if hasattr(context, 'habituation'):
@@ -567,14 +579,14 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             
         # Speichere den Zustand als JSON
         try:
-        with open(filename, 'w') as f:
-            json.dump(state, f, indent=2)
-        
-        print(f"Zustand gespeichert: {filename}")
-        
-            # Begrenze die Anzahl der Zustandsdateien
-            self.limit_files(self.save_dir, "consciousness_state_", ".json", max_files=3)
+            with open(filename, 'w') as f:
+                json.dump(state, f, indent=2)
             
+            print(f"Zustand gespeichert: {filename}")
+            
+            # Begrenze die Anzahl der Zustandsdateien                
+            self.limit_files(self.save_dir, "consciousness_state_", ".json", max_files=3)
+                
             return True
         except Exception as e:
             print(f"Fehler beim Speichern des Zustands: {e}")
@@ -768,15 +780,21 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
                 energy_gain = self.energy_gain_rate * (1.0 + self.contexts[energy_source_id].happiness)
                 self.energy = min(self.max_energy, self.energy + energy_gain)
                 print(f"Energie aufgefüllt: +{energy_gain:.2f}. Neuer Energiestand: {self.energy:.2f}")
-                    else:
-                # Bei ausreichender Energie: Normales Denken
-                # Versuche, logische Schlussfolgerungen zu ziehen
-                if self.current_focus and self.current_focus in self.contexts:
-                    current_context = self.contexts[self.current_focus]
-                    current_text = " ".join([word.content for word in current_context.words])
-                    reasoning_result = self.reason_from_current_knowledge(current_text)
-                else:
-                    reasoning_result = None
+        else:
+            # Bei ausreichender Energie: Normales Denken
+            # Versuche, logische Schlussfolgerungen zu ziehen
+            current_focus_id = None
+            if self.current_focus:
+                current_focus_id = self.current_focus
+                if hasattr(self.current_focus, 'label'):
+                    current_focus_id = self.current_focus.label
+                    
+            if current_focus_id and current_focus_id in self.contexts:
+                current_context = self.contexts[current_focus_id]
+                current_text = " ".join([word.content for word in current_context.words])
+                reasoning_result = self.reason_from_current_knowledge(current_text)
+            else:
+                reasoning_result = None
 
             if reasoning_result:
                 # Wenn eine neue Erkenntnis gewonnen wurde, setze den Fokus darauf
@@ -792,8 +810,13 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
                     self.learn_from_internet()
         
         # 8. Aktualisiere Habituation für den aktuellen Fokus
+        current_focus_id = None
         if self.current_focus:
-            self.update_habituation(self.current_focus)
+            current_focus_id = self.current_focus
+            if hasattr(self.current_focus, 'label'):
+                current_focus_id = self.current_focus.label
+        if current_focus_id:
+            self.update_habituation(current_focus_id)
         
         # 9. Erstelle neue Verbindungen basierend auf Ähnlichkeit
         self.create_new_connections()
@@ -1008,7 +1031,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         for word in query_words:
             if word in query_vector:
                 query_vector[word] += 1
-                else:
+            else:
                 query_vector[word] = 1
                 
         # Berechne die Relevanz für jeden Kontext
@@ -1482,10 +1505,29 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
 
     def find_best_next_focus(self):
         """Findet den besten nächsten Fokus basierend auf verschiedenen Faktoren."""
-        if not self.contexts or not self.current_focus or self.current_focus not in self.contexts:
+        if not self.contexts:
             return None
             
-        current_context = self.contexts[self.current_focus]
+        # Wenn es keinen aktuellen Fokus gibt, wähle einen zufälligen Kontext
+        if not self.current_focus:
+            context_ids = list(self.contexts.keys())
+            if context_ids:
+                return random.choice(context_ids)
+            return None
+            
+        # Bestimme die ID des aktuellen Fokus
+        current_focus_id = self.current_focus
+        if hasattr(self.current_focus, 'label'):
+            current_focus_id = self.current_focus.label
+        
+        if current_focus_id not in self.contexts:
+            # Wähle einen zufälligen Kontext wenn der aktuelle Fokus nicht existiert
+            context_ids = list(self.contexts.keys())
+            if context_ids:
+                return random.choice(context_ids)
+            return None
+            
+        current_context = self.contexts[current_focus_id]
         
         # Prüfe, ob der aktuelle Kontext Verbindungen hat
         if not hasattr(current_context, 'connections') or not current_context.connections:
@@ -1535,10 +1577,20 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
 
     def create_new_connections(self):
         """Erstellt neue Verbindungen zwischen Kontexten basierend auf Ähnlichkeit."""
-        if not self.contexts or not self.current_focus or self.current_focus not in self.contexts:
+        if not self.contexts:
+            return
+            
+        # Bestimme die ID des aktuellen Fokus
+        current_focus_id = None
+        if self.current_focus:
+            current_focus_id = self.current_focus
+            if hasattr(self.current_focus, 'label'):
+                current_focus_id = self.current_focus.label
+                
+        if not current_focus_id or current_focus_id not in self.contexts:
             return
         
-        current_context = self.contexts[self.current_focus]
+        current_context = self.contexts[current_focus_id]
         
         # Extrahiere Wörter aus dem aktuellen Kontext
         current_words = [word.content.lower() for word in current_context.words]
@@ -1548,7 +1600,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         
         for context_id, context in self.contexts.items():
             # Überspringe den aktuellen Kontext
-            if context_id == self.current_focus:
+            if context_id == current_focus_id:
                 continue
                 
             # Überspringe bereits verbundene Kontexte
@@ -1605,7 +1657,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         
         # Erstelle Verbindungen zu den ähnlichsten Kontexten
         for context_id, similarity in similar_contexts:
-            self.create_connection(self.current_focus, context_id, weight=similarity)
+            self.create_connection(current_focus_id, context_id, weight=similarity)
 
     def update_needs_pyramid_from_state(self):
         """Aktualisiert die Bedürfnispyramide basierend auf dem aktuellen Zustand."""
@@ -1642,8 +1694,14 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         happiness = 0.0
         stimulation = 0.0
         
-        if self.contexts and self.current_focus in self.contexts:
-            happiness = self.contexts[self.current_focus].happiness
+        current_focus_id = None
+        if self.current_focus:
+            current_focus_id = self.current_focus
+            if hasattr(self.current_focus, 'label'):
+                current_focus_id = self.current_focus.label
+                
+        if self.contexts and current_focus_id and current_focus_id in self.contexts:
+            happiness = self.contexts[current_focus_id].happiness
         
         if hasattr(self, 'stimulation'):
             stimulation = self.stimulation
@@ -1666,8 +1724,22 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         """Ruft Inhalte von Ollama ab basierend auf einem Suchbegriff."""
         try:
             import ollama
+            
+            if self.verbose:
+                print(f"\n🤖 OLLAMA ANFRAGE:")
+                print(f"   Modell: llama3.2:1b")
+                print(f"   Prompt: '{search_term}'")
+                print(f"   Warte auf Antwort...")
+            
             # Assuming Ollama is running locally and the model is available
-            response = ollama.generate(model='llama2', prompt=search_term)
+            response = ollama.generate(model='llama3.2:1b', prompt=search_term)
+            
+            if self.verbose:
+                print(f"\n📝 OLLAMA ANTWORT:")
+                print(f"   Länge: {len(response['response'])} Zeichen")
+                print(f"   Inhalt: {response['response'][:200]}{'...' if len(response['response']) > 200 else ''}")
+                print(f"   ─" * 60)
+            
             return response['response']
         except ImportError:
             print("Ollama-Modul nicht installiert. Verwende 'pip install ollama' zum Installieren.")
@@ -1677,18 +1749,65 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
             return None
             
     def learn_from_internet(self):
-        """Lernt aus dem Internet basierend auf dem aktuellen Fokus."""
-        if not self.current_focus or self.current_focus not in self.contexts:
-            print("Kein aktueller Fokus vorhanden. Kann nicht aus dem Internet lernen.")
-            return
+        """Lernt aus dem Internet basierend auf dem aktuellen Fokus oder zufälligen Themen."""
+        # Bestimme die ID des aktuellen Fokus
+        current_focus_id = None
+        if self.current_focus:
+            current_focus_id = self.current_focus
+            if hasattr(self.current_focus, 'label'):
+                current_focus_id = self.current_focus.label
+                
+        # Erweiterte Themenauswahl für mehr Vielfalt
+        learning_topics = []
+        
+        # 1. Basierend auf aktuellem Fokus (50% Wahrscheinlichkeit)
+        if current_focus_id and current_focus_id in self.contexts and random.random() < 0.5:
+            current_context = self.contexts[current_focus_id]
+            context_text = " ".join([word.content for word in current_context.words])
+            learning_topics.append(context_text)
+        
+        # 2. Zufällige Themen für Exploration (erweiterte Liste)
+        exploration_topics = [
+            "science discovery", "art creativity", "music harmony", "nature beauty",
+            "friendship love", "adventure exploration", "learning knowledge", "cooking food",
+            "travel culture", "technology innovation", "health wellness", "exercise fitness",
+            "books reading", "movies entertainment", "games fun", "hobbies interests",
+            "philosophy wisdom", "history stories", "language communication", "mathematics patterns",
+            "astronomy stars", "biology life", "chemistry reactions", "physics universe",
+            "geography places", "weather climate", "animals wildlife", "plants gardening",
+            "sports competition", "dance movement", "photography art", "writing creativity",
+            "meditation mindfulness", "psychology mind", "dreams sleep", "emotions feelings",
+            "memory learning", "creativity inspiration", "problem solving", "decision making",
+            "time management", "goal setting", "success achievement", "happiness well-being",
+            "peace tranquility", "courage strength", "kindness compassion", "gratitude appreciation"
+        ]
+        
+        # Wähle 1-2 zufällige Themen aus
+        selected_topics = random.sample(exploration_topics, min(2, len(exploration_topics)))
+        learning_topics.extend(selected_topics)
+        
+        # 3. Themen basierend auf Honeypot-Bedürfnissen
+        if hasattr(self, 'needs_pyramid'):
+            if self.needs_pyramid.get("physiological", 0) < 0.7:
+                learning_topics.append("nutrition healthy eating")
+            if self.needs_pyramid.get("safety", 0) < 0.7:
+                learning_topics.append("security safety protection")
+            if self.needs_pyramid.get("belonging", 0) < 0.7:
+                learning_topics.append("social connection community")
+            if self.needs_pyramid.get("esteem", 0) < 0.7:
+                learning_topics.append("achievement recognition success")
+            if self.needs_pyramid.get("self_actualization", 0) < 0.7:
+                learning_topics.append("personal growth self-improvement")
+        
+        # Wähle ein zufälliges Thema aus der Liste
+        if learning_topics:
+            selected_topic = random.choice(learning_topics)
+            print(f"Lernthema ausgewählt: '{selected_topic}'")
             
-        current_context = self.contexts[self.current_focus]
-        
-        # Extrahiere den gesamten Text aus dem aktuellen Kontext
-        context_text = " ".join([word.content for word in current_context.words])
-        
-        # Rufe die allgemeine Lernmethode auf
-        self.learn_about_topic(context_text, connect_to_focus=True)
+            # Rufe die allgemeine Lernmethode auf
+            self.learn_about_topic(selected_topic, connect_to_focus=True)
+        else:
+            print("Keine Lernthemen verfügbar.")
     
     def analyze_question(self, question):
         """
@@ -1852,6 +1971,13 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         
         print(f"Lerne über: '{search_term}'")
         
+        if self.verbose:
+            print(f"\n📚 LERNPROZESS GESTARTET:")
+            print(f"   Suchbegriff: '{search_term}'")
+            print(f"   Ist Frage: {is_question}")
+            print(f"   Max Kontexte: {max_contexts}")
+            print(f"   Mit Fokus verbinden: {connect_to_focus}")
+        
         created_contexts = []
         
         try:
@@ -1862,11 +1988,11 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
                 print(f"Keine Inhalte für '{search_term}' von Ollama gefunden.")
                 return created_contexts
             
+            # Teile den Inhalt in Absätze (für alle Fälle)
+            paragraphs = ollama_content.split('\n\n')
+            
             # Wenn es eine Frage war, versuche die relevanten Informationen zu extrahieren
             if is_question:
-                # Teile den Inhalt in Absätze
-                paragraphs = ollama_content.split('\n\n')
-                
                 # Extrahiere relevante Informationen basierend auf dem Fragetyp und den Attributen
                 if question_analysis['type'] == 'beschaffenheit' and 'geschmack' in question_analysis['attributes']:
                     # Suche nach Absätzen, die Geschmacksinformationen enthalten könnten
@@ -1919,6 +2045,17 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
                     self.create_connection(self.current_focus, context_id, weight=0.8)
             
             print(f"Neues Wissen erworben über: '{search_term}' ({len(created_contexts)} Kontexte)")
+            
+            if self.verbose and created_contexts:
+                print(f"\n✅ LERNPROZESS ABGESCHLOSSEN:")
+                print(f"   Erstellt: {len(created_contexts)} neue Kontexte")
+                for i, context_id in enumerate(created_contexts[:3]):  # Zeige nur die ersten 3
+                    if context_id in self.contexts:
+                        words = " ".join([word.content for word in self.contexts[context_id].words])
+                        print(f"   [{i+1}] {context_id}: {words[:100]}{'...' if len(words) > 100 else ''}")
+                if len(created_contexts) > 3:
+                    print(f"   ... und {len(created_contexts) - 3} weitere Kontexte")
+                print(f"   ─" * 60)
             
             # Setze den Fokus auf den ersten neuen Kontext
             if created_contexts:
@@ -1999,7 +2136,7 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
                         self.contexts[context_id] = context
                         
             print(f"Zustand geladen: {filename}")
-        return True
+            return True
         except Exception as e:
             print(f"Fehler beim Laden des Zustands: {e}")
             return False
