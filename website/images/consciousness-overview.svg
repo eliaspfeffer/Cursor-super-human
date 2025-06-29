@@ -2,6 +2,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
   <rect width="100%" height="100%" fill="#f8f9fa"/>
   
+  <!-- All Connecting Lines First -->
+  <line x1="150" y1="120" x2="300" y2="200" stroke="#444" stroke-width="2" stroke-dasharray="5,5" opacity="0.6"/>
+  <line x1="450" y1="120" x2="300" y2="200" stroke="#444" stroke-width="2" stroke-dasharray="5,5" opacity="0.6"/>
+  <line x1="150" y1="280" x2="300" y2="200" stroke="#444" stroke-width="2" stroke-dasharray="5,5" opacity="0.6"/>
+  <line x1="450" y1="280" x2="300" y2="200" stroke="#444" stroke-width="2" stroke-dasharray="5,5" opacity="0.6"/>
+  <line x1="100" y1="200" x2="300" y2="200" stroke="#444" stroke-width="2" stroke-dasharray="5,5" opacity="0.6"/>
+  <line x1="300" y1="100" x2="300" y2="200" stroke="#444" stroke-width="2" stroke-dasharray="5,5" opacity="0.6"/>
+  <line x1="300" y1="300" x2="300" y2="200" stroke="#444" stroke-width="2" stroke-dasharray="5,5" opacity="0.6"/>
+  <line x1="500" y1="200" x2="300" y2="200" stroke="#444" stroke-width="2" stroke-dasharray="5,5" opacity="0.6"/>
+
+  <!-- Lines for Small Context Nodes -->
+  <line x1="350" y1="150" x2="300" y2="200" stroke="#444" stroke-width="1" opacity="0.4"/>
+  <line x1="250" y1="160" x2="300" y2="200" stroke="#444" stroke-width="1" opacity="0.4"/>
+  <line x1="350" y1="250" x2="300" y2="200" stroke="#444" stroke-width="1" opacity="0.4"/>
+  <line x1="250" y1="240" x2="300" y2="200" stroke="#444" stroke-width="1" opacity="0.4"/>
+
   <!-- Central Node -->
   <circle cx="300" cy="200" r="60" fill="#6366f1" opacity="0.9"/>
   <text x="300" y="200" font-family="Arial" font-size="14" fill="white" text-anchor="middle" dominant-baseline="middle">Consciousness</text>
@@ -9,42 +25,34 @@
   <!-- Energy Node -->
   <circle cx="150" cy="120" r="40" fill="#ef4444" opacity="0.8"/>
   <text x="150" y="120" font-family="Arial" font-size="12" fill="white" text-anchor="middle" dominant-baseline="middle">Energy</text>
-  <line x1="150" y1="120" x2="300" y2="200" stroke="#444" stroke-width="2" stroke-dasharray="5,5" opacity="0.6"/>
   
   <!-- Emotions Node -->
   <circle cx="450" cy="120" r="40" fill="#f59e0b" opacity="0.8"/>
   <text x="450" y="120" font-family="Arial" font-size="12" fill="white" text-anchor="middle" dominant-baseline="middle">Emotions</text>
-  <line x1="450" y1="120" x2="300" y2="200" stroke="#444" stroke-width="2" stroke-dasharray="5,5" opacity="0.6"/>
   
   <!-- Needs Node -->
   <circle cx="150" cy="280" r="40" fill="#10b981" opacity="0.8"/>
   <text x="150" y="280" font-family="Arial" font-size="12" fill="white" text-anchor="middle" dominant-baseline="middle">Needs</text>
-  <line x1="150" y1="280" x2="300" y2="200" stroke="#444" stroke-width="2" stroke-dasharray="5,5" opacity="0.6"/>
   
   <!-- Knowledge Node -->
   <circle cx="450" cy="280" r="40" fill="#3b82f6" opacity="0.8"/>
   <text x="450" y="280" font-family="Arial" font-size="12" fill="white" text-anchor="middle" dominant-baseline="middle">Knowledge</text>
-  <line x1="450" y1="280" x2="300" y2="200" stroke="#444" stroke-width="2" stroke-dasharray="5,5" opacity="0.6"/>
   
   <!-- Honeypot Node -->
   <circle cx="100" cy="200" r="30" fill="#f0b090" opacity="0.8" stroke="#f97316" stroke-width="2"/>
   <text x="100" y="200" font-family="Arial" font-size="10" fill="white" text-anchor="middle" dominant-baseline="middle">Honeypot</text>
-  <line x1="100" y1="200" x2="300" y2="200" stroke="#444" stroke-width="2" stroke-dasharray="5,5" opacity="0.6"/>
   
   <!-- Focus Node -->
   <circle cx="300" cy="100" r="30" fill="#a855f7" opacity="0.8"/>
   <text x="300" y="100" font-family="Arial" font-size="10" fill="white" text-anchor="middle" dominant-baseline="middle">Focus</text>
-  <line x1="300" y1="100" x2="300" y2="200" stroke="#444" stroke-width="2" stroke-dasharray="5,5" opacity="0.6"/>
   
   <!-- Habituation Node -->
   <circle cx="300" cy="300" r="30" fill="#14b8a6" opacity="0.8"/>
   <text x="300" y="300" font-family="Arial" font-size="10" fill="white" text-anchor="middle" dominant-baseline="middle">Habituation</text>
-  <line x1="300" y1="300" x2="300" y2="200" stroke="#444" stroke-width="2" stroke-dasharray="5,5" opacity="0.6"/>
   
   <!-- Learning Node -->
   <circle cx="500" cy="200" r="30" fill="#22c55e" opacity="0.8"/>
   <text x="500" y="200" font-family="Arial" font-size="10" fill="white" text-anchor="middle" dominant-baseline="middle">Learning</text>
-  <line x1="500" y1="200" x2="300" y2="200" stroke="#444" stroke-width="2" stroke-dasharray="5,5" opacity="0.6"/>
   
   <!-- Small Context Nodes -->
   <circle cx="350" cy="150" r="15" fill="#6366f1" opacity="0.7"/>
@@ -52,13 +60,7 @@
   <circle cx="350" cy="250" r="14" fill="#6366f1" opacity="0.7"/>
   <circle cx="250" cy="240" r="13" fill="#6366f1" opacity="0.6"/>
   
-  <!-- Verbindungen zwischen kleinen Knoten -->
-  <line x1="350" y1="150" x2="300" y2="200" stroke="#444" stroke-width="1" opacity="0.4"/>
-  <line x1="250" y1="160" x2="300" y2="200" stroke="#444" stroke-width="1" opacity="0.4"/>
-  <line x1="350" y1="250" x2="300" y2="200" stroke="#444" stroke-width="1" opacity="0.4"/>
-  <line x1="250" y1="240" x2="300" y2="200" stroke="#444" stroke-width="1" opacity="0.4"/>
-  
-  <!-- Pulsierender Effekt für den zentralen Knoten -->
+  <!-- Pulsing effect for the central node -->
   <circle cx="300" cy="200" r="60" fill="none" stroke="#6366f1" stroke-width="2">
     <animate attributeName="r" values="60;70;60" dur="4s" repeatCount="indefinite"/>
     <animate attributeName="opacity" values="0.8;0.2;0.8" dur="4s" repeatCount="indefinite"/>
