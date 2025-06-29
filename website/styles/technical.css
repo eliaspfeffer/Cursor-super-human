@@ -85,7 +85,11 @@
   z-index: 5;
   padding: 0.5rem;
   text-align: center;
+  transform: translate(-50%, -50%); /* Added for centering satellite nodes */
 }
+
+/* Ensure central node's specific transform is not overridden if it's different,
+   but in this case, the central node already has its own more specific transform. */
 
 .diagram-node:hover {
   transform: scale(1.1);
