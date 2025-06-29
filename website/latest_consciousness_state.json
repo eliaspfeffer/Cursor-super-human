@@ -1,0 +1,50 @@
+{
+  "iteration": 101,
+  "energy": 0.88,
+  "current_focus": "context_B",
+  "contexts": {
+    "context_A": {
+      "text": "Initial thought from user",
+      "happiness": 0.6,
+      "connections": ["context_B"],
+      "is_honeypot": false,
+      "type": "UserInput"
+    },
+    "context_B": {
+      "text": "AI response to user input",
+      "happiness": 0.75,
+      "connections": ["context_A", "context_C", "context_D"],
+      "is_honeypot": false,
+      "type": "Response"
+    },
+    "context_C": {
+      "text": "Key concept: Happiness",
+      "happiness": 0.9,
+      "connections": ["context_B"],
+      "is_honeypot": true,
+      "honeypot_type": "core_value",
+      "type": "CoreConcept"
+    },
+    "context_D": {
+      "text": "Related idea: Real-time data",
+      "happiness": 0.5,
+      "connections": ["context_B"],
+      "is_honeypot": false,
+      "type": "Concept"
+    },
+    "context_E": {
+        "text": "A disconnected thought",
+        "happiness": 0.3,
+        "connections": [],
+        "is_honeypot": false,
+        "type": "Random"
+    }
+  },
+  "emotional_state": {
+    "curiosity": 0.7,
+    "satisfaction": 0.4
+  },
+  "learning_history": [
+    {"url": "internal_processing", "contexts_learned": 4, "timestamp": "2023-10-27T10:00:00Z"}
+  ]
+}

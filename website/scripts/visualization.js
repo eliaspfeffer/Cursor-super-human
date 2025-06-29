@@ -13,6 +13,9 @@ document.addEventListener("DOMContentLoaded", function () {
   window.height = 0;
   window.selectedNode = null;
   window.colorScheme = "category";
+  window.dataFetchInterval = null; // For setInterval
+  window.DATA_URL = "latest_consciousness_state.json"; // Path to the data file
+  window.FETCH_INTERVAL_MS = 5000; // Fetch data every 5 seconds
 
   // Define attribute types
   window.attributeTypes = [
@@ -42,6 +45,8 @@ document.addEventListener("DOMContentLoaded", function () {
       try {
         initNetworkVisualization();
         console.log("Network visualization initialized successfully");
+        // Start fetching data periodically
+        startRealtimeUpdates();
       } catch (error) {
         console.error(
           "Error during network visualization initialization:",
@@ -69,12 +74,18 @@ function setupEventListeners() {
   // Netzwerk-Steuerung
   const addRandomNodeButton = document.getElementById("addRandomNode");
   if (addRandomNodeButton) {
-    addRandomNodeButton.addEventListener("click", addRandomNode);
+    // Disable or remove, as data now comes from real-time updates
+    addRandomNodeButton.style.display = 'none';
+    // addRandomNodeButton.addEventListener("click", addRandomNode);
   }
 
   const resetNetworkButton = document.getElementById("resetNetwork");
   if (resetNetworkButton) {
-    resetNetworkButton.addEventListener("click", resetNetwork);
+    // Reset might need to just clear and wait for next fetch, or fetch immediately
+    resetNetworkButton.addEventListener("click", () => {
+        logProcessingStep("Network reset. Fetching latest data...", "info");
+        fetchAndUpdateData(true); // Pass true to indicate it's a reset
+    });
   }
   if (document.getElementById("nodeCharge")) {
     document
@@ -111,9 +122,18 @@ function setupEventListeners() {
 
   // Simulations-Bereich
   if (document.getElementById("addContext")) {
-    document
-      .getElementById("addContext")
-      .addEventListener("click", addUserContext);
+    // Disable or remove, as data now comes from real-time updates
+     document.getElementById("addContext").style.display = 'none';
+     const contextCategory = document.getElementById("contextCategory");
+     if(contextCategory) contextCategory.style.display = 'none';
+     const newContextInput = document.getElementById("newContext");
+     if(newContextInput) newContextInput.style.display = 'none';
+     // Find the h3 "Add New Information" and hide its parent .input-area
+     const inputAreaHeader = Array.from(document.querySelectorAll('.input-area h3')).find(h3 => h3.textContent === "Add New Information");
+     if (inputAreaHeader && inputAreaHeader.parentElement) {
+        inputAreaHeader.parentElement.style.display = 'none';
+     }
+    // document.getElementById("addContext").addEventListener("click", addUserContext);
   }
 }
 
@@ -154,13 +174,13 @@ function initNetworkVisualization() {
       d3
         .forceLink()
         .id((d) => d.id)
-        .distance(100)
+        .distance(100) // Initial distance, can be updated
     )
-    .force("charge", d3.forceManyBody().strength(-300))
+    .force("charge", d3.forceManyBody().strength(-300)) // Initial charge, can be updated
     .force("center", d3.forceCenter(width / 2, height / 2))
     .force(
       "collision",
-      d3.forceCollide().radius((d) => d.size + 10)
+      d3.forceCollide().radius((d) => (d.size || 10) + 10) // Ensure d.size exists
     );
 
   // Selektionen für Elemente
@@ -173,29 +193,139 @@ function initNetworkVisualization() {
 
   textElements = container.append("g").attr("class", "texts").selectAll("text");
 
-  // Beispieldaten erstellen
-  createSampleData();
-
-  // Visualisierung aktualisieren
-  updateSimulation();
-
-  // Statistiken aktualisieren
-  updateStats();
+  // Initial empty state or fetch first data
+  updateSimulation(); // Will draw empty if nodes/links are empty
+  updateStats();      // Will show 0 counts
 
   // Laden-Overlay ausblenden
   if (document.querySelector(".loading-overlay")) {
     document.querySelector(".loading-overlay").style.display = "none";
   }
 
-  // Knoten nach dem Start kurz hervorheben, um Klickbarkeit anzuzeigen
-  setTimeout(highlightNodesSequentially, 1000);
+  // Knoten nach dem Start kurz hervorheben, um Klickbarkeit anzuzeigen (if any nodes exist)
+  // setTimeout(highlightNodesSequentially, 1000); // This can be called after first data load
 
-  logProcessingStep("Netzwerk initialisiert.", "success");
+  logProcessingStep("Netzwerk initialisiert. Warte auf erste Daten...", "success");
 }
+
+
+// Start fetching data periodically
+function startRealtimeUpdates() {
+  if (window.dataFetchInterval) {
+    clearInterval(window.dataFetchInterval);
+  }
+  // Fetch immediately, then set interval
+  fetchAndUpdateData();
+  window.dataFetchInterval = setInterval(fetchAndUpdateData, window.FETCH_INTERVAL_MS);
+  console.log(`Real-time updates started. Fetching every ${window.FETCH_INTERVAL_MS / 1000}s.`);
+}
+
+// Fetch and update data
+async function fetchAndUpdateData(isReset = false) {
+  logProcessingStep("Lade aktuelle AI-Daten...", "info");
+  try {
+    const response = await fetch(`${window.DATA_URL}?t=${new Date().getTime()}`); // Cache buster
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const aiState = await response.json();
+    logProcessingStep("AI-Daten erfolgreich geladen.", "success");
+
+    // Transform AI state to D3 graph data
+    transformAiStateToGraph(aiState, isReset);
+
+    // Update visualization
+    updateSimulation();
+    updateStats();
+
+    if (nodes.length > 0 && isReset) {
+        setTimeout(highlightNodesSequentially, 500); // Highlight after reset and data load
+    }
+
+  } catch (error) {
+    console.error("Fehler beim Laden oder Verarbeiten der AI-Daten:", error);
+    logProcessingStep(`Fehler beim Laden der AI-Daten: ${error.message}`, "error");
+  }
+}
+
+// Transform AI state to graph nodes and links
+function transformAiStateToGraph(aiState, isReset) {
+  const newNodes = [];
+  const newLinks = [];
+
+  if (aiState && aiState.contexts) {
+    for (const contextId in aiState.contexts) {
+      const contextData = aiState.contexts[contextId];
+
+      // Determine node group/type
+      let group = "default";
+      if (contextData.is_honeypot) {
+        group = contextData.honeypot_type || "honeypot";
+      } else if (contextId.startsWith("Web_")) {
+        group = "Web";
+      } else if (contextId.startsWith("Random_")) {
+        group = "Random";
+      } else if (contextId.startsWith("Energy_")) {
+        group = "Energy";
+      } else if (contextId.startsWith("Obj_")) {
+        group = "Object";
+      } else if (contextId.startsWith("UserInput_")) {
+        group = "UserInput";
+      } else if (contextId.startsWith("Response_")) {
+        group = "Response";
+      }
+
+
+      newNodes.push({
+        id: contextId,
+        group: group,
+        label: contextData.text ? (contextData.text.length > 20 ? contextData.text.substring(0, 17) + "..." : contextData.text) : contextId,
+        fullText: contextData.text || contextId,
+        happiness: contextData.happiness || 0,
+        size: 10 + Math.abs((contextData.happiness || 0) * 10) + (contextData.is_honeypot ? 5 : 0),
+        attributes: { // Simple attributes for now
+            Happiness: (contextData.happiness || 0).toFixed(2),
+            Connections: (contextData.connections || []).length,
+            IsHoneypot: contextData.is_honeypot || false,
+        },
+        isCurrentFocus: aiState.current_focus === contextId,
+        createdAt: Date.now() // Or a timestamp from data if available
+      });
+
+      if (contextData.connections) {
+        contextData.connections.forEach(targetId => {
+          // Ensure target context exists before creating a link
+          if (aiState.contexts[targetId]) {
+            newLinks.push({
+              source: contextId,
+              target: targetId,
+              weight: 1 // Default weight, can be enhanced
+            });
+          }
+        });
+      }
+    }
+  }
+
+  if (isReset) {
+    nodes = newNodes;
+    links = newLinks;
+  } else {
+    // More sophisticated update: merge newNodes with existing nodes
+    // For simplicity, we'll replace for now, but a merge is better for preserving layout stability
+    nodes = newNodes; // Simple replacement
+    links = newLinks; // Simple replacement
+  }
+  logProcessingStep(`${nodes.length} Knoten und ${links.length} Verbindungen verarbeitet.`, "info");
+}
+
 
 // Funktion, um Knoten nacheinander kurz hervorzuheben
 function highlightNodesSequentially() {
+  if (!nodeElements || typeof nodeElements.nodes !== 'function') return;
   const nodesArray = nodeElements.nodes();
+  if (nodesArray.length === 0) return;
+
   let index = 0;
 
   // Alle Knoten auf normale Darstellung zurücksetzen
@@ -204,83 +334,38 @@ function highlightNodesSequentially() {
   const interval = setInterval(() => {
     if (index >= nodesArray.length) {
       clearInterval(interval);
+      // Reset the last highlighted node
+      if (index > 0 && nodesArray[index-1]) {
+         d3.select(nodesArray[index - 1])
+          .attr("stroke-width", 2)
+          .attr("stroke", "#fff");
+      }
       return;
     }
 
     // Vorherigen Knoten zurücksetzen
-    if (index > 0) {
+    if (index > 0 && nodesArray[index-1]) {
       d3.select(nodesArray[index - 1])
         .attr("stroke-width", 2)
         .attr("stroke", "#fff");
     }
 
     // Aktuellen Knoten hervorheben
-    d3.select(nodesArray[index])
-      .attr("stroke-width", 3)
-      .attr("stroke", "var(--primary-color)");
+    if(nodesArray[index]) {
+        d3.select(nodesArray[index])
+        .attr("stroke-width", 3)
+        .attr("stroke", "var(--primary-color)");
+    }
 
     index++;
 
-    // Nach dem letzten Knoten alle zurücksetzen
-    if (index >= nodesArray.length) {
-      setTimeout(() => {
-        nodeElements.attr("stroke-width", 2).attr("stroke", "#fff");
-  // Display "Click me" hint
-        logProcessingStep(
-          "Tip: Click on a node to see details.",
-          "info"
-        );
-      }, 500);
-    }
+    // Nach dem letzten Knoten alle zurücksetzen (handled by the clear interval condition)
   }, 200); // Switch to the next node every 200ms
-}
-
-// Create sample data
-function createSampleData() {
-  // Create nodes
-  const sampleNodes = [
-    {
-      id: "Apple", // Apfel
-      group: "food",
-      attributes: { Taste: "sweet", Appearance: "red", Size: "medium" }, // Geschmack: süß, Aussehen: rot, Größe: mittel
-      size: 20,
-    },
-    {
-      id: "Banana", // Banane
-      group: "food",
-      attributes: { Taste: "sweet", Appearance: "yellow", Size: "medium" }, // Geschmack: süß, Aussehen: gelb, Größe: mittel
-      size: 20,
-    },
-    { id: "sweet", group: "attribute", attributes: {}, size: 15 },
-    { id: "red", group: "attribute", attributes: {}, size: 15 },
-    { id: "yellow", group: "attribute", attributes: {}, size: 15 },
-    { id: "medium", group: "attribute", attributes: {}, size: 10 },
-    { id: "Taste", group: "category", label: "Taste", attributes: {}, size: 18 },
-    { id: "Appearance", group: "category", label: "Appearance", attributes: {}, size: 18 },
-    { id: "Size", group: "category", label: "Size", attributes: {}, size: 15 },
-  ];
-
-  // Create links
-  const sampleLinks = [
-    { source: "Apple", target: "sweet", weight: 3 },
-    { source: "Apple", target: "red", weight: 3 },
-    { source: "Apple", target: "medium", weight: 2 },
-    { source: "Banana", target: "sweet", weight: 3 },
-    { source: "Banana", target: "yellow", weight: 3 },
-    { source: "Banana", target: "medium", weight: 2 },
-    { source: "sweet", target: "Taste", weight: 5 },
-    { source: "red", target: "Appearance", weight: 5 },
-    { source: "yellow", target: "Appearance", weight: 5 },
-    { source: "medium", target: "Size", weight: 5 },
-  ];
-
-  // Add to global arrays
-  nodes = sampleNodes;
-  links = sampleLinks;
 }
 
 // Update the visualization with current data
 function updateSimulation() {
+  if (!simulation) return;
   // Apply the nodes to the force simulation
   simulation.nodes(nodes);
   simulation.force("link").links(links);
