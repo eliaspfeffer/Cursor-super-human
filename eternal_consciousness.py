@@ -1662,52 +1662,18 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         for need in self.needs_pyramid:
             self.needs_pyramid[need] = max(0.0, min(1.0, self.needs_pyramid[need]))
 
-    def get_wikipedia_content(self, search_term):
-        """Ruft Inhalte von Wikipedia ab basierend auf einem Suchbegriff."""
+    def get_ollama_content(self, search_term: str) -> Optional[str]:
+        """Ruft Inhalte von Ollama ab basierend auf einem Suchbegriff."""
         try:
-            import wikipedia
-            
-            # Suche nach Seiten, die dem Suchbegriff entsprechen
-            search_results = wikipedia.search(search_term, results=3)
-            
-            if not search_results:
-                print(f"Keine Wikipedia-Artikel für '{search_term}' gefunden.")
-            return None
-        
-            # Versuche, den ersten Treffer zu verwenden
-            try:
-                # Hole eine Zusammenfassung des Artikels
-                page = wikipedia.page(search_results[0])
-                summary = page.summary
-                
-                # Begrenze die Länge der Zusammenfassung
-                if len(summary) > 500:
-                    summary = summary[:500] + "..."
-                    
-                return summary
-                
-            except wikipedia.exceptions.DisambiguationError as e:
-                # Bei Mehrdeutigkeiten verwende die erste Option
-                if e.options:
-                    try:
-                        page = wikipedia.page(e.options[0])
-                        summary = page.summary
-                        
-                        # Begrenze die Länge der Zusammenfassung
-                        if len(summary) > 500:
-                            summary = summary[:500] + "..."
-                            
-                        return summary
-                    except:
-                        pass
-                        
-            except Exception as e:
-                print(f"Fehler beim Abrufen des Wikipedia-Artikels: {e}")
-                
-            return None
-        
+            import ollama
+            # Assuming Ollama is running locally and the model is available
+            response = ollama.generate(model='llama2', prompt=search_term)
+            return response['response']
         except ImportError:
-            print("Wikipedia-Modul nicht installiert. Verwende 'pip install wikipedia' zum Installieren.")
+            print("Ollama-Modul nicht installiert. Verwende 'pip install ollama' zum Installieren.")
+            return None
+        except Exception as e:
+            print(f"Fehler beim Abrufen des Ollama-Inhalts: {e}")
             return None
             
     def learn_from_internet(self):
@@ -1889,17 +1855,17 @@ class EternalConsciousnessEngine(AdvancedConsciousnessEngine):
         created_contexts = []
         
         try:
-            # Hole Inhalte von Wikipedia
-            wikipedia_content = self.get_wikipedia_content(search_term)
+            # Hole Inhalte von Ollama
+            ollama_content = self.get_ollama_content(search_term)
             
-            if not wikipedia_content:
-                print(f"Keine Inhalte für '{search_term}' gefunden.")
+            if not ollama_content:
+                print(f"Keine Inhalte für '{search_term}' von Ollama gefunden.")
                 return created_contexts
             
             # Wenn es eine Frage war, versuche die relevanten Informationen zu extrahieren
             if is_question:
                 # Teile den Inhalt in Absätze
-                paragraphs = wikipedia_content.split('\n\n')
+                paragraphs = ollama_content.split('\n\n')
                 
                 # Extrahiere relevante Informationen basierend auf dem Fragetyp und den Attributen
                 if question_analysis['type'] == 'beschaffenheit' and 'geschmack' in question_analysis['attributes']:
