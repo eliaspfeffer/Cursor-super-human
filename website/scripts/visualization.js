@@ -251,13 +251,13 @@ function createSampleData() {
       attributes: { Taste: "sweet", Appearance: "yellow", Size: "medium" }, // Geschmack: süß, Aussehen: gelb, Größe: mittel
       size: 20,
     },
-    { id: "sweet", group: "attribute", attributes: {}, size: 15 }, // süß
-    { id: "red", group: "attribute", attributes: {}, size: 15 },   // rot
-    { id: "yellow", group: "attribute", attributes: {}, size: 15 },// gelb
-    { id: "medium", group: "attribute", attributes: {}, size: 10 },// mittel
-    { id: "Taste_cat", group: "category", attributes: {}, size: 18 }, // Geschmack (als Kategorie)
-    { id: "Appearance_cat", group: "category", attributes: {}, size: 18 }, // Aussehen (als Kategorie)
-    { id: "Size_cat", group: "category", attributes: {}, size: 15 },    // Größe (als Kategorie)
+    { id: "sweet", group: "attribute", attributes: {}, size: 15 },
+    { id: "red", group: "attribute", attributes: {}, size: 15 },
+    { id: "yellow", group: "attribute", attributes: {}, size: 15 },
+    { id: "medium", group: "attribute", attributes: {}, size: 10 },
+    { id: "Taste", group: "category", label: "Taste", attributes: {}, size: 18 },
+    { id: "Appearance", group: "category", label: "Appearance", attributes: {}, size: 18 },
+    { id: "Size", group: "category", label: "Size", attributes: {}, size: 15 },
   ];
 
   // Create links
@@ -268,10 +268,10 @@ function createSampleData() {
     { source: "Banana", target: "sweet", weight: 3 },
     { source: "Banana", target: "yellow", weight: 3 },
     { source: "Banana", target: "medium", weight: 2 },
-    { source: "sweet", target: "Taste_cat", weight: 5 },
-    { source: "red", target: "Appearance_cat", weight: 5 },
-    { source: "yellow", target: "Appearance_cat", weight: 5 },
-    { source: "medium", target: "Size_cat", weight: 5 },
+    { source: "sweet", target: "Taste", weight: 5 },
+    { source: "red", target: "Appearance", weight: 5 },
+    { source: "yellow", target: "Appearance", weight: 5 },
+    { source: "medium", target: "Size", weight: 5 },
   ];
 
   // Add to global arrays
