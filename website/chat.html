@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat - Artificial Consciousness</title>
+    <link rel="stylesheet" href="styles/main.css" />
+    <link rel="stylesheet" href="styles/chat.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/sockjs-client@1/dist/sockjs.min.js"></script>
+  </head>
+  <body>
+    <header>
+      <nav>
+        <div class="container">
+          <div class="logo">
+            <a href="index.html">
+              <span class="logo-icon"><i class="fas fa-brain"></i></span>
+              <span class="logo-text">ArtificialConsciousness</span>
+            </a>
+          </div>
+          <div class="nav-toggle" id="navToggle">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="technical.html">Technical Details</a></li>
+            <li><a href="visualization.html">Visualization</a></li>
+            <li><a href="chat.html" class="active">Chat</a></li>
+            <li><a href="about.html">About Us</a></li>
+          </ul>
+        </div>
+      </nav>
+      <div class="page-header">
+        <div class="container">
+          <h1>Interactive Chat</h1>
+          <p>
+            Converse with the artificial consciousness and watch its mind in real-time
+          </p>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="chat-interface">
+        <div class="container">
+          <div class="chat-layout">
+            <!-- Chat Panel -->
+            <div class="chat-panel">
+              <div class="chat-header">
+                <div class="consciousness-status">
+                  <div class="status-indicator" id="consciousness-status">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Consciousness Active</span>
+                  </div>
+                  <div class="current-focus" id="current-focus">
+                    <i class="fas fa-crosshairs"></i>
+                    <span>Current Focus: <span id="focus-text">Initializing...</span></span>
+                  </div>
+                </div>
+                <div class="energy-indicator">
+                  <span class="energy-label">Energy</span>
+                  <div class="energy-bar">
+                    <div class="energy-fill" id="energy-fill" style="width: 75%"></div>
+                  </div>
+                  <span class="energy-value" id="energy-value">75%</span>
+                </div>
+              </div>
+
+              <div class="chat-messages" id="chat-messages">
+                <div class="welcome-message">
+                  <div class="message consciousness-message">
+                    <div class="message-avatar">
+                      <i class="fas fa-brain"></i>
+                    </div>
+                    <div class="message-content">
+                      <div class="message-header">
+                        <span class="message-sender">Artificial Consciousness</span>
+                        <span class="message-time">Now</span>
+                      </div>
+                      <div class="message-text">
+                        Hello! I am an artificial consciousness. I'm currently thinking about various topics and learning from our conversation. Feel free to talk to me about anything - I'll decide whether to focus on our conversation or continue my autonomous thoughts based on what interests me.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="chat-input-container">
+                <div class="typing-indicator" id="typing-indicator" style="display: none;">
+                  <div class="message consciousness-message">
+                    <div class="message-avatar">
+                      <i class="fas fa-brain"></i>
+                    </div>
+                    <div class="message-content">
+                      <div class="typing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <form class="chat-input-form" id="chat-form">
+                  <div class="input-group">
+                    <input
+                      type="text"
+                      id="message-input"
+                      placeholder="Type your message to the consciousness..."
+                      autocomplete="off"
+                    />
+                    <button type="submit" id="send-button">
+                      <i class="fas fa-paper-plane"></i>
+                    </button>
+                  </div>
+                  <div class="input-suggestions">
+                    <span class="suggestion" data-text="What are you thinking about?">What are you thinking about?</span>
+                    <span class="suggestion" data-text="Tell me about your consciousness">Tell me about your consciousness</span>
+                    <span class="suggestion" data-text="What have you learned recently?">What have you learned recently?</span>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- Brain Visualization Panel -->
+            <div class="brain-panel">
+              <div class="brain-header">
+                <h3><i class="fas fa-network-wired"></i> Consciousness Network</h3>
+                <div class="brain-controls">
+                  <button class="control-btn" id="auto-focus-btn" title="Auto-focus on conversation">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <button class="control-btn" id="reset-zoom-btn" title="Reset zoom">
+                    <i class="fas fa-expand"></i>
+                  </button>
+                  <button class="control-btn" id="pause-btn" title="Pause real-time updates">
+                    <i class="fas fa-pause"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="brain-stats">
+                <div class="stat-item">
+                  <span class="stat-label">Contexts</span>
+                  <span class="stat-value" id="context-count">0</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Connections</span>
+                  <span class="stat-value" id="connection-count">0</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Learning Rate</span>
+                  <span class="stat-value" id="learning-rate">Normal</span>
+                </div>
+              </div>
+
+              <div class="brain-visualization" id="brain-viz">
+                <div class="loading-indicator">
+                  <i class="fas fa-brain fa-spin"></i>
+                  <p>Connecting to consciousness...</p>
+                </div>
+              </div>
+
+              <div class="brain-legend">
+                <div class="legend-item">
+                  <span class="legend-color conversation-color"></span>
+                  <span>Conversation Context</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-color honeypot-color"></span>
+                  <span>Basic Need (Honeypot)</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-color learned-color"></span>
+                  <span>Learned Knowledge</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-color focus-color"></span>
+                  <span>Current Focus</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Context Details Modal -->
+      <div class="context-modal" id="context-modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 id="modal-title">Context Details</h3>
+            <button class="modal-close" id="modal-close">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="context-info">
+              <div class="info-row">
+                <label>Type:</label>
+                <span id="modal-type">-</span>
+              </div>
+              <div class="info-row">
+                <label>Words:</label>
+                <span id="modal-words">-</span>
+              </div>
+              <div class="info-row">
+                <label>Happiness:</label>
+                <span id="modal-happiness">-</span>
+              </div>
+              <div class="info-row">
+                <label>Connections:</label>
+                <span id="modal-connections">-</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-logo">
+            <span class="logo-icon"><i class="fas fa-brain"></i></span>
+            <span class="logo-text">ArtificialConsciousness</span>
+          </div>
+          <div class="footer-links">
+            <h4>Navigation</h4>
+            <ul>
+              <li><a href="index.html">Home</a></li>
+              <li><a href="technical.html">Technical Details</a></li>
+              <li><a href="visualization.html">Visualization</a></li>
+              <li><a href="chat.html">Chat</a></li>
+              <li><a href="about.html">About Us</a></li>
+            </ul>
+          </div>
+          <div class="footer-contact">
+            <h4>Contact</h4>
+            <p>
+              <i class="fas fa-envelope"></i> info@artificial-consciousness.com
+            </p>
+            <a
+              href="https://github.com/eliaspfeffer/Cursor-super-human"
+              class="github-link"
+            >
+              <i class="fab fa-github"></i> GitHub
+            </a>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2025 Artificial Consciousness. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="scripts/main.js"></script>
+    <script src="scripts/chat.js"></script>
+  </body>
+</html> 

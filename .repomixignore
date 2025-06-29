@@ -1,0 +1,41 @@
+# Large text files
+Chatgptconversation.txt
+Chatgptconversation2.txt
+google_response.html
+*.docx
+
+# Old backup files
+website/scripts/technical.js.original
+website/scripts/technical.js.backup
+
+# Virtual environment
+venv/
+
+# Consciousness state files
+consciousness_state_new/
+
+# Generated visualizations
+*.png
+
+# Specific Python files not related to chat
+advanced_consciousness.py
+analyze_consciousness.py
+artificial_consciousness.py
+eternal_consciousness.py
+interact_with_consciousness*.py
+start_consciousness.py
+test_*.py
+visualize_consciousness_tree.py
+ask_google.py
+Browseragent.py
+google_search.py
+simulated_search.py
+
+# Text files
+*.txt
+*.md
+!README.md
+
+# JSON files
+*.json
+!package.json 

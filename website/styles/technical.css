@@ -629,6 +629,11 @@
   color: #3730a3;
 }
 
+.status.todo {
+  background-color: #fecaca;
+  color: #991b1b;
+}
+
 /* Animation for Energy Level */
 @keyframes energyFluctuation {
   0% {
